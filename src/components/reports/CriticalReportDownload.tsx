@@ -15,6 +15,8 @@ interface CriticalEquipment {
   planned_date: string | null;
   area_name: string;
   system_name: string;
+  week_number: number;
+  year: number;
 }
 
 interface AreaReport {
@@ -27,14 +29,7 @@ export function CriticalReportDownload() {
   const { toast } = useToast();
 
   const fetchCriticalData = async (): Promise<AreaReport[]> => {
-    // Get current week/year
-    const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const days = Math.floor((now.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
-    const currentWeek = Math.ceil((days + startOfYear.getDay() + 1) / 7);
-    const currentYear = now.getFullYear();
-
-    // Fetch critical equipment (Falla or Alerta)
+    // Fetch ALL critical equipment (Falla or Alerta) from entire history
     const { data, error } = await supabase
       .from('weekly_reports')
       .select(`
@@ -43,6 +38,8 @@ export function CriticalReportDownload() {
         sap_notification,
         sap_order,
         planned_date,
+        week_number,
+        year,
         equipment:equipment_id (
           tag,
           name,
@@ -54,9 +51,9 @@ export function CriticalReportDownload() {
           )
         )
       `)
-      .eq('week_number', currentWeek)
-      .eq('year', currentYear)
-      .in('status', ['Falla', 'Alerta']);
+      .in('status', ['Falla', 'Alerta'])
+      .order('year', { ascending: false })
+      .order('week_number', { ascending: false });
 
     if (error) throw error;
 
@@ -80,6 +77,8 @@ export function CriticalReportDownload() {
         planned_date: report.planned_date,
         area_name: areaName,
         system_name: systemName,
+        week_number: report.week_number,
+        year: report.year,
       };
 
       if (!areaMap.has(areaName)) {
@@ -102,7 +101,7 @@ export function CriticalReportDownload() {
       if (areaReports.length === 0) {
         toast({
           title: "Sin datos",
-          description: "No hay condiciones críticas para la semana actual",
+          description: "No hay condiciones críticas registradas en el historial",
         });
         setIsGenerating(false);
         return;
@@ -160,10 +159,15 @@ export function CriticalReportDownload() {
           pdf.text(equip.status, margin + 10, yPos, { align: "center" });
           pdf.setTextColor(0, 0, 0);
 
-          // Tag and name
+          // Tag and name with week/year
           pdf.setFontSize(10);
           pdf.setFont("helvetica", "bold");
           pdf.text(`${equip.tag} - ${equip.name}`, margin + 25, yPos);
+          pdf.setFont("helvetica", "normal");
+          pdf.setFontSize(8);
+          pdf.setTextColor(100, 100, 100);
+          pdf.text(`S${equip.week_number}/${equip.year}`, pageWidth - margin - 20, yPos);
+          pdf.setTextColor(0, 0, 0);
           yPos += 6;
 
           // System
