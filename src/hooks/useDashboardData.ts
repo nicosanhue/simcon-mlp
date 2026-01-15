@@ -5,6 +5,7 @@ export interface DashboardFilters {
   week: number;
   year: number;
   areaId: string;
+  searchTerm?: string;
 }
 
 export function useDashboardData(filters: DashboardFilters) {
@@ -60,6 +61,16 @@ export function useDashboardData(filters: DashboardFilters) {
       if (filters.areaId !== "all") {
         filteredData = data.filter(
           (eq) => eq.systems.areas.id === filters.areaId
+        );
+      }
+
+      // Filter by search term if provided
+      if (filters.searchTerm && filters.searchTerm.trim() !== "") {
+        const term = filters.searchTerm.toLowerCase().trim();
+        filteredData = filteredData.filter(
+          (eq) =>
+            eq.tag.toLowerCase().includes(term) ||
+            eq.name.toLowerCase().includes(term)
         );
       }
 
