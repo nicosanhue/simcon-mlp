@@ -5,7 +5,8 @@ import {
   History,
   Activity,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  GitBranch
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import {
@@ -25,6 +26,7 @@ import { Button } from "@/components/ui/button";
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Organigrama", url: "/equipment-tree", icon: GitBranch },
   { title: "Registro Semanal", url: "/data-entry", icon: ClipboardEdit },
   { title: "Historial", url: "/history", icon: History },
   { title: "Activos", url: "/assets", icon: Settings2 },
