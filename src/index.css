@@ -1,96 +1,81 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* Industrial Equipment Monitoring Design System
+   Dark control room aesthetic with status-based color coding
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Dark industrial theme - default */
+    --background: 220 20% 8%;
+    --foreground: 210 20% 92%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 220 18% 11%;
+    --card-foreground: 210 20% 92%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 220 18% 11%;
+    --popover-foreground: 210 20% 92%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 199 89% 48%;
+    --primary-foreground: 220 20% 8%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 16% 16%;
+    --secondary-foreground: 210 20% 92%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 14% 14%;
+    --muted-foreground: 215 15% 55%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 199 89% 48%;
+    --accent-foreground: 220 20% 8%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 20% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 220 16% 18%;
+    --input: 220 16% 18%;
+    --ring: 199 89% 48%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Status Colors */
+    --status-operativo: 142 76% 36%;
+    --status-operativo-foreground: 142 76% 95%;
+    --status-alerta: 45 93% 47%;
+    --status-alerta-foreground: 45 93% 10%;
+    --status-standby: 45 93% 47%;
+    --status-standby-foreground: 45 93% 10%;
+    --status-falla: 0 84% 60%;
+    --status-falla-foreground: 0 84% 98%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Chart Colors */
+    --chart-operativo: 142 76% 36%;
+    --chart-alerta: 45 93% 47%;
+    --chart-falla: 0 84% 60%;
+    --chart-standby: 38 92% 50%;
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* Sidebar - Dark industrial */
+    --sidebar-background: 220 22% 6%;
+    --sidebar-foreground: 210 20% 75%;
+    --sidebar-primary: 199 89% 48%;
+    --sidebar-primary-foreground: 220 20% 8%;
+    --sidebar-accent: 220 16% 12%;
+    --sidebar-accent-foreground: 210 20% 92%;
+    --sidebar-border: 220 16% 14%;
+    --sidebar-ring: 199 89% 48%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Glow effects */
+    --glow-primary: 199 89% 48%;
+    --glow-success: 142 76% 36%;
+    --glow-warning: 45 93% 47%;
+    --glow-danger: 0 84% 60%;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    /* Same as root - app is dark by default */
   }
 }
 
@@ -100,6 +85,88 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  /* Monospace for tags and technical data */
+  .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+@layer components {
+  /* Status badge variants */
+  .status-operativo {
+    @apply bg-[hsl(var(--status-operativo))] text-[hsl(var(--status-operativo-foreground))];
+  }
+
+  .status-alerta {
+    @apply bg-[hsl(var(--status-alerta))] text-[hsl(var(--status-alerta-foreground))];
+  }
+
+  .status-standby {
+    @apply bg-[hsl(var(--status-standby)/0.8)] text-[hsl(var(--status-standby-foreground))];
+  }
+
+  .status-falla {
+    @apply bg-[hsl(var(--status-falla))] text-[hsl(var(--status-falla-foreground))];
+  }
+
+  /* Card glow effects */
+  .card-glow-success {
+    box-shadow: 0 0 20px -5px hsl(var(--glow-success) / 0.3);
+  }
+
+  .card-glow-warning {
+    box-shadow: 0 0 20px -5px hsl(var(--glow-warning) / 0.3);
+  }
+
+  .card-glow-danger {
+    box-shadow: 0 0 20px -5px hsl(var(--glow-danger) / 0.3);
+  }
+
+  /* Industrial panel style */
+  .industrial-panel {
+    @apply bg-card border border-border rounded-lg;
+    background: linear-gradient(180deg, hsl(220 18% 12%) 0%, hsl(220 18% 10%) 100%);
+  }
+
+  /* Data grid styling */
+  .data-grid {
+    @apply bg-card/50 border border-border rounded-md;
+  }
+
+  /* Pulse animation for critical alerts */
+  .pulse-danger {
+    animation: pulse-danger 2s infinite;
+  }
+
+  @keyframes pulse-danger {
+    0%, 100% {
+      box-shadow: 0 0 0 0 hsl(var(--status-falla) / 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 8px hsl(var(--status-falla) / 0);
+    }
+  }
+
+  /* Subtle scan line effect for industrial feel */
+  .scanline {
+    position: relative;
+  }
+
+  .scanline::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      hsl(var(--foreground) / 0.015) 2px,
+      hsl(var(--foreground) / 0.015) 4px
+    );
+    pointer-events: none;
   }
 }
