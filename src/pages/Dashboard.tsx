@@ -22,12 +22,22 @@ export default function Dashboard() {
   const [week, setWeek] = useState(getWeekNumber(currentDate));
   const [year, setYear] = useState(currentDate.getFullYear());
   const [selectedArea, setSelectedArea] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<"Falla" | "Alerta" | null>(null);
 
   const { areas, stats, criticalAlerts, isLoading } = useDashboardData({
     week,
     year,
     areaId: selectedArea,
   });
+
+  // Filter critical alerts based on selected status
+  const filteredAlerts = statusFilter 
+    ? criticalAlerts.filter(alert => alert.status === statusFilter)
+    : criticalAlerts;
+
+  const handleStatusClick = (status: "Falla" | "Alerta") => {
+    setStatusFilter(prev => prev === status ? null : status);
+  };
 
   const chartData = [
     { name: "Operativo", value: stats.operativo, color: "hsl(142, 76%, 36%)" },
@@ -91,6 +101,8 @@ export default function Dashboard() {
               subtitle="Requiere monitoreo"
               icon={<AlertTriangle className="h-6 w-6" />}
               variant="warning"
+              onClick={() => handleStatusClick("Alerta")}
+              isActive={statusFilter === "Alerta"}
             />
             <StatusCard
               title="En Falla"
@@ -98,6 +110,8 @@ export default function Dashboard() {
               subtitle="Intervención requerida"
               icon={<XCircle className="h-6 w-6" />}
               variant="danger"
+              onClick={() => handleStatusClick("Falla")}
+              isActive={statusFilter === "Falla"}
             />
             <StatusCard
               title="Stand By"
@@ -125,7 +139,7 @@ export default function Dashboard() {
           {isLoading ? (
             <Skeleton className="h-[380px] rounded-lg" />
           ) : (
-            <CriticalAlertsList alerts={criticalAlerts} />
+            <CriticalAlertsList alerts={filteredAlerts} activeFilter={statusFilter ?? undefined} />
           )}
         </div>
 
