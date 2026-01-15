@@ -98,42 +98,53 @@ export function CriticalReportDownload() {
 
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.getWidth();
-      const margin = 20;
-      let yPos = 25;
+      const margin = 15;
+      let yPos = 10;
 
-      // Title - minimal
-      pdf.setFontSize(14);
-      pdf.setFont("helvetica", "bold");
-      pdf.setTextColor(30, 30, 30);
-      pdf.text("Condiciones Críticas", margin, yPos);
+      // Header with green background
+      pdf.setFillColor(0, 128, 0); // Green
+      pdf.rect(0, 0, pageWidth, 25, 'F');
       
-      // Date - right aligned
+      // Title - white text on green
+      pdf.setFontSize(16);
+      pdf.setFont("helvetica", "bold");
+      pdf.setTextColor(255, 255, 255);
+      pdf.text("MINERA LOS PELAMBRES", margin, 12);
+      
+      pdf.setFontSize(11);
+      pdf.setFont("helvetica", "normal");
+      pdf.text("Reporte de Condiciones Críticas", margin, 20);
+      
+      // Date - right aligned on green header
       const now = new Date();
       pdf.setFontSize(9);
-      pdf.setFont("helvetica", "normal");
-      pdf.setTextColor(120, 120, 120);
-      pdf.text(now.toLocaleDateString('es-CL'), pageWidth - margin, yPos, { align: "right" });
+      pdf.text(now.toLocaleDateString('es-CL'), pageWidth - margin, 16, { align: "right" });
       
-      yPos += 12;
-      pdf.setDrawColor(220, 220, 220);
-      pdf.line(margin, yPos, pageWidth - margin, yPos);
-      yPos += 10;
+      yPos = 35;
 
-      // Render equipment list
-      const renderEquipmentList = (items: CriticalEquipment[], sectionTitle: string, color: number[]) => {
+      // Render equipment list with colored section headers
+      const renderEquipmentList = (items: CriticalEquipment[], sectionTitle: string, bgColor: number[], textColor: number[]) => {
         if (items.length === 0) return;
 
-        // Section header
+        // Check page break
+        if (yPos > 260) {
+          pdf.addPage();
+          yPos = 20;
+        }
+
+        // Section header with colored background
+        pdf.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
+        pdf.rect(margin, yPos - 5, pageWidth - margin * 2, 10, 'F');
         pdf.setFontSize(11);
         pdf.setFont("helvetica", "bold");
-        pdf.setTextColor(color[0], color[1], color[2]);
-        pdf.text(`${sectionTitle} (${items.length})`, margin, yPos);
-        yPos += 8;
+        pdf.setTextColor(textColor[0], textColor[1], textColor[2]);
+        pdf.text(`${sectionTitle} (${items.length})`, margin + 3, yPos + 2);
+        yPos += 12;
 
         items.forEach((equip) => {
           if (yPos > 270) {
             pdf.addPage();
-            yPos = 25;
+            yPos = 20;
           }
 
           // Tag + Name
@@ -147,7 +158,7 @@ export function CriticalReportDownload() {
 
           // Week/Year right aligned
           pdf.setFontSize(8);
-          pdf.setTextColor(140, 140, 140);
+          pdf.setTextColor(120, 120, 120);
           pdf.text(`S${equip.week_number}/${equip.year}`, pageWidth - margin, yPos, { align: "right" });
           yPos += 5;
 
@@ -160,8 +171,8 @@ export function CriticalReportDownload() {
           // Technical description (if exists)
           if (equip.technical_description) {
             pdf.setTextColor(60, 60, 60);
-            const desc = equip.technical_description.length > 100 
-              ? equip.technical_description.substring(0, 100) + '...' 
+            const desc = equip.technical_description.length > 120 
+              ? equip.technical_description.substring(0, 120) + '...' 
               : equip.technical_description;
             pdf.text(desc, margin, yPos);
             yPos += 4;
@@ -177,17 +188,17 @@ export function CriticalReportDownload() {
             yPos += 4;
           }
 
-          yPos += 4; // spacing between items
+          yPos += 3; // spacing between items
         });
 
-        yPos += 6; // spacing after section
+        yPos += 8; // spacing after section
       };
 
-      // Render Fallas first (red)
-      renderEquipmentList(fallas, "En Falla", [180, 40, 40]);
+      // Render Fallas first (red background, white text)
+      renderEquipmentList(fallas, "EN FALLA", [220, 53, 69], [255, 255, 255]);
 
-      // Render Alertas second (amber)
-      renderEquipmentList(alertas, "En Alerta", [180, 120, 20]);
+      // Render Alertas second (yellow/amber background, dark text)
+      renderEquipmentList(alertas, "EN ALERTA", [255, 193, 7], [40, 40, 40]);
 
       // Footer summary
       if (yPos > 270) {
