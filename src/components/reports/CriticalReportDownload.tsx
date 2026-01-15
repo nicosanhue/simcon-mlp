@@ -82,6 +82,24 @@ export function CriticalReportDownload() {
     return { fallas, alertas };
   };
 
+  // Load logo as base64 for PDF
+  const loadLogoAsBase64 = (): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(img, 0, 0);
+        resolve(canvas.toDataURL('image/png'));
+      };
+      img.onerror = reject;
+      img.src = '/images/logo-pelambres.png';
+    });
+  };
+
   const generatePDF = async () => {
     setIsGenerating(true);
     try {
@@ -96,31 +114,40 @@ export function CriticalReportDownload() {
         return;
       }
 
+      // Load logo
+      let logoBase64: string | null = null;
+      try {
+        logoBase64 = await loadLogoAsBase64();
+      } catch (e) {
+        console.warn('Could not load logo:', e);
+      }
+
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.getWidth();
       const margin = 15;
       let yPos = 10;
 
       // Header with green background
-      pdf.setFillColor(0, 128, 0); // Green
-      pdf.rect(0, 0, pageWidth, 25, 'F');
+      pdf.setFillColor(0, 128, 77); // Corporate green
+      pdf.rect(0, 0, pageWidth, 28, 'F');
       
-      // Title - white text on green
-      pdf.setFontSize(16);
+      // Add logo if available
+      if (logoBase64) {
+        pdf.addImage(logoBase64, 'PNG', margin, 4, 50, 20);
+      }
+      
+      // Title - right side
+      const now = new Date();
+      pdf.setFontSize(10);
       pdf.setFont("helvetica", "bold");
       pdf.setTextColor(255, 255, 255);
-      pdf.text("MINERA LOS PELAMBRES", margin, 12);
+      pdf.text("Reporte de Condiciones Críticas", pageWidth - margin, 12, { align: "right" });
       
-      pdf.setFontSize(11);
-      pdf.setFont("helvetica", "normal");
-      pdf.text("Reporte de Condiciones Críticas", margin, 20);
-      
-      // Date - right aligned on green header
-      const now = new Date();
       pdf.setFontSize(9);
-      pdf.text(now.toLocaleDateString('es-CL'), pageWidth - margin, 16, { align: "right" });
+      pdf.setFont("helvetica", "normal");
+      pdf.text(now.toLocaleDateString('es-CL'), pageWidth - margin, 20, { align: "right" });
       
-      yPos = 35;
+      yPos = 38;
 
       // Render equipment list with colored section headers
       const renderEquipmentList = (items: CriticalEquipment[], sectionTitle: string, bgColor: number[], textColor: number[]) => {
