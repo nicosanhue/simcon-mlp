@@ -88,12 +88,16 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-4">
-            <WeekSelector
-              week={week}
-              year={year}
-              onWeekChange={setWeek}
-              onYearChange={setYear}
-            />
+            {week !== null && year !== null ? (
+              <WeekSelector
+                week={week}
+                year={year}
+                onWeekChange={setWeek}
+                onYearChange={setYear}
+              />
+            ) : (
+              <Skeleton className="h-10 w-[250px]" />
+            )}
             <AreaFilter
               areas={areas}
               selectedArea={selectedArea}
