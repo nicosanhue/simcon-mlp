@@ -28,6 +28,7 @@ const navigationItems = [
   { title: "Registro Semanal", url: "/data-entry", icon: ClipboardEdit },
   { title: "Historial", url: "/history", icon: History },
   { title: "Activos", url: "/assets", icon: Settings2 },
+  { title: "Admin", url: "/admin", icon: Settings2 },
 ];
 
 export function AppSidebar() {
