@@ -8,6 +8,7 @@ import DataEntry from "./pages/DataEntry";
 import History from "./pages/History";
 import Assets from "./pages/Assets";
 import AdminSettings from "./pages/AdminSettings";
+import EquipmentTree from "./pages/EquipmentTree";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/equipment-tree" element={<EquipmentTree />} />
           <Route path="/data-entry" element={<DataEntry />} />
           <Route path="/history" element={<History />} />
           <Route path="/assets" element={<Assets />} />
