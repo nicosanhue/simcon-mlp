@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, FileImage, Loader2 } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
@@ -19,17 +19,11 @@ interface CriticalEquipment {
   year: number;
 }
 
-interface AreaReport {
-  area_name: string;
-  equipment: CriticalEquipment[];
-}
-
 export function CriticalReportDownload() {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
-  const fetchCriticalData = async (): Promise<AreaReport[]> => {
-    // Fetch ALL critical equipment (Falla or Alerta) from entire history
+  const fetchCriticalData = async (): Promise<{ fallas: CriticalEquipment[]; alertas: CriticalEquipment[] }> => {
     const { data, error } = await supabase
       .from('weekly_reports')
       .select(`
@@ -57,15 +51,12 @@ export function CriticalReportDownload() {
 
     if (error) throw error;
 
-    // Group by area
-    const areaMap = new Map<string, CriticalEquipment[]>();
+    const fallas: CriticalEquipment[] = [];
+    const alertas: CriticalEquipment[] = [];
 
     data?.forEach((report: any) => {
       const equipment = report.equipment;
       if (!equipment) return;
-
-      const areaName = equipment.system?.area?.name || 'Sin Área';
-      const systemName = equipment.system?.name || 'Sin Sistema';
 
       const criticalEquip: CriticalEquipment = {
         tag: equipment.tag,
@@ -75,33 +66,31 @@ export function CriticalReportDownload() {
         sap_notification: report.sap_notification,
         sap_order: report.sap_order,
         planned_date: report.planned_date,
-        area_name: areaName,
-        system_name: systemName,
+        area_name: equipment.system?.area?.name || 'Sin Área',
+        system_name: equipment.system?.name || 'Sin Sistema',
         week_number: report.week_number,
         year: report.year,
       };
 
-      if (!areaMap.has(areaName)) {
-        areaMap.set(areaName, []);
+      if (report.status === 'Falla') {
+        fallas.push(criticalEquip);
+      } else {
+        alertas.push(criticalEquip);
       }
-      areaMap.get(areaName)!.push(criticalEquip);
     });
 
-    return Array.from(areaMap.entries()).map(([area_name, equipment]) => ({
-      area_name,
-      equipment,
-    }));
+    return { fallas, alertas };
   };
 
   const generatePDF = async () => {
     setIsGenerating(true);
     try {
-      const areaReports = await fetchCriticalData();
+      const { fallas, alertas } = await fetchCriticalData();
 
-      if (areaReports.length === 0) {
+      if (fallas.length === 0 && alertas.length === 0) {
         toast({
           title: "Sin datos",
-          description: "No hay condiciones críticas registradas en el historial",
+          description: "No hay condiciones críticas registradas",
         });
         setIsGenerating(false);
         return;
@@ -109,139 +98,124 @@ export function CriticalReportDownload() {
 
       const pdf = new jsPDF();
       const pageWidth = pdf.internal.pageSize.getWidth();
-      const margin = 15;
-      let yPos = 20;
+      const margin = 20;
+      let yPos = 25;
 
-      // Title
-      pdf.setFontSize(18);
+      // Title - minimal
+      pdf.setFontSize(14);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Reporte de Condiciones Críticas", pageWidth / 2, yPos, { align: "center" });
-      yPos += 10;
-
-      // Date
+      pdf.setTextColor(30, 30, 30);
+      pdf.text("Condiciones Críticas", margin, yPos);
+      
+      // Date - right aligned
       const now = new Date();
-      pdf.setFontSize(10);
+      pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
-      pdf.text(`Generado: ${now.toLocaleDateString('es-CL')} ${now.toLocaleTimeString('es-CL')}`, pageWidth / 2, yPos, { align: "center" });
-      yPos += 15;
-
-      // Process each area
-      for (const areaReport of areaReports) {
-        // Check if we need a new page
-        if (yPos > 250) {
-          pdf.addPage();
-          yPos = 20;
-        }
-
-        // Area header
-        pdf.setFillColor(220, 53, 69); // Red background
-        pdf.rect(margin, yPos - 5, pageWidth - margin * 2, 10, 'F');
-        pdf.setTextColor(255, 255, 255);
-        pdf.setFontSize(12);
-        pdf.setFont("helvetica", "bold");
-        pdf.text(`Área: ${areaReport.area_name}`, margin + 5, yPos + 2);
-        pdf.setTextColor(0, 0, 0);
-        yPos += 15;
-
-        // Equipment list
-        for (const equip of areaReport.equipment) {
-          if (yPos > 270) {
-            pdf.addPage();
-            yPos = 20;
-          }
-
-          // Status badge
-          const statusColor = equip.status === 'Falla' ? [220, 53, 69] : [255, 193, 7];
-          pdf.setFillColor(statusColor[0], statusColor[1], statusColor[2]);
-          pdf.roundedRect(margin, yPos - 4, 20, 7, 1, 1, 'F');
-          pdf.setTextColor(equip.status === 'Falla' ? 255 : 0, equip.status === 'Falla' ? 255 : 0, equip.status === 'Falla' ? 255 : 0);
-          pdf.setFontSize(8);
-          pdf.text(equip.status, margin + 10, yPos, { align: "center" });
-          pdf.setTextColor(0, 0, 0);
-
-          // Tag and name with week/year
-          pdf.setFontSize(10);
-          pdf.setFont("helvetica", "bold");
-          pdf.text(`${equip.tag} - ${equip.name}`, margin + 25, yPos);
-          pdf.setFont("helvetica", "normal");
-          pdf.setFontSize(8);
-          pdf.setTextColor(100, 100, 100);
-          pdf.text(`S${equip.week_number}/${equip.year}`, pageWidth - margin - 20, yPos);
-          pdf.setTextColor(0, 0, 0);
-          yPos += 6;
-
-          // System
-          pdf.setFontSize(9);
-          pdf.setFont("helvetica", "normal");
-          pdf.setTextColor(100, 100, 100);
-          pdf.text(`Sistema: ${equip.system_name}`, margin + 5, yPos);
-          yPos += 5;
-
-          // Technical description
-          if (equip.technical_description) {
-            pdf.setTextColor(0, 0, 0);
-            const descLines = pdf.splitTextToSize(equip.technical_description, pageWidth - margin * 2 - 10);
-            pdf.text(descLines, margin + 5, yPos);
-            yPos += descLines.length * 4 + 2;
-          }
-
-          // SAP info
-          if (equip.sap_notification || equip.sap_order) {
-            pdf.setFontSize(8);
-            pdf.setTextColor(80, 80, 80);
-            const sapInfo = [];
-            if (equip.sap_notification) sapInfo.push(`Aviso: ${equip.sap_notification}`);
-            if (equip.sap_order) sapInfo.push(`Orden: ${equip.sap_order}`);
-            pdf.text(sapInfo.join('  |  '), margin + 5, yPos);
-            yPos += 4;
-          }
-
-          // Planned date
-          if (equip.planned_date) {
-            pdf.setTextColor(0, 100, 0);
-            pdf.text(`Fecha planificada: ${new Date(equip.planned_date).toLocaleDateString('es-CL')}`, margin + 5, yPos);
-            yPos += 4;
-          }
-
-          pdf.setTextColor(0, 0, 0);
-          yPos += 8;
-        }
-
-        yPos += 5;
-      }
-
-      // Summary footer
-      const totalCritical = areaReports.reduce((acc, ar) => acc + ar.equipment.length, 0);
-      const totalFallas = areaReports.reduce((acc, ar) => acc + ar.equipment.filter(e => e.status === 'Falla').length, 0);
-      const totalAlertas = areaReports.reduce((acc, ar) => acc + ar.equipment.filter(e => e.status === 'Alerta').length, 0);
-
-      if (yPos > 260) {
-        pdf.addPage();
-        yPos = 20;
-      }
-
-      yPos += 10;
-      pdf.setDrawColor(200, 200, 200);
+      pdf.setTextColor(120, 120, 120);
+      pdf.text(now.toLocaleDateString('es-CL'), pageWidth - margin, yPos, { align: "right" });
+      
+      yPos += 12;
+      pdf.setDrawColor(220, 220, 220);
       pdf.line(margin, yPos, pageWidth - margin, yPos);
       yPos += 10;
 
-      pdf.setFontSize(10);
-      pdf.setFont("helvetica", "bold");
-      pdf.text(`Resumen: ${totalCritical} equipos críticos (${totalFallas} Fallas, ${totalAlertas} Alertas)`, margin, yPos);
+      // Render equipment list
+      const renderEquipmentList = (items: CriticalEquipment[], sectionTitle: string, color: number[]) => {
+        if (items.length === 0) return;
 
-      // Save PDF
-      const fileName = `reporte_criticos_${now.toISOString().split('T')[0]}.pdf`;
+        // Section header
+        pdf.setFontSize(11);
+        pdf.setFont("helvetica", "bold");
+        pdf.setTextColor(color[0], color[1], color[2]);
+        pdf.text(`${sectionTitle} (${items.length})`, margin, yPos);
+        yPos += 8;
+
+        items.forEach((equip) => {
+          if (yPos > 270) {
+            pdf.addPage();
+            yPos = 25;
+          }
+
+          // Tag + Name
+          pdf.setFontSize(9);
+          pdf.setFont("helvetica", "bold");
+          pdf.setTextColor(40, 40, 40);
+          pdf.text(`${equip.tag}`, margin, yPos);
+          
+          pdf.setFont("helvetica", "normal");
+          pdf.text(`— ${equip.name}`, margin + pdf.getTextWidth(equip.tag) + 2, yPos);
+
+          // Week/Year right aligned
+          pdf.setFontSize(8);
+          pdf.setTextColor(140, 140, 140);
+          pdf.text(`S${equip.week_number}/${equip.year}`, pageWidth - margin, yPos, { align: "right" });
+          yPos += 5;
+
+          // Area > System
+          pdf.setFontSize(8);
+          pdf.setTextColor(100, 100, 100);
+          pdf.text(`${equip.area_name} › ${equip.system_name}`, margin, yPos);
+          yPos += 4;
+
+          // Technical description (if exists)
+          if (equip.technical_description) {
+            pdf.setTextColor(60, 60, 60);
+            const desc = equip.technical_description.length > 100 
+              ? equip.technical_description.substring(0, 100) + '...' 
+              : equip.technical_description;
+            pdf.text(desc, margin, yPos);
+            yPos += 4;
+          }
+
+          // SAP info inline
+          if (equip.sap_notification || equip.sap_order) {
+            pdf.setTextColor(100, 100, 100);
+            const sapParts = [];
+            if (equip.sap_notification) sapParts.push(`Aviso: ${equip.sap_notification}`);
+            if (equip.sap_order) sapParts.push(`Orden: ${equip.sap_order}`);
+            pdf.text(sapParts.join('  •  '), margin, yPos);
+            yPos += 4;
+          }
+
+          yPos += 4; // spacing between items
+        });
+
+        yPos += 6; // spacing after section
+      };
+
+      // Render Fallas first (red)
+      renderEquipmentList(fallas, "En Falla", [180, 40, 40]);
+
+      // Render Alertas second (amber)
+      renderEquipmentList(alertas, "En Alerta", [180, 120, 20]);
+
+      // Footer summary
+      if (yPos > 270) {
+        pdf.addPage();
+        yPos = 25;
+      }
+      pdf.setDrawColor(220, 220, 220);
+      pdf.line(margin, yPos, pageWidth - margin, yPos);
+      yPos += 8;
+
+      pdf.setFontSize(9);
+      pdf.setFont("helvetica", "normal");
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`Total: ${fallas.length + alertas.length} registros`, margin, yPos);
+
+      // Save
+      const fileName = `criticos_${now.toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
 
       toast({
         title: "PDF generado",
-        description: `Archivo ${fileName} descargado`,
+        description: fileName,
       });
     } catch (error) {
       console.error('Error generating PDF:', error);
       toast({
         title: "Error",
-        description: "Error al generar el reporte PDF",
+        description: "Error al generar el reporte",
         variant: "destructive",
       });
     } finally {
