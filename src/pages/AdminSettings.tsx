@@ -12,12 +12,28 @@ interface CSVRow {
   Sistema: string;
   Tag: string;
   Descripcion_Equipo: string;
+  Estado: string;
+  Condicion_Tecnica: string;
+  Aviso_SAP: string;
+  Orden_SAP: string;
+  Fecha_Plan: string;
+  Semana: string;
+  Anio: string;
 }
 
 interface UploadResult {
   success: number;
   errors: string[];
 }
+
+// Map CSV status values to database enum values
+const mapStatus = (csvStatus: string): 'Operativo' | 'Stand By' | 'Falla' | 'Alerta' => {
+  const statusLower = csvStatus?.toLowerCase().trim();
+  if (statusLower === 'critico' || statusLower === 'crítico') return 'Falla';
+  if (statusLower === 'alerta') return 'Alerta';
+  if (statusLower === 'stand by' || statusLower === 'standby') return 'Stand By';
+  return 'Operativo'; // Default
+};
 
 export default function AdminSettings() {
   const [isUploading, setIsUploading] = useState(false);
@@ -29,10 +45,26 @@ export default function AdminSettings() {
     const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
     
     return lines.slice(1).map(line => {
-      const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+      // Handle quoted values with commas inside
+      const values: string[] = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (const char of line) {
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          values.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      values.push(current.trim());
+      
       const row: Record<string, string> = {};
       headers.forEach((header, index) => {
-        row[header] = values[index] || '';
+        row[header] = values[index]?.replace(/"/g, '') || '';
       });
       return row as unknown as CSVRow;
     }).filter(row => row.Tag && row.Tag.trim() !== '');
@@ -99,25 +131,106 @@ export default function AdminSettings() {
           continue;
         }
 
-        // Insert equipment
-        const { error: insertError } = await supabase
+        // Check if equipment exists, if not insert it
+        let equipmentId: string;
+        const { data: existingEquipment } = await supabase
           .from('equipment')
-          .insert({
-            tag: tag,
-            name: description || tag,
-            description: description,
-            system_id: systemId,
-            criticality: 'Media'
-          });
+          .select('id')
+          .eq('tag', tag)
+          .single();
 
-        if (insertError) {
-          if (insertError.message.includes('duplicate')) {
-            errors.push(`Equipo duplicado: ${tag}`);
+        if (existingEquipment) {
+          equipmentId = existingEquipment.id;
+        } else {
+          // Insert new equipment
+          const { data: newEquipment, error: insertError } = await supabase
+            .from('equipment')
+            .insert({
+              tag: tag,
+              name: description || tag,
+              description: description,
+              system_id: systemId,
+              criticality: 'Media'
+            })
+            .select('id')
+            .single();
+
+          if (insertError) {
+            errors.push(`Error insertando equipo ${tag}: ${insertError.message}`);
+            continue;
+          }
+          equipmentId = newEquipment.id;
+        }
+
+        // Parse week and year
+        const weekNumber = parseInt(row.Semana) || null;
+        const year = parseInt(row.Anio) || null;
+
+        // Only create weekly report if we have week and year
+        if (weekNumber && year) {
+          // Parse planned date
+          let plannedDate: string | null = null;
+          if (row.Fecha_Plan) {
+            const dateParts = row.Fecha_Plan.split('/');
+            if (dateParts.length === 3) {
+              // Assuming DD/MM/YYYY format
+              plannedDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+            }
+          }
+
+          // Map status
+          const status = mapStatus(row.Estado);
+
+          // Check if report already exists for this equipment/week/year
+          const { data: existingReport } = await supabase
+            .from('weekly_reports')
+            .select('id')
+            .eq('equipment_id', equipmentId)
+            .eq('week_number', weekNumber)
+            .eq('year', year)
+            .single();
+
+          if (existingReport) {
+            // Update existing report
+            const { error: updateError } = await supabase
+              .from('weekly_reports')
+              .update({
+                status: status,
+                technical_description: row.Condicion_Tecnica || null,
+                sap_notification: row.Aviso_SAP || null,
+                sap_order: row.Orden_SAP || null,
+                planned_date: plannedDate
+              })
+              .eq('id', existingReport.id);
+
+            if (updateError) {
+              errors.push(`Error actualizando reporte ${tag} S${weekNumber}: ${updateError.message}`);
+            } else {
+              successCount++;
+            }
           } else {
-            errors.push(`Error insertando ${tag}: ${insertError.message}`);
+            // Insert new weekly report
+            const { error: reportError } = await supabase
+              .from('weekly_reports')
+              .insert({
+                equipment_id: equipmentId,
+                week_number: weekNumber,
+                year: year,
+                status: status,
+                technical_description: row.Condicion_Tecnica || null,
+                sap_notification: row.Aviso_SAP || null,
+                sap_order: row.Orden_SAP || null,
+                planned_date: plannedDate
+              });
+
+            if (reportError) {
+              errors.push(`Error insertando reporte ${tag} S${weekNumber}: ${reportError.message}`);
+            } else {
+              successCount++;
+            }
           }
         } else {
-          successCount++;
+          successCount++; // Count equipment insertion as success if no report data
         }
       }
 
@@ -159,7 +272,7 @@ export default function AdminSettings() {
               Cargar Equipos desde CSV
             </CardTitle>
             <CardDescription>
-              Sube un archivo CSV con las columnas: Area, Sistema, Tag, Descripcion_Equipo
+              Sube un archivo CSV con las columnas: Area, Sistema, Tag, Descripcion_Equipo, Estado, Condicion_Tecnica, Aviso_SAP, Orden_SAP, Fecha_Plan, Semana, Anio
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
