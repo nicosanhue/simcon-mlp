@@ -7,6 +7,8 @@ interface StatusCardProps {
   subtitle?: string;
   icon: ReactNode;
   variant?: "default" | "success" | "warning" | "danger";
+  onClick?: () => void;
+  isActive?: boolean;
 }
 
 const variantStyles = {
@@ -23,12 +25,17 @@ const iconVariantStyles = {
   danger: "bg-status-falla/10 text-status-falla",
 };
 
-export function StatusCard({ title, value, subtitle, icon, variant = "default" }: StatusCardProps) {
+export function StatusCard({ title, value, subtitle, icon, variant = "default", onClick, isActive }: StatusCardProps) {
   return (
-    <div className={cn(
-      "industrial-panel p-5 border",
-      variantStyles[variant]
-    )}>
+    <div 
+      className={cn(
+        "industrial-panel p-5 border transition-all",
+        variantStyles[variant],
+        onClick && "cursor-pointer hover:scale-[1.02] hover:shadow-lg",
+        isActive && "ring-2 ring-primary ring-offset-2 ring-offset-background"
+      )}
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium text-muted-foreground">{title}</p>

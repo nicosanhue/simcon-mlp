@@ -15,19 +15,31 @@ interface Alert {
 
 interface CriticalAlertsListProps {
   alerts: Alert[];
+  activeFilter?: "Falla" | "Alerta" | null;
 }
 
-export function CriticalAlertsList({ alerts }: CriticalAlertsListProps) {
+export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListProps) {
   if (alerts.length === 0) {
     return (
       <div className="industrial-panel p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Alertas Críticas</h3>
+        <h3 className="text-lg font-semibold text-foreground mb-4">
+          Alertas Críticas
+          {activeFilter && (
+            <span className="text-sm font-normal text-muted-foreground ml-2">
+              (filtrando por {activeFilter})
+            </span>
+          )}
+        </h3>
         <div className="flex flex-col items-center justify-center py-8 text-center">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-status-operativo/10 mb-3">
             <AlertCircle className="h-6 w-6 text-status-operativo" />
           </div>
-          <p className="text-muted-foreground">Sin alertas críticas</p>
-          <p className="text-sm text-muted-foreground mt-1">Todos los equipos operativos</p>
+          <p className="text-muted-foreground">
+            {activeFilter ? `Sin equipos en ${activeFilter}` : "Sin alertas críticas"}
+          </p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {activeFilter ? "Haz clic en la tarjeta para quitar el filtro" : "Todos los equipos operativos"}
+          </p>
         </div>
       </div>
     );
@@ -36,7 +48,14 @@ export function CriticalAlertsList({ alerts }: CriticalAlertsListProps) {
   return (
     <div className="industrial-panel p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">Alertas Críticas</h3>
+        <h3 className="text-lg font-semibold text-foreground">
+          Alertas Críticas
+          {activeFilter && (
+            <span className="text-sm font-normal text-muted-foreground ml-2">
+              (filtrando por {activeFilter})
+            </span>
+          )}
+        </h3>
         <Badge variant="destructive" className="animate-pulse-glow">
           {alerts.length} {alerts.length === 1 ? "alerta" : "alertas"}
         </Badge>
