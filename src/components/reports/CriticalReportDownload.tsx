@@ -149,7 +149,19 @@ export function CriticalReportDownload() {
       
       yPos = 38;
 
-      // Render equipment list with colored section headers
+      // Group equipment by area
+      const groupByArea = (items: CriticalEquipment[]): Map<string, CriticalEquipment[]> => {
+        const areaMap = new Map<string, CriticalEquipment[]>();
+        items.forEach(item => {
+          if (!areaMap.has(item.area_name)) {
+            areaMap.set(item.area_name, []);
+          }
+          areaMap.get(item.area_name)!.push(item);
+        });
+        return areaMap;
+      };
+
+      // Render equipment list with colored section headers, grouped by area
       const renderEquipmentList = (items: CriticalEquipment[], sectionTitle: string, bgColor: number[], textColor: number[]) => {
         if (items.length === 0) return;
 
@@ -159,66 +171,87 @@ export function CriticalReportDownload() {
           yPos = 20;
         }
 
-        // Section header with colored background
+        // Main section header with colored background
         pdf.setFillColor(bgColor[0], bgColor[1], bgColor[2]);
         pdf.rect(margin, yPos - 5, pageWidth - margin * 2, 10, 'F');
         pdf.setFontSize(11);
         pdf.setFont("helvetica", "bold");
         pdf.setTextColor(textColor[0], textColor[1], textColor[2]);
         pdf.text(`${sectionTitle} (${items.length})`, margin + 3, yPos + 2);
-        yPos += 12;
+        yPos += 14;
 
-        items.forEach((equip) => {
-          if (yPos > 270) {
+        // Group by area
+        const areaGroups = groupByArea(items);
+
+        areaGroups.forEach((areaItems, areaName) => {
+          // Check page break before area header
+          if (yPos > 265) {
             pdf.addPage();
             yPos = 20;
           }
 
-          // Tag + Name
-          pdf.setFontSize(9);
+          // Area sub-header
+          pdf.setFontSize(10);
           pdf.setFont("helvetica", "bold");
-          pdf.setTextColor(40, 40, 40);
-          pdf.text(`${equip.tag}`, margin, yPos);
-          
-          pdf.setFont("helvetica", "normal");
-          pdf.text(`— ${equip.name}`, margin + pdf.getTextWidth(equip.tag) + 2, yPos);
+          pdf.setTextColor(60, 60, 60);
+          pdf.text(`${areaName}`, margin, yPos);
+          yPos += 6;
 
-          // Week/Year right aligned
-          pdf.setFontSize(8);
-          pdf.setTextColor(120, 120, 120);
-          pdf.text(`S${equip.week_number}/${equip.year}`, pageWidth - margin, yPos, { align: "right" });
-          yPos += 5;
+          // Render equipment in this area
+          areaItems.forEach((equip) => {
+            if (yPos > 270) {
+              pdf.addPage();
+              yPos = 20;
+            }
 
-          // Area > System
-          pdf.setFontSize(8);
-          pdf.setTextColor(100, 100, 100);
-          pdf.text(`${equip.area_name} › ${equip.system_name}`, margin, yPos);
-          yPos += 4;
+            // Tag + Name
+            pdf.setFontSize(9);
+            pdf.setFont("helvetica", "bold");
+            pdf.setTextColor(40, 40, 40);
+            pdf.text(`${equip.tag}`, margin + 3, yPos);
+            
+            pdf.setFont("helvetica", "normal");
+            pdf.text(`— ${equip.name}`, margin + 3 + pdf.getTextWidth(equip.tag) + 2, yPos);
 
-          // Technical description (if exists)
-          if (equip.technical_description) {
-            pdf.setTextColor(60, 60, 60);
-            const desc = equip.technical_description.length > 120 
-              ? equip.technical_description.substring(0, 120) + '...' 
-              : equip.technical_description;
-            pdf.text(desc, margin, yPos);
-            yPos += 4;
-          }
+            // Week/Year right aligned
+            pdf.setFontSize(8);
+            pdf.setTextColor(120, 120, 120);
+            pdf.text(`S${equip.week_number}/${equip.year}`, pageWidth - margin, yPos, { align: "right" });
+            yPos += 5;
 
-          // SAP info inline
-          if (equip.sap_notification || equip.sap_order) {
+            // System
+            pdf.setFontSize(8);
             pdf.setTextColor(100, 100, 100);
-            const sapParts = [];
-            if (equip.sap_notification) sapParts.push(`Aviso: ${equip.sap_notification}`);
-            if (equip.sap_order) sapParts.push(`Orden: ${equip.sap_order}`);
-            pdf.text(sapParts.join('  •  '), margin, yPos);
+            pdf.text(`${equip.system_name}`, margin + 3, yPos);
             yPos += 4;
-          }
 
-          yPos += 3; // spacing between items
+            // Technical description (if exists)
+            if (equip.technical_description) {
+              pdf.setTextColor(60, 60, 60);
+              const desc = equip.technical_description.length > 120 
+                ? equip.technical_description.substring(0, 120) + '...' 
+                : equip.technical_description;
+              pdf.text(desc, margin + 3, yPos);
+              yPos += 4;
+            }
+
+            // SAP info inline
+            if (equip.sap_notification || equip.sap_order) {
+              pdf.setTextColor(100, 100, 100);
+              const sapParts = [];
+              if (equip.sap_notification) sapParts.push(`Aviso: ${equip.sap_notification}`);
+              if (equip.sap_order) sapParts.push(`Orden: ${equip.sap_order}`);
+              pdf.text(sapParts.join('  •  '), margin + 3, yPos);
+              yPos += 4;
+            }
+
+            yPos += 2; // spacing between items
+          });
+
+          yPos += 4; // spacing after area
         });
 
-        yPos += 8; // spacing after section
+        yPos += 6; // spacing after section
       };
 
       // Render Fallas first (red background, white text)
