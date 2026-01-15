@@ -6,6 +6,7 @@ import { StatusCard } from "@/components/dashboard/StatusCard";
 import { CriticalAlertsList } from "@/components/dashboard/CriticalAlertsList";
 import { WeekSelector } from "@/components/dashboard/WeekSelector";
 import { AreaFilter } from "@/components/dashboard/AreaFilter";
+import { EquipmentSearch } from "@/components/dashboard/EquipmentSearch";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,6 +26,7 @@ export default function Dashboard() {
   const [year, setYear] = useState<number | null>(null);
   const [selectedArea, setSelectedArea] = useState("all");
   const [statusFilter, setStatusFilter] = useState<"Falla" | "Alerta" | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch the latest week with data
   const { data: latestWeekData } = useQuery({
@@ -58,6 +60,7 @@ export default function Dashboard() {
     week: week ?? getWeekNumber(currentDate),
     year: year ?? currentDate.getFullYear(),
     areaId: selectedArea,
+    searchTerm,
   });
 
   // Filter critical alerts based on selected status
@@ -79,6 +82,20 @@ export default function Dashboard() {
   return (
     <MainLayout>
       <div className="space-y-6">
+        {/* Search Bar */}
+        <div className="w-full">
+          <EquipmentSearch
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+          />
+          {searchTerm && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Mostrando resultados para: <span className="font-medium text-foreground">"{searchTerm}"</span>
+              {stats.total === 0 && " — Sin resultados encontrados"}
+            </p>
+          )}
+        </div>
+
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
