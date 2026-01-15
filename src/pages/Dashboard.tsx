@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Activity, CheckCircle2, AlertTriangle, XCircle, Clock } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { StatusPieChart } from "@/components/dashboard/StatusPieChart";
@@ -8,6 +8,8 @@ import { WeekSelector } from "@/components/dashboard/WeekSelector";
 import { AreaFilter } from "@/components/dashboard/AreaFilter";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
 function getWeekNumber(date: Date): number {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -19,14 +21,42 @@ function getWeekNumber(date: Date): number {
 
 export default function Dashboard() {
   const currentDate = new Date();
-  const [week, setWeek] = useState(getWeekNumber(currentDate));
-  const [year, setYear] = useState(currentDate.getFullYear());
+  const [week, setWeek] = useState<number | null>(null);
+  const [year, setYear] = useState<number | null>(null);
   const [selectedArea, setSelectedArea] = useState("all");
   const [statusFilter, setStatusFilter] = useState<"Falla" | "Alerta" | null>(null);
 
+  // Fetch the latest week with data
+  const { data: latestWeekData } = useQuery({
+    queryKey: ['latest-week'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('weekly_reports')
+        .select('week_number, year')
+        .order('year', { ascending: false })
+        .order('week_number', { ascending: false })
+        .limit(1);
+      
+      if (error) throw error;
+      return data?.[0] || null;
+    }
+  });
+
+  // Initialize week/year once we have the latest data
+  useEffect(() => {
+    if (latestWeekData && week === null && year === null) {
+      setWeek(latestWeekData.week_number);
+      setYear(latestWeekData.year);
+    } else if (!latestWeekData && week === null && year === null) {
+      // Fallback to current week if no data exists
+      setWeek(getWeekNumber(currentDate));
+      setYear(currentDate.getFullYear());
+    }
+  }, [latestWeekData, week, year, currentDate]);
+
   const { areas, stats, criticalAlerts, isLoading } = useDashboardData({
-    week,
-    year,
+    week: week ?? getWeekNumber(currentDate),
+    year: year ?? currentDate.getFullYear(),
     areaId: selectedArea,
   });
 
