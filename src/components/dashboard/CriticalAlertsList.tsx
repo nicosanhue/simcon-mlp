@@ -1,6 +1,13 @@
-import { AlertTriangle, AlertCircle, Clock } from "lucide-react";
+import { useState } from "react";
+import { AlertTriangle, AlertCircle, Clock, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Alert {
   id: string;
@@ -19,6 +26,8 @@ interface CriticalAlertsListProps {
 }
 
 export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListProps) {
+  const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+
   if (alerts.length === 0) {
     return (
       <div className="industrial-panel p-6">
@@ -46,78 +55,161 @@ export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListP
   }
 
   return (
-    <div className="industrial-panel p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-foreground">
-          Alertas Críticas
-          {activeFilter && (
-            <span className="text-sm font-normal text-muted-foreground ml-2">
-              (filtrando por {activeFilter})
-            </span>
-          )}
-        </h3>
-        <Badge variant="destructive" className="animate-pulse-glow">
-          {alerts.length} {alerts.length === 1 ? "alerta" : "alertas"}
-        </Badge>
-      </div>
-      <div className="space-y-3 max-h-[400px] overflow-y-auto">
-        {alerts.map((alert) => (
-          <div
-            key={alert.id}
-            className={cn(
-              "p-4 rounded-lg border transition-colors",
-              alert.status === "Falla" 
-                ? "bg-status-falla/5 border-status-falla/30 pulse-danger" 
-                : "bg-status-alerta/5 border-status-alerta/30"
+    <>
+      <div className="industrial-panel p-6">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-foreground">
+            Alertas Críticas
+            {activeFilter && (
+              <span className="text-sm font-normal text-muted-foreground ml-2">
+                (filtrando por {activeFilter})
+              </span>
             )}
-          >
-            <div className="flex items-start gap-3">
-              <div className={cn(
-                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-                alert.status === "Falla" ? "bg-status-falla/20" : "bg-status-alerta/20"
-              )}>
-                <AlertTriangle className={cn(
-                  "h-4 w-4",
-                  alert.status === "Falla" ? "text-status-falla" : "text-status-alerta"
-                )} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-mono text-sm font-semibold text-primary">
-                    {alert.tag}
-                  </span>
-                  <Badge 
-                    variant="outline" 
-                    className={cn(
-                      "text-xs",
-                      alert.status === "Falla" 
-                        ? "border-status-falla/50 text-status-falla" 
-                        : "border-status-alerta/50 text-status-alerta"
-                    )}
-                  >
-                    {alert.status}
-                  </Badge>
+          </h3>
+          <Badge variant="destructive" className="animate-pulse-glow">
+            {alerts.length} {alerts.length === 1 ? "alerta" : "alertas"}
+          </Badge>
+        </div>
+        <div className="space-y-3 max-h-[400px] overflow-y-auto">
+          {alerts.map((alert) => (
+            <div
+              key={alert.id}
+              onClick={() => setSelectedAlert(alert)}
+              className={cn(
+                "p-4 rounded-lg border transition-all cursor-pointer hover:scale-[1.01] hover:shadow-md",
+                alert.status === "Falla" 
+                  ? "bg-status-falla/5 border-status-falla/30 pulse-danger hover:bg-status-falla/10" 
+                  : "bg-status-alerta/5 border-status-alerta/30 hover:bg-status-alerta/10"
+              )}
+            >
+              <div className="flex items-start gap-3">
+                <div className={cn(
+                  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
+                  alert.status === "Falla" ? "bg-status-falla/20" : "bg-status-alerta/20"
+                )}>
+                  <AlertTriangle className={cn(
+                    "h-4 w-4",
+                    alert.status === "Falla" ? "text-status-falla" : "text-status-alerta"
+                  )} />
                 </div>
-                <p className="text-sm text-foreground mt-1 truncate">{alert.name}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {alert.area} • {alert.system}
-                </p>
-                {alert.description && (
-                  <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                    {alert.description}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-mono text-sm font-semibold text-primary">
+                      {alert.tag}
+                    </span>
+                    <Badge 
+                      variant="outline" 
+                      className={cn(
+                        "text-xs",
+                        alert.status === "Falla" 
+                          ? "border-status-falla/50 text-status-falla" 
+                          : "border-status-alerta/50 text-status-alerta"
+                      )}
+                    >
+                      {alert.status}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-foreground mt-1 truncate">{alert.name}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {alert.area} • {alert.system}
                   </p>
-                )}
-                {alert.plannedDate && (
-                  <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    <span>Fecha plan: {alert.plannedDate}</span>
+                  {alert.description && (
+                    <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                      {alert.description}
+                    </p>
+                  )}
+                  {alert.plannedDate && (
+                    <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span>Fecha plan: {alert.plannedDate}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Alert Detail Dialog */}
+      <Dialog open={!!selectedAlert} onOpenChange={() => setSelectedAlert(null)}>
+        <DialogContent className="sm:max-w-lg">
+          {selectedAlert && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
+                    selectedAlert.status === "Falla" ? "bg-status-falla/20" : "bg-status-alerta/20"
+                  )}>
+                    <AlertTriangle className={cn(
+                      "h-5 w-5",
+                      selectedAlert.status === "Falla" ? "text-status-falla" : "text-status-alerta"
+                    )} />
+                  </div>
+                  <div>
+                    <DialogTitle className="flex items-center gap-2">
+                      <span className="font-mono">{selectedAlert.tag}</span>
+                      <Badge 
+                        variant="outline" 
+                        className={cn(
+                          "text-xs",
+                          selectedAlert.status === "Falla" 
+                            ? "border-status-falla/50 text-status-falla bg-status-falla/10" 
+                            : "border-status-alerta/50 text-status-alerta bg-status-alerta/10"
+                        )}
+                      >
+                        {selectedAlert.status}
+                      </Badge>
+                    </DialogTitle>
+                    <p className="text-sm text-muted-foreground mt-1">{selectedAlert.name}</p>
+                  </div>
+                </div>
+              </DialogHeader>
+
+              <div className="space-y-4 mt-4">
+                {/* Location */}
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                    Ubicación
+                  </p>
+                  <p className="text-sm text-foreground">
+                    {selectedAlert.area} › {selectedAlert.system}
+                  </p>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                    Condición Técnica
+                  </p>
+                  <div className={cn(
+                    "p-3 rounded-lg border text-sm",
+                    selectedAlert.status === "Falla" 
+                      ? "bg-status-falla/5 border-status-falla/20" 
+                      : "bg-status-alerta/5 border-status-alerta/20"
+                  )}>
+                    {selectedAlert.description || "Sin descripción disponible"}
+                  </div>
+                </div>
+
+                {/* Planned Date */}
+                {selectedAlert.plannedDate && (
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                      Fecha Planificada
+                    </p>
+                    <div className="flex items-center gap-2 text-sm text-foreground">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span>{selectedAlert.plannedDate}</span>
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
