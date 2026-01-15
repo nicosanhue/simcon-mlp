@@ -84,7 +84,7 @@ export default function Dashboard() {
           <div>
             <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
             <p className="text-muted-foreground mt-1">
-              Monitoreo de condición de equipos industriales
+              Monitoreo de condiciones de Equipos TFT+ Puerto
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-4">
