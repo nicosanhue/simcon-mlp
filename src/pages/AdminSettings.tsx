@@ -40,12 +40,8 @@ export default function AdminSettings() {
   const [result, setResult] = useState<UploadResult | null>(null);
   const { toast } = useToast();
 
-  // Detect delimiter: semicolon (Spanish Excel) or comma
-  const detectDelimiter = (headerLine: string): string => {
-    const semicolonCount = (headerLine.match(/;/g) || []).length;
-    const commaCount = (headerLine.match(/,/g) || []).length;
-    return semicolonCount >= commaCount ? ';' : ',';
-  };
+  // Force semicolon delimiter (Spanish Excel format)
+  const DELIMITER = ';';
 
   const parseCSV = (text: string): CSVRow[] => {
     // Remove BOM character if present and normalize line endings
@@ -54,9 +50,9 @@ export default function AdminSettings() {
     
     if (lines.length === 0) return [];
     
-    // Detect delimiter from header line
-    const delimiter = detectDelimiter(lines[0]);
-    console.log(`CSV delimiter detected: "${delimiter}"`);
+    // Use forced semicolon delimiter
+    const delimiter = DELIMITER;
+    console.log(`CSV parsing with forced delimiter: "${delimiter}", total lines: ${lines.length}`);
     
     // Parse headers and filter out empty ones
     const headers = lines[0].split(delimiter).map(h => h.trim().replace(/"/g, '')).filter(h => h !== '');
@@ -111,9 +107,16 @@ export default function AdminSettings() {
     setResult(null);
 
     try {
-      const text = await file.text();
+      // Force UTF-8 encoding to handle special characters like 'ñ'
+      const text = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = reject;
+        reader.readAsText(file, 'UTF-8');
+      });
+      
       const rows = parseCSV(text);
-      console.log(`Parsed ${rows.length} rows from CSV`);
+      console.log(`Parsed ${rows.length} rows from CSV (UTF-8 encoding)`);
 
       // Fetch all areas, systems, and equipment for lookup
       const [areasRes, systemsRes, equipmentRes] = await Promise.all([
