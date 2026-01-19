@@ -169,6 +169,7 @@ export function useDashboardData(filters: DashboardFilters) {
     : [];
 
   // Calculate stats grouped by system (when a specific area is selected)
+  // Note: equipmentQuery.data is already filtered by area, so we just need to group by system
   const statsBySystem: GroupedStats[] = equipmentQuery.data && systemsQuery.data && filters.areaId !== "all"
     ? systemsQuery.data
         .filter((system) => system.area_id === filters.areaId)
@@ -180,7 +181,10 @@ export function useDashboardData(filters: DashboardFilters) {
           return {
             id: system.id,
             name: system.name,
-            ...systemStats,
+            total: systemStats.total,
+            operativo: systemStats.operativo,
+            alerta: systemStats.alerta,
+            falla: systemStats.falla,
           };
         }).filter((system) => system.total > 0)
     : [];
