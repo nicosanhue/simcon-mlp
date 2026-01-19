@@ -2,12 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { Activity, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { StatusPieChart } from "@/components/dashboard/StatusPieChart";
+import { MultipleStatusCharts } from "@/components/dashboard/MultipleStatusCharts";
 import { StatusCard } from "@/components/dashboard/StatusCard";
 import { CriticalAlertsList } from "@/components/dashboard/CriticalAlertsList";
 import { WeekSelector } from "@/components/dashboard/WeekSelector";
 import { AreaFilter } from "@/components/dashboard/AreaFilter";
 import { EquipmentSearch } from "@/components/dashboard/EquipmentSearch";
-import { useDashboardData } from "@/hooks/useDashboardData";
+import { useDashboardData, GroupedStats } from "@/hooks/useDashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -20,6 +21,21 @@ function getWeekNumber(date: Date): number {
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
   const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+}
+
+function createChartData(stats: { operativo: number; alerta: number; falla: number }) {
+  return [
+    { name: "Operativo", value: stats.operativo, color: "hsl(142, 76%, 36%)" },
+    { name: "Alerta", value: stats.alerta, color: "hsl(45, 93%, 47%)" },
+    { name: "Crítico", value: stats.falla, color: "hsl(0, 84%, 60%)" },
+  ].filter(item => item.value > 0);
+}
+
+function createGroupedCharts(groupedStats: GroupedStats[]) {
+  return groupedStats.map((group) => ({
+    title: group.name,
+    data: createChartData(group),
+  }));
 }
 
 export default function Dashboard() {
@@ -59,7 +75,7 @@ export default function Dashboard() {
     }
   }, [latestWeekData, week, year, currentDate]);
 
-  const { areas, stats, criticalAlerts, isLoading } = useDashboardData({
+  const { areas, stats, statsByArea, statsBySystem, criticalAlerts, isLoading } = useDashboardData({
     week: week ?? getWeekNumber(currentDate),
     year: year ?? currentDate.getFullYear(),
     areaId: selectedArea,
@@ -75,11 +91,9 @@ export default function Dashboard() {
     setStatusFilter(prev => prev === status ? null : status);
   };
 
-  const chartData = [
-    { name: "Operativo", value: stats.operativo, color: "hsl(142, 76%, 36%)" },
-    { name: "Alerta", value: stats.alerta, color: "hsl(45, 93%, 47%)" },
-    { name: "Crítico", value: stats.falla, color: "hsl(0, 84%, 60%)" },
-  ].filter(item => item.value > 0);
+  const chartData = createChartData(stats);
+  const areaCharts = createGroupedCharts(statsByArea);
+  const systemCharts = createGroupedCharts(statsBySystem);
 
   return (
     <MainLayout>
@@ -183,14 +197,37 @@ export default function Dashboard() {
 
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Pie Chart */}
+          {/* Pie Charts Section */}
           {isLoading ? (
             <Skeleton className="h-[380px] rounded-lg" />
+          ) : selectedArea === "all" ? (
+            // When "All Areas" is selected: Show total chart + charts by area
+            <div className="space-y-6">
+              <StatusPieChart
+                data={chartData}
+                title="Distribución Total"
+              />
+              {areaCharts.length > 0 && (
+                <MultipleStatusCharts
+                  charts={areaCharts}
+                  mainTitle="Distribución por Área"
+                />
+              )}
+            </div>
           ) : (
-            <StatusPieChart
-              data={chartData}
-              title="Distribución de Estados"
-            />
+            // When a specific area is selected: Show total for that area + charts by system
+            <div className="space-y-6">
+              <StatusPieChart
+                data={chartData}
+                title={`Distribución - ${areas.find(a => a.id === selectedArea)?.name || 'Área'}`}
+              />
+              {systemCharts.length > 0 && (
+                <MultipleStatusCharts
+                  charts={systemCharts}
+                  mainTitle="Distribución por Sistema"
+                />
+              )}
+            </div>
           )}
 
           {/* Critical Alerts */}
