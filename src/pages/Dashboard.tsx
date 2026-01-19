@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Activity, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { StatusPieChart } from "@/components/dashboard/StatusPieChart";
@@ -11,6 +11,8 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { CriticalReportDownload } from "@/components/reports/CriticalReportDownload";
+import { DashboardScreenshotDownload } from "@/components/reports/DashboardScreenshotDownload";
 
 function getWeekNumber(date: Date): number {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -27,6 +29,7 @@ export default function Dashboard() {
   const [selectedArea, setSelectedArea] = useState("all");
   const [statusFilter, setStatusFilter] = useState<"Falla" | "Alerta" | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const dashboardRef = useRef<HTMLDivElement>(null);
 
   // Fetch the latest week with data
   const { data: latestWeekData } = useQuery({
@@ -80,7 +83,19 @@ export default function Dashboard() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <div className="space-y-6" ref={dashboardRef}>
+        {/* Report Actions */}
+        <div className="flex justify-end gap-2">
+          <CriticalReportDownload />
+          <DashboardScreenshotDownload
+            areas={areas}
+            currentWeek={week ?? getWeekNumber(currentDate)}
+            currentYear={year ?? currentDate.getFullYear()}
+            onAreaChange={setSelectedArea}
+            dashboardRef={dashboardRef}
+          />
+        </div>
+
         {/* Search Bar */}
         <div className="w-full">
           <EquipmentSearch
