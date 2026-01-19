@@ -48,8 +48,9 @@ export default function AdminSettings() {
   };
 
   const parseCSV = (text: string): CSVRow[] => {
-    // Normalize line endings and split
-    const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
+    // Remove BOM character if present and normalize line endings
+    const cleanText = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+    const lines = cleanText.split('\n');
     
     if (lines.length === 0) return [];
     
@@ -57,8 +58,8 @@ export default function AdminSettings() {
     const delimiter = detectDelimiter(lines[0]);
     console.log(`CSV delimiter detected: "${delimiter}"`);
     
-    // Parse headers
-    const headers = lines[0].split(delimiter).map(h => h.trim().replace(/"/g, ''));
+    // Parse headers and filter out empty ones
+    const headers = lines[0].split(delimiter).map(h => h.trim().replace(/"/g, '')).filter(h => h !== '');
     console.log('CSV headers:', headers);
     
     // Expected headers for validation
