@@ -35,9 +35,29 @@ const mapStatus = (csvStatus: string): 'Operativo' | 'Stand By' | 'Falla' | 'Ale
   return 'Operativo'; // Default
 };
 
+// Parse week and year from filename like "Estado Equipos Semana 52 2025.csv"
+const parseFilename = (filename: string): { week: number; year: number } | null => {
+  // Match pattern: "Estado Equipos Semana [Week] [Year].csv"
+  const match = filename.match(/Estado\s+Equipos\s+Semana\s+(\d+)\s+(\d{4})\.csv/i);
+  if (match) {
+    return { week: parseInt(match[1]), year: parseInt(match[2]) };
+  }
+  return null;
+};
+
+// Map area names (legacy support)
+const mapAreaName = (areaName: string): string => {
+  const normalized = areaName.toLowerCase().trim();
+  if (normalized === 'puerto desaladora') {
+    return 'puerto';
+  }
+  return areaName.trim();
+};
+
 export default function AdminSettings() {
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
+  const [parsedFileInfo, setParsedFileInfo] = useState<{ week: number; year: number } | null>(null);
   const { toast } = useToast();
 
   // Force semicolon delimiter (Spanish Excel format)
@@ -59,7 +79,7 @@ export default function AdminSettings() {
     console.log('CSV headers:', headers);
     
     // Expected headers for validation
-    const expectedHeaders = ['Area', 'Sistema', 'Tag', 'Descripcion_Equipo', 'Estado', 'Condicion_Tecnica', 'Aviso_SAP', 'Orden_SAP', 'Fecha_Plan', 'Semana', 'Anio'];
+    const expectedHeaders = ['Area', 'Sistema', 'Tag', 'Descripcion_Equipo', 'Estado', 'Condicion_Tecnica', 'Aviso_SAP', 'Orden_SAP', 'Fecha_Plan'];
     
     return lines.slice(1).map((line, lineIndex) => {
       // Skip empty lines
@@ -88,11 +108,18 @@ export default function AdminSettings() {
       expectedHeaders.forEach((header, index) => {
         // Use header from file if available, otherwise use expected header
         const actualHeader = headers[index] || header;
-        const value = values[index];
+        let value = values[index];
         // Handle undefined, null, and clean quotes
-        row[actualHeader] = (value !== undefined && value !== null) 
+        value = (value !== undefined && value !== null) 
           ? value.replace(/"/g, '').trim() 
           : '';
+        
+        // Apply area name mapping
+        if (header === 'Area') {
+          value = mapAreaName(value);
+        }
+        
+        row[actualHeader] = value;
       });
       
       return row as unknown as CSVRow;
@@ -105,6 +132,24 @@ export default function AdminSettings() {
 
     setIsUploading(true);
     setResult(null);
+    setParsedFileInfo(null);
+
+    // Parse week and year from filename
+    const fileInfo = parseFilename(file.name);
+    if (!fileInfo) {
+      toast({
+        title: "Error de formato",
+        description: "El nombre del archivo debe seguir el formato: 'Estado Equipos Semana [Semana] [Año].csv' (ej: 'Estado Equipos Semana 52 2025.csv')",
+        variant: "destructive",
+      });
+      setIsUploading(false);
+      event.target.value = '';
+      return;
+    }
+
+    setParsedFileInfo(fileInfo);
+    const { week: weekNumber, year } = fileInfo;
+    console.log(`Parsed from filename: Week ${weekNumber}, Year ${year}`);
 
     try {
       // Force UTF-8 encoding to handle special characters like 'ñ'
@@ -117,6 +162,20 @@ export default function AdminSettings() {
       
       const rows = parseCSV(text);
       console.log(`Parsed ${rows.length} rows from CSV (UTF-8 encoding)`);
+
+      // DELETE existing records for this week/year (clean overwrite)
+      console.log(`Deleting existing records for Week ${weekNumber}, Year ${year}...`);
+      const { error: deleteError, count: deletedCount } = await supabase
+        .from('weekly_reports')
+        .delete()
+        .eq('week_number', weekNumber)
+        .eq('year', year);
+      
+      if (deleteError) {
+        console.error('Error deleting existing records:', deleteError);
+        throw deleteError;
+      }
+      console.log(`Deleted ${deletedCount ?? 'unknown number of'} existing records`);
 
       // Fetch all areas, systems, and equipment for lookup
       const [areasRes, systemsRes, equipmentRes] = await Promise.all([
@@ -228,49 +287,11 @@ export default function AdminSettings() {
 
       console.log(`Equipment map now has ${equipmentMap.size} entries`);
 
-      // Fetch existing weekly reports for the weeks/years in the CSV
-      const weekYearCombos = new Set<string>();
-      rowsToProcess.forEach(({ row }) => {
-        const weekNumber = parseInt(row.Semana);
-        const year = parseInt(row.Anio);
-        if (weekNumber && year) {
-          weekYearCombos.add(`${year}-${weekNumber}`);
-        }
-      });
-
-      // Build a set of existing reports for quick lookup
-      const existingReportsMap = new Map<string, string>();
-      
-      // Fetch existing reports in batches by week/year
-      for (const combo of weekYearCombos) {
-        const [year, week] = combo.split('-').map(Number);
-        const { data: existingReports } = await supabase
-          .from('weekly_reports')
-          .select('id, equipment_id')
-          .eq('week_number', week)
-          .eq('year', year);
-        
-        existingReports?.forEach(r => {
-          existingReportsMap.set(`${r.equipment_id}-${year}-${week}`, r.id);
-        });
-      }
-
-      console.log(`Found ${existingReportsMap.size} existing reports`);
-
-      // Prepare reports for insert and update
+      // Prepare reports for insert (all new since we deleted existing)
       const reportsToInsert: Array<{
         equipment_id: string;
         week_number: number;
         year: number;
-        status: 'Operativo' | 'Stand By' | 'Falla' | 'Alerta';
-        technical_description: string | null;
-        sap_notification: string | null;
-        sap_order: string | null;
-        planned_date: string | null;
-      }> = [];
-      
-      const reportsToUpdate: Array<{
-        id: string;
         status: 'Operativo' | 'Stand By' | 'Falla' | 'Alerta';
         technical_description: string | null;
         sap_notification: string | null;
@@ -289,14 +310,6 @@ export default function AdminSettings() {
           continue;
         }
 
-        const weekNumber = parseInt(row.Semana) || null;
-        const year = parseInt(row.Anio) || null;
-
-        if (!weekNumber || !year) {
-          successCount++; // Count equipment as success even without report
-          continue;
-        }
-
         // Parse planned date
         let plannedDate: string | null = null;
         if (row.Fecha_Plan) {
@@ -307,33 +320,20 @@ export default function AdminSettings() {
         }
 
         const status = mapStatus(row.Estado);
-        const reportKey = `${equipmentId}-${year}-${weekNumber}`;
-        const existingReportId = existingReportsMap.get(reportKey);
 
-        if (existingReportId) {
-          reportsToUpdate.push({
-            id: existingReportId,
-            status,
-            technical_description: row.Condicion_Tecnica || null,
-            sap_notification: row.Aviso_SAP || null,
-            sap_order: row.Orden_SAP || null,
-            planned_date: plannedDate
-          });
-        } else {
-          reportsToInsert.push({
-            equipment_id: equipmentId,
-            week_number: weekNumber,
-            year: year,
-            status,
-            technical_description: row.Condicion_Tecnica || null,
-            sap_notification: row.Aviso_SAP || null,
-            sap_order: row.Orden_SAP || null,
-            planned_date: plannedDate
-          });
-        }
+        reportsToInsert.push({
+          equipment_id: equipmentId,
+          week_number: weekNumber,
+          year: year,
+          status,
+          technical_description: row.Condicion_Tecnica || null,
+          sap_notification: row.Aviso_SAP || null,
+          sap_order: row.Orden_SAP || null,
+          planned_date: plannedDate
+        });
       }
 
-      console.log(`Inserting ${reportsToInsert.length} new reports, updating ${reportsToUpdate.length} existing reports`);
+      console.log(`Inserting ${reportsToInsert.length} new reports for Week ${weekNumber}, Year ${year}`);
 
       // Batch insert new reports
       for (let i = 0; i < reportsToInsert.length; i += BATCH_SIZE) {
@@ -347,33 +347,6 @@ export default function AdminSettings() {
         } else {
           successCount += batch.length;
         }
-      }
-
-      // Batch update existing reports (upsert not available, so we update one by one in parallel batches)
-      const updatePromises = reportsToUpdate.map(report => 
-        supabase
-          .from('weekly_reports')
-          .update({
-            status: report.status,
-            technical_description: report.technical_description,
-            sap_notification: report.sap_notification,
-            sap_order: report.sap_order,
-            planned_date: report.planned_date
-          })
-          .eq('id', report.id)
-      );
-
-      // Execute updates in parallel batches
-      for (let i = 0; i < updatePromises.length; i += BATCH_SIZE) {
-        const batch = updatePromises.slice(i, i + BATCH_SIZE);
-        const results = await Promise.all(batch);
-        results.forEach((result, index) => {
-          if (result.error) {
-            errors.push(`Error actualizando reporte: ${result.error.message}`);
-          } else {
-            successCount++;
-          }
-        });
       }
 
       setResult({ success: successCount, errors });
@@ -411,10 +384,13 @@ export default function AdminSettings() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileSpreadsheet className="h-5 w-5" />
-              Cargar Equipos desde CSV
+              Cargar Datos Semanales desde CSV
             </CardTitle>
             <CardDescription>
-              Sube un archivo CSV con las columnas: Area, Sistema, Tag, Descripcion_Equipo, Estado, Condicion_Tecnica, Aviso_SAP, Orden_SAP, Fecha_Plan, Semana, Anio
+              <strong>Formato de nombre de archivo:</strong> Estado Equipos Semana [Semana] [Año].csv<br />
+              <span className="text-xs">Ejemplo: "Estado Equipos Semana 52 2025.csv"</span><br /><br />
+              <strong>Columnas requeridas:</strong> Area, Sistema, Tag, Descripcion_Equipo, Estado, Condicion_Tecnica, Aviso_SAP, Orden_SAP, Fecha_Plan<br />
+              <span className="text-xs text-muted-foreground">La semana y año se extraen automáticamente del nombre del archivo. Los registros existentes para esa semana se reemplazan automáticamente.</span>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -434,18 +410,25 @@ export default function AdminSettings() {
               )}
             </div>
 
+            {parsedFileInfo && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-2 rounded-md">
+                <FileSpreadsheet className="h-4 w-4" />
+                <span>Archivo detectado: <strong>Semana {parsedFileInfo.week}, Año {parsedFileInfo.year}</strong></span>
+              </div>
+            )}
+
             {result && (
               <div className="space-y-3 mt-4">
                 {result.success > 0 && (
-                  <div className="flex items-center gap-2 text-green-600">
+                  <div className="flex items-center gap-2 text-primary">
                     <CheckCircle className="h-4 w-4" />
-                    <span>{result.success} equipos insertados correctamente</span>
+                    <span>{result.success} registros procesados correctamente</span>
                   </div>
                 )}
                 
                 {result.errors.length > 0 && (
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-amber-600">
+                    <div className="flex items-center gap-2 text-destructive">
                       <AlertCircle className="h-4 w-4" />
                       <span>{result.errors.length} errores encontrados:</span>
                     </div>
