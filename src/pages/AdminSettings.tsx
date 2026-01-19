@@ -130,14 +130,24 @@ export default function AdminSettings() {
     const delimiter = DELIMITER;
     console.log(`CSV parsing with forced delimiter: "${delimiter}", total lines: ${lines.length}`);
     
-    // Parse headers and filter out empty ones
-    const headers = lines[0].split(delimiter).map(h => h.trim().replace(/"/g, '')).filter(h => h !== '');
-    console.log('CSV headers:', headers);
+    // Parse first line to check if it's a header or data
+    const firstLine = lines[0].split(delimiter).map(h => h.trim().replace(/"/g, ''));
+    console.log('First line values:', firstLine);
     
-    // Expected headers for validation
-    const expectedHeaders = ['Area', 'Sistema', 'Tag', 'Descripcion_Equipo', 'Estado', 'Condicion_Tecnica', 'Aviso_SAP', 'Orden_SAP', 'Fecha_Plan'];
+    // Expected column order (by position)
+    const columnOrder = ['Area', 'Sistema', 'Tag', 'Descripcion_Equipo', 'Estado', 'Condicion_Tecnica', 'Aviso_SAP', 'Orden_SAP', 'Fecha_Plan', 'Semana', 'Anio'];
     
-    return lines.slice(1).map((line, lineIndex) => {
+    // Check if first line is header or data
+    // If first value looks like an area name (not "Area"), treat as data
+    const knownAreas = ['tf', 'puerto', 'desaladora', 'tranque mauro', 'puerto desaladora'];
+    const hasHeader = firstLine[0]?.toLowerCase() === 'area' || 
+                      !knownAreas.includes(firstLine[0]?.toLowerCase().trim());
+    
+    console.log(`First line is ${hasHeader ? 'HEADER' : 'DATA'}`);
+    
+    const dataLines = hasHeader ? lines.slice(1) : lines;
+    
+    return dataLines.map((line, lineIndex) => {
       // Skip empty lines
       if (!line.trim()) return null;
       
@@ -159,11 +169,9 @@ export default function AdminSettings() {
       // Push the last value
       values.push(current.trim());
       
-      // Build row object, handling missing values safely
+      // Build row object using fixed column positions
       const row: Record<string, string> = {};
-      expectedHeaders.forEach((header, index) => {
-        // Use header from file if available, otherwise use expected header
-        const actualHeader = headers[index] || header;
+      columnOrder.forEach((header, index) => {
         let value = values[index];
         // Handle undefined, null, and clean quotes
         value = (value !== undefined && value !== null) 
@@ -175,8 +183,13 @@ export default function AdminSettings() {
           value = mapAreaName(value);
         }
         
-        row[actualHeader] = value;
+        row[header] = value;
       });
+      
+      // Debug log first few rows
+      if (lineIndex < 3) {
+        console.log(`Row ${lineIndex + 1}:`, row);
+      }
       
       return row as unknown as CSVRow;
     }).filter((row): row is CSVRow => row !== null && row.Tag && row.Tag.trim() !== '');
