@@ -50,7 +50,11 @@ const parseFilename = (filename: string): { week: number; year: number } | null 
 const mapAreaName = (areaName: string): string => {
   const normalized = areaName.toLowerCase().trim();
   if (normalized === 'puerto desaladora') {
-    return 'puerto';
+    return 'Puerto';
+  }
+  // Map TF to its full name
+  if (normalized === 'tf') {
+    return 'Transporte Fluidos';
   }
   return areaName.trim();
 };
