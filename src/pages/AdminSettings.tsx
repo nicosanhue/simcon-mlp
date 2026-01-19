@@ -409,11 +409,20 @@ export default function AdminSettings() {
         });
       }
 
-      console.log(`Inserting ${reportsToInsert.length} new reports for Week ${weekNumber}, Year ${year}`);
+      // Deduplicate reports: keep only the last occurrence for each equipment_id
+      // (in case the same TAG appears multiple times in the CSV)
+      const reportsMap = new Map<string, typeof reportsToInsert[0]>();
+      for (const report of reportsToInsert) {
+        const key = `${report.equipment_id}-${report.week_number}-${report.year}`;
+        reportsMap.set(key, report); // Last one wins
+      }
+      const uniqueReports = Array.from(reportsMap.values());
+
+      console.log(`Inserting ${uniqueReports.length} unique reports for Week ${weekNumber}, Year ${year} (${reportsToInsert.length - uniqueReports.length} duplicates removed)`);
 
       // Batch upsert reports (update if exists, insert if not)
-      for (let i = 0; i < reportsToInsert.length; i += BATCH_SIZE) {
-        const batch = reportsToInsert.slice(i, i + BATCH_SIZE);
+      for (let i = 0; i < uniqueReports.length; i += BATCH_SIZE) {
+        const batch = uniqueReports.slice(i, i + BATCH_SIZE);
         const { error: upsertError } = await supabase
           .from('weekly_reports')
           .upsert(batch, { 
