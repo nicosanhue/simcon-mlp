@@ -113,31 +113,41 @@ export default function AdminSettings() {
     try {
       const text = await file.text();
       const rows = parseCSV(text);
+      console.log(`Parsed ${rows.length} rows from CSV`);
 
-      // Fetch all areas and systems for lookup
-      const { data: areas, error: areasError } = await supabase
-        .from('areas')
-        .select('id, name');
+      // Fetch all areas, systems, and equipment for lookup
+      const [areasRes, systemsRes, equipmentRes] = await Promise.all([
+        supabase.from('areas').select('id, name'),
+        supabase.from('systems').select('id, name, area_id'),
+        supabase.from('equipment').select('id, tag, system_id')
+      ]);
       
-      if (areasError) throw areasError;
-
-      const { data: systems, error: systemsError } = await supabase
-        .from('systems')
-        .select('id, name, area_id');
-      
-      if (systemsError) throw systemsError;
+      if (areasRes.error) throw areasRes.error;
+      if (systemsRes.error) throw systemsRes.error;
+      if (equipmentRes.error) throw equipmentRes.error;
 
       // Create lookup maps
-      const areaMap = new Map(areas?.map(a => [a.name.toLowerCase().trim(), a.id]) || []);
-      const systemMap = new Map(systems?.map(s => [
+      const areaMap = new Map(areasRes.data?.map(a => [a.name.toLowerCase().trim(), a.id]) || []);
+      const systemMap = new Map(systemsRes.data?.map(s => [
         `${s.area_id}-${s.name.toLowerCase().trim()}`, 
         s.id
       ]) || []);
+      const equipmentMap = new Map(equipmentRes.data?.map(e => [e.tag, e.id]) || []);
 
       const errors: string[] = [];
-      let successCount = 0;
+      const newEquipmentToInsert: Array<{
+        tag: string;
+        name: string;
+        description: string | null;
+        system_id: string;
+        criticality: 'Alta' | 'Media' | 'Baja';
+      }> = [];
+      const rowsToProcess: Array<{
+        row: CSVRow;
+        systemId: string;
+      }> = [];
 
-      // Process each row
+      // First pass: validate and collect new equipment
       for (const row of rows) {
         const areaName = row.Area?.trim().toLowerCase();
         const systemName = row.Sistema?.trim().toLowerCase();
@@ -156,115 +166,211 @@ export default function AdminSettings() {
           continue;
         }
 
-        // Find system ID
+        // Find system ID, or create if not exists
         const systemKey = `${areaId}-${systemName}`;
-        const systemId = systemMap.get(systemKey);
+        let systemId = systemMap.get(systemKey);
+        
         if (!systemId) {
-          errors.push(`Sistema no encontrado: "${row.Sistema}" en área "${row.Area}" para equipo ${tag}`);
-          continue;
-        }
-
-        // Check if equipment exists, if not insert it
-        let equipmentId: string;
-        const { data: existingEquipment } = await supabase
-          .from('equipment')
-          .select('id')
-          .eq('tag', tag)
-          .single();
-
-        if (existingEquipment) {
-          equipmentId = existingEquipment.id;
-        } else {
-          // Insert new equipment
-          const { data: newEquipment, error: insertError } = await supabase
-            .from('equipment')
+          // Try to create the system
+          const { data: newSystem, error: createSystemError } = await supabase
+            .from('systems')
             .insert({
-              tag: tag,
-              name: description || tag,
-              description: description,
-              system_id: systemId,
-              criticality: 'Media'
+              name: row.Sistema?.trim(),
+              area_id: areaId,
+              description: null
             })
             .select('id')
             .single();
 
-          if (insertError) {
-            errors.push(`Error insertando equipo ${tag}: ${insertError.message}`);
+          if (createSystemError) {
+            errors.push(`Sistema no encontrado y no se pudo crear: "${row.Sistema}" en área "${row.Area}" para equipo ${tag}`);
             continue;
           }
-          equipmentId = newEquipment.id;
+          
+          systemId = newSystem.id;
+          systemMap.set(systemKey, systemId);
+          console.log(`Created new system: ${row.Sistema} with id ${systemId}`);
         }
 
-        // Parse week and year
+        // Check if equipment already exists
+        if (!equipmentMap.has(tag)) {
+          newEquipmentToInsert.push({
+            tag: tag,
+            name: description || tag,
+            description: description || null,
+            system_id: systemId,
+            criticality: 'Media'
+          });
+        }
+
+        rowsToProcess.push({ row, systemId });
+      }
+
+      // Batch insert new equipment (in chunks of 100)
+      const BATCH_SIZE = 100;
+      for (let i = 0; i < newEquipmentToInsert.length; i += BATCH_SIZE) {
+        const batch = newEquipmentToInsert.slice(i, i + BATCH_SIZE);
+        const { data: insertedEquipment, error: insertError } = await supabase
+          .from('equipment')
+          .insert(batch)
+          .select('id, tag');
+
+        if (insertError) {
+          errors.push(`Error insertando lote de equipos: ${insertError.message}`);
+        } else if (insertedEquipment) {
+          // Update the equipment map with new IDs
+          insertedEquipment.forEach(e => equipmentMap.set(e.tag, e.id));
+        }
+      }
+
+      console.log(`Equipment map now has ${equipmentMap.size} entries`);
+
+      // Fetch existing weekly reports for the weeks/years in the CSV
+      const weekYearCombos = new Set<string>();
+      rowsToProcess.forEach(({ row }) => {
+        const weekNumber = parseInt(row.Semana);
+        const year = parseInt(row.Anio);
+        if (weekNumber && year) {
+          weekYearCombos.add(`${year}-${weekNumber}`);
+        }
+      });
+
+      // Build a set of existing reports for quick lookup
+      const existingReportsMap = new Map<string, string>();
+      
+      // Fetch existing reports in batches by week/year
+      for (const combo of weekYearCombos) {
+        const [year, week] = combo.split('-').map(Number);
+        const { data: existingReports } = await supabase
+          .from('weekly_reports')
+          .select('id, equipment_id')
+          .eq('week_number', week)
+          .eq('year', year);
+        
+        existingReports?.forEach(r => {
+          existingReportsMap.set(`${r.equipment_id}-${year}-${week}`, r.id);
+        });
+      }
+
+      console.log(`Found ${existingReportsMap.size} existing reports`);
+
+      // Prepare reports for insert and update
+      const reportsToInsert: Array<{
+        equipment_id: string;
+        week_number: number;
+        year: number;
+        status: 'Operativo' | 'Stand By' | 'Falla' | 'Alerta';
+        technical_description: string | null;
+        sap_notification: string | null;
+        sap_order: string | null;
+        planned_date: string | null;
+      }> = [];
+      
+      const reportsToUpdate: Array<{
+        id: string;
+        status: 'Operativo' | 'Stand By' | 'Falla' | 'Alerta';
+        technical_description: string | null;
+        sap_notification: string | null;
+        sap_order: string | null;
+        planned_date: string | null;
+      }> = [];
+
+      let successCount = 0;
+
+      for (const { row } of rowsToProcess) {
+        const tag = row.Tag?.trim();
+        const equipmentId = equipmentMap.get(tag);
+        
+        if (!equipmentId) {
+          errors.push(`Equipo no encontrado después de inserción: ${tag}`);
+          continue;
+        }
+
         const weekNumber = parseInt(row.Semana) || null;
         const year = parseInt(row.Anio) || null;
 
-        // Only create weekly report if we have week and year
-        if (weekNumber && year) {
-          // Parse planned date
-          let plannedDate: string | null = null;
-          if (row.Fecha_Plan) {
-            const dateParts = row.Fecha_Plan.split('/');
-            if (dateParts.length === 3) {
-              // Assuming DD/MM/YYYY format
-              plannedDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
-            }
-          }
-
-          // Map status
-          const status = mapStatus(row.Estado);
-
-          // Check if report already exists for this equipment/week/year
-          const { data: existingReport } = await supabase
-            .from('weekly_reports')
-            .select('id')
-            .eq('equipment_id', equipmentId)
-            .eq('week_number', weekNumber)
-            .eq('year', year)
-            .single();
-
-          if (existingReport) {
-            // Update existing report
-            const { error: updateError } = await supabase
-              .from('weekly_reports')
-              .update({
-                status: status,
-                technical_description: row.Condicion_Tecnica || null,
-                sap_notification: row.Aviso_SAP || null,
-                sap_order: row.Orden_SAP || null,
-                planned_date: plannedDate
-              })
-              .eq('id', existingReport.id);
-
-            if (updateError) {
-              errors.push(`Error actualizando reporte ${tag} S${weekNumber}: ${updateError.message}`);
-            } else {
-              successCount++;
-            }
-          } else {
-            // Insert new weekly report
-            const { error: reportError } = await supabase
-              .from('weekly_reports')
-              .insert({
-                equipment_id: equipmentId,
-                week_number: weekNumber,
-                year: year,
-                status: status,
-                technical_description: row.Condicion_Tecnica || null,
-                sap_notification: row.Aviso_SAP || null,
-                sap_order: row.Orden_SAP || null,
-                planned_date: plannedDate
-              });
-
-            if (reportError) {
-              errors.push(`Error insertando reporte ${tag} S${weekNumber}: ${reportError.message}`);
-            } else {
-              successCount++;
-            }
-          }
-        } else {
-          successCount++; // Count equipment insertion as success if no report data
+        if (!weekNumber || !year) {
+          successCount++; // Count equipment as success even without report
+          continue;
         }
+
+        // Parse planned date
+        let plannedDate: string | null = null;
+        if (row.Fecha_Plan) {
+          const dateParts = row.Fecha_Plan.split('/');
+          if (dateParts.length === 3) {
+            plannedDate = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+          }
+        }
+
+        const status = mapStatus(row.Estado);
+        const reportKey = `${equipmentId}-${year}-${weekNumber}`;
+        const existingReportId = existingReportsMap.get(reportKey);
+
+        if (existingReportId) {
+          reportsToUpdate.push({
+            id: existingReportId,
+            status,
+            technical_description: row.Condicion_Tecnica || null,
+            sap_notification: row.Aviso_SAP || null,
+            sap_order: row.Orden_SAP || null,
+            planned_date: plannedDate
+          });
+        } else {
+          reportsToInsert.push({
+            equipment_id: equipmentId,
+            week_number: weekNumber,
+            year: year,
+            status,
+            technical_description: row.Condicion_Tecnica || null,
+            sap_notification: row.Aviso_SAP || null,
+            sap_order: row.Orden_SAP || null,
+            planned_date: plannedDate
+          });
+        }
+      }
+
+      console.log(`Inserting ${reportsToInsert.length} new reports, updating ${reportsToUpdate.length} existing reports`);
+
+      // Batch insert new reports
+      for (let i = 0; i < reportsToInsert.length; i += BATCH_SIZE) {
+        const batch = reportsToInsert.slice(i, i + BATCH_SIZE);
+        const { error: insertError } = await supabase
+          .from('weekly_reports')
+          .insert(batch);
+
+        if (insertError) {
+          errors.push(`Error insertando lote de reportes: ${insertError.message}`);
+        } else {
+          successCount += batch.length;
+        }
+      }
+
+      // Batch update existing reports (upsert not available, so we update one by one in parallel batches)
+      const updatePromises = reportsToUpdate.map(report => 
+        supabase
+          .from('weekly_reports')
+          .update({
+            status: report.status,
+            technical_description: report.technical_description,
+            sap_notification: report.sap_notification,
+            sap_order: report.sap_order,
+            planned_date: report.planned_date
+          })
+          .eq('id', report.id)
+      );
+
+      // Execute updates in parallel batches
+      for (let i = 0; i < updatePromises.length; i += BATCH_SIZE) {
+        const batch = updatePromises.slice(i, i + BATCH_SIZE);
+        const results = await Promise.all(batch);
+        results.forEach((result, index) => {
+          if (result.error) {
+            errors.push(`Error actualizando reporte: ${result.error.message}`);
+          } else {
+            successCount++;
+          }
+        });
       }
 
       setResult({ success: successCount, errors });
@@ -272,7 +378,7 @@ export default function AdminSettings() {
       if (successCount > 0) {
         toast({
           title: "Carga completada",
-          description: `${successCount} equipos insertados correctamente`,
+          description: `${successCount} registros procesados correctamente`,
         });
       }
 
