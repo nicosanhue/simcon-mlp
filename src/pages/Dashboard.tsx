@@ -94,6 +94,9 @@ export default function Dashboard() {
   const chartData = createChartData(stats);
   const areaCharts = createGroupedCharts(statsByArea);
   const systemCharts = createGroupedCharts(statsBySystem);
+  
+  console.log('[DEBUG Dashboard] systemCharts:', systemCharts);
+  console.log('[DEBUG Dashboard] systemCharts.length:', systemCharts.length);
 
   return (
     <MainLayout>
