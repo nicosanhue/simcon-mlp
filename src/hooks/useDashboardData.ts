@@ -171,12 +171,16 @@ export function useDashboardData(filters: DashboardFilters) {
   // Calculate stats grouped by system (when a specific area is selected)
   // Note: equipmentQuery.data is already filtered by area, so we just need to group by system
   const statsBySystem: GroupedStats[] = equipmentQuery.data && systemsQuery.data && filters.areaId !== "all"
-    ? systemsQuery.data
-        .filter((system) => system.area_id === filters.areaId)
-        .map((system) => {
+    ? (() => {
+        const filteredSystems = systemsQuery.data.filter((system) => system.area_id === filters.areaId);
+        console.log('[DEBUG] Filtered systems for area:', filters.areaId, filteredSystems);
+        console.log('[DEBUG] Equipment data sample:', equipmentQuery.data.slice(0, 3));
+        
+        const result = filteredSystems.map((system) => {
           const systemEquipment = equipmentQuery.data.filter(
             (eq) => eq.systems.id === system.id
           );
+          console.log('[DEBUG] System:', system.name, 'Equipment count:', systemEquipment.length);
           const systemStats = calculateStats(systemEquipment);
           return {
             id: system.id,
@@ -186,7 +190,11 @@ export function useDashboardData(filters: DashboardFilters) {
             alerta: systemStats.alerta,
             falla: systemStats.falla,
           };
-        }).filter((system) => system.total > 0)
+        }).filter((system) => system.total > 0);
+        
+        console.log('[DEBUG] Final statsBySystem:', result);
+        return result;
+      })()
     : [];
 
   // Get critical alerts (Falla or Alerta)
