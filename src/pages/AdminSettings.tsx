@@ -3,9 +3,10 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, FileSpreadsheet, CheckCircle, AlertCircle } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, Database } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 interface CSVRow {
   Area: string;
@@ -59,6 +60,20 @@ export default function AdminSettings() {
   const [result, setResult] = useState<UploadResult | null>(null);
   const [parsedFileInfo, setParsedFileInfo] = useState<{ week: number; year: number } | null>(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Debug: Fetch all areas from database
+  const { data: dbAreas, refetch: refetchAreas } = useQuery({
+    queryKey: ["debug-areas"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("areas")
+        .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   // Force semicolon delimiter (Spanish Excel format)
   const DELIMITER = ';';
@@ -352,9 +367,17 @@ export default function AdminSettings() {
       setResult({ success: successCount, errors });
       
       if (successCount > 0) {
+        // Invalidate all related queries to refresh data across the app
+        await queryClient.invalidateQueries({ queryKey: ["areas"] });
+        await queryClient.invalidateQueries({ queryKey: ["systems"] });
+        await queryClient.invalidateQueries({ queryKey: ["dashboard-equipment"] });
+        await queryClient.invalidateQueries({ queryKey: ["debug-counts"] });
+        await queryClient.invalidateQueries({ queryKey: ["latest-week"] });
+        await queryClient.invalidateQueries({ queryKey: ["debug-areas"] });
+        
         toast({
           title: "Carga completada",
-          description: `${successCount} registros procesados correctamente`,
+          description: `${successCount} registros procesados correctamente. Datos actualizados.`,
         });
       }
 
@@ -443,6 +466,42 @@ export default function AdminSettings() {
                 )}
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Debug: Areas in Database */}
+        <Card className="border-dashed border-muted-foreground/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-sm">
+              <Database className="h-4 w-4" />
+              🔍 Debug: Áreas Disponibles en BD
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Esta sección muestra las áreas actualmente registradas en la base de datos
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-2">
+              {dbAreas?.map((area) => (
+                <div
+                  key={area.id}
+                  className="bg-muted px-3 py-1.5 rounded-full text-sm font-medium"
+                >
+                  {area.name}
+                </div>
+              ))}
+              {(!dbAreas || dbAreas.length === 0) && (
+                <p className="text-muted-foreground text-sm">No hay áreas registradas</p>
+              )}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => refetchAreas()}
+            >
+              Actualizar lista
+            </Button>
           </CardContent>
         </Card>
       </div>
