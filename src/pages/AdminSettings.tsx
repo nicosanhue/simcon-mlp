@@ -75,6 +75,47 @@ export default function AdminSettings() {
     },
   });
 
+  // Debug: Fetch equipment counts per area
+  const { data: equipmentCounts, refetch: refetchEquipmentCounts } = useQuery({
+    queryKey: ["debug-equipment-counts"],
+    queryFn: async () => {
+      const { data: areas } = await supabase.from("areas").select("id, name").order("name");
+      if (!areas) return [];
+      
+      const counts = await Promise.all(areas.map(async (area) => {
+        // Count equipment for this area
+        const { count: equipCount } = await supabase
+          .from("equipment")
+          .select("id, systems!inner(area_id)", { count: "exact", head: true })
+          .eq("systems.area_id", area.id);
+        
+        // Count reports for equipment in this area (via join)
+        const { data: equipmentIds } = await supabase
+          .from("equipment")
+          .select("id, systems!inner(area_id)")
+          .eq("systems.area_id", area.id);
+        
+        let reportCount = 0;
+        if (equipmentIds && equipmentIds.length > 0) {
+          const ids = equipmentIds.map(e => e.id);
+          const { count } = await supabase
+            .from("weekly_reports")
+            .select("id", { count: "exact", head: true })
+            .in("equipment_id", ids);
+          reportCount = count || 0;
+        }
+          
+        return { 
+          area_name: area.name, 
+          equipment_count: equipCount || 0,
+          report_count: reportCount 
+        };
+      }));
+      
+      return counts;
+    },
+  });
+
   // Force semicolon delimiter (Spanish Excel format)
   const DELIMITER = ';';
 
@@ -224,6 +265,9 @@ export default function AdminSettings() {
         systemId: string;
       }> = [];
 
+      // Debug: Log available areas
+      console.log('Available areas in DB:', Array.from(areaMap.keys()));
+      
       // First pass: validate and collect new equipment
       for (const row of rows) {
         const areaName = row.Area?.trim().toLowerCase();
@@ -232,14 +276,14 @@ export default function AdminSettings() {
         const description = row.Descripcion_Equipo?.trim();
 
         if (!areaName || !systemName || !tag) {
-          errors.push(`Fila inválida: ${tag || 'sin tag'} - faltan datos requeridos`);
+          errors.push(`Fila inválida: ${tag || 'sin tag'} - faltan datos requeridos (Area: "${row.Area}", Sistema: "${row.Sistema}")`);
           continue;
         }
 
         // Find area ID
         const areaId = areaMap.get(areaName);
         if (!areaId) {
-          errors.push(`Área no encontrada: "${row.Area}" para equipo ${tag}`);
+          errors.push(`Área no encontrada: "${row.Area}" (normalizado: "${areaName}") para equipo ${tag}. Áreas disponibles: ${Array.from(areaMap.keys()).join(', ')}`);
           continue;
         }
 
@@ -469,39 +513,76 @@ export default function AdminSettings() {
           </CardContent>
         </Card>
 
-        {/* Debug: Areas in Database */}
+        {/* Debug: Areas in Database with Report Counts */}
         <Card className="border-dashed border-muted-foreground/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-sm">
               <Database className="h-4 w-4" />
-              🔍 Debug: Áreas Disponibles en BD
+              🔍 Debug: Estado de Datos por Área
             </CardTitle>
             <CardDescription className="text-xs">
-              Esta sección muestra las áreas actualmente registradas en la base de datos
+              Muestra equipos y reportes por área. Si un área tiene equipos pero 0 reportes, hay un problema de importación.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {dbAreas?.map((area) => (
-                <div
-                  key={area.id}
-                  className="bg-muted px-3 py-1.5 rounded-full text-sm font-medium"
-                >
-                  {area.name}
-                </div>
-              ))}
-              {(!dbAreas || dbAreas.length === 0) && (
-                <p className="text-muted-foreground text-sm">No hay áreas registradas</p>
-              )}
+          <CardContent className="space-y-4">
+            {/* Areas list */}
+            <div>
+              <p className="text-sm font-medium mb-2">Áreas en BD:</p>
+              <div className="flex flex-wrap gap-2">
+                {dbAreas?.map((area) => (
+                  <div
+                    key={area.id}
+                    className="bg-muted px-3 py-1.5 rounded-full text-sm font-medium"
+                  >
+                    {area.name}
+                  </div>
+                ))}
+                {(!dbAreas || dbAreas.length === 0) && (
+                  <p className="text-muted-foreground text-sm">No hay áreas registradas</p>
+                )}
+              </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4"
-              onClick={() => refetchAreas()}
-            >
-              Actualizar lista
-            </Button>
+
+            {/* Equipment & Report counts per area */}
+            <div>
+              <p className="text-sm font-medium mb-2">Conteo de Equipos y Reportes:</p>
+              <div className="grid gap-2">
+                {equipmentCounts?.map((item) => (
+                  <div
+                    key={item.area_name}
+                    className={`flex justify-between items-center p-2 rounded-md text-sm ${
+                      item.equipment_count > 0 && item.report_count === 0 
+                        ? 'bg-destructive/20 border border-destructive' 
+                        : 'bg-muted'
+                    }`}
+                  >
+                    <span className="font-medium">{item.area_name}</span>
+                    <div className="flex gap-4 text-xs">
+                      <span>Equipos: <strong>{item.equipment_count}</strong></span>
+                      <span className={item.equipment_count > 0 && item.report_count === 0 ? 'text-destructive font-bold' : ''}>
+                        Reportes: <strong>{item.report_count}</strong>
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {equipmentCounts?.some(item => item.equipment_count > 0 && item.report_count === 0) && (
+                  <p className="text-destructive text-xs mt-1">⚠️ Hay áreas con equipos pero sin reportes - re-importe el CSV</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  refetchAreas();
+                  refetchEquipmentCounts();
+                }}
+              >
+                Actualizar datos
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
