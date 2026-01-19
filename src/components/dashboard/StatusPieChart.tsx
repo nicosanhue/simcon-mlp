@@ -67,10 +67,16 @@ export function StatusPieChart({ data, title }: StatusPieChartProps) {
             <Tooltip content={<CustomTooltip />} />
             <Legend
               verticalAlign="bottom"
-              height={36}
-              formatter={(value) => (
-                <span className="text-sm text-foreground">{value}</span>
-              )}
+              height={50}
+              formatter={(value, entry: any) => {
+                const item = data.find(d => d.name === value);
+                const percentage = item && total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
+                return (
+                  <span className="text-sm text-foreground">
+                    {value}: {item?.value ?? 0} ({percentage}%)
+                  </span>
+                );
+              }}
             />
           </PieChart>
         </ResponsiveContainer>
