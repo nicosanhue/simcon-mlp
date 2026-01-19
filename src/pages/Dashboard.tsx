@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Activity, CheckCircle2, AlertTriangle, XCircle, Clock } from "lucide-react";
+import { Activity, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { StatusPieChart } from "@/components/dashboard/StatusPieChart";
 import { StatusCard } from "@/components/dashboard/StatusCard";
@@ -75,8 +75,7 @@ export default function Dashboard() {
   const chartData = [
     { name: "Operativo", value: stats.operativo, color: "hsl(142, 76%, 36%)" },
     { name: "Alerta", value: stats.alerta, color: "hsl(45, 93%, 47%)" },
-    { name: "Falla", value: stats.falla, color: "hsl(0, 84%, 60%)" },
-    { name: "Stand By", value: stats.standby, color: "hsl(38, 92%, 50%)" },
+    { name: "Crítico", value: stats.falla, color: "hsl(0, 84%, 60%)" },
   ].filter(item => item.value > 0);
 
   return (
@@ -125,13 +124,13 @@ export default function Dashboard() {
 
         {/* Stats Cards */}
         {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {Array.from({ length: 5 }).map((_, i) => (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-[120px] rounded-lg" />
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <StatusCard
               title="Total Equipos"
               value={stats.total}
@@ -156,20 +155,13 @@ export default function Dashboard() {
               isActive={statusFilter === "Alerta"}
             />
             <StatusCard
-              title="En Falla"
+              title="Crítico"
               value={stats.falla}
               subtitle="Intervención requerida"
               icon={<XCircle className="h-6 w-6" />}
               variant="danger"
               onClick={() => handleStatusClick("Falla")}
               isActive={statusFilter === "Falla"}
-            />
-            <StatusCard
-              title="Stand By"
-              value={stats.standby}
-              subtitle="Fuera de operación"
-              icon={<Clock className="h-6 w-6" />}
-              variant="default"
             />
           </div>
         )}
