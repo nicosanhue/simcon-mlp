@@ -23,7 +23,24 @@ export function CriticalReportDownload() {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
-  const fetchCriticalData = async (): Promise<{ fallas: CriticalEquipment[]; alertas: CriticalEquipment[] }> => {
+  const fetchCriticalData = async (): Promise<{ fallas: CriticalEquipment[]; alertas: CriticalEquipment[]; latestWeek: number; latestYear: number }> => {
+    // First, get the latest week with data
+    const { data: latestData, error: latestError } = await supabase
+      .from('weekly_reports')
+      .select('week_number, year')
+      .order('year', { ascending: false })
+      .order('week_number', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (latestError || !latestData) {
+      return { fallas: [], alertas: [], latestWeek: 0, latestYear: 0 };
+    }
+
+    const latestWeek = latestData.week_number;
+    const latestYear = latestData.year;
+
+    // Now fetch only critical data from the latest week
     const { data, error } = await supabase
       .from('weekly_reports')
       .select(`
@@ -46,8 +63,8 @@ export function CriticalReportDownload() {
         )
       `)
       .in('status', ['Falla', 'Alerta'])
-      .order('year', { ascending: false })
-      .order('week_number', { ascending: false });
+      .eq('week_number', latestWeek)
+      .eq('year', latestYear);
 
     if (error) throw error;
 
@@ -79,7 +96,7 @@ export function CriticalReportDownload() {
       }
     });
 
-    return { fallas, alertas };
+    return { fallas, alertas, latestWeek, latestYear };
   };
 
   // Load logo as base64 for PDF
@@ -103,12 +120,12 @@ export function CriticalReportDownload() {
   const generatePDF = async () => {
     setIsGenerating(true);
     try {
-      const { fallas, alertas } = await fetchCriticalData();
+      const { fallas, alertas, latestWeek, latestYear } = await fetchCriticalData();
 
       if (fallas.length === 0 && alertas.length === 0) {
         toast({
           title: "Sin datos",
-          description: "No hay condiciones críticas registradas",
+          description: "No hay condiciones críticas en la última semana",
         });
         setIsGenerating(false);
         return;
@@ -145,7 +162,7 @@ export function CriticalReportDownload() {
       
       pdf.setFontSize(9);
       pdf.setFont("helvetica", "normal");
-      pdf.text(now.toLocaleDateString('es-CL'), pageWidth - margin, 20, { align: "right" });
+      pdf.text(`Semana ${latestWeek} / ${latestYear}`, pageWidth - margin, 20, { align: "right" });
       
       yPos = 38;
 
