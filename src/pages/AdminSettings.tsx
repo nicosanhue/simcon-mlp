@@ -40,12 +40,35 @@ export default function AdminSettings() {
   const [result, setResult] = useState<UploadResult | null>(null);
   const { toast } = useToast();
 
+  // Detect delimiter: semicolon (Spanish Excel) or comma
+  const detectDelimiter = (headerLine: string): string => {
+    const semicolonCount = (headerLine.match(/;/g) || []).length;
+    const commaCount = (headerLine.match(/,/g) || []).length;
+    return semicolonCount >= commaCount ? ';' : ',';
+  };
+
   const parseCSV = (text: string): CSVRow[] => {
-    const lines = text.trim().split('\n');
-    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+    // Normalize line endings and split
+    const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n');
     
-    return lines.slice(1).map(line => {
-      // Handle quoted values with commas inside
+    if (lines.length === 0) return [];
+    
+    // Detect delimiter from header line
+    const delimiter = detectDelimiter(lines[0]);
+    console.log(`CSV delimiter detected: "${delimiter}"`);
+    
+    // Parse headers
+    const headers = lines[0].split(delimiter).map(h => h.trim().replace(/"/g, ''));
+    console.log('CSV headers:', headers);
+    
+    // Expected headers for validation
+    const expectedHeaders = ['Area', 'Sistema', 'Tag', 'Descripcion_Equipo', 'Estado', 'Condicion_Tecnica', 'Aviso_SAP', 'Orden_SAP', 'Fecha_Plan', 'Semana', 'Anio'];
+    
+    return lines.slice(1).map((line, lineIndex) => {
+      // Skip empty lines
+      if (!line.trim()) return null;
+      
+      // Handle quoted values with delimiter inside
       const values: string[] = [];
       let current = '';
       let inQuotes = false;
@@ -53,21 +76,30 @@ export default function AdminSettings() {
       for (const char of line) {
         if (char === '"') {
           inQuotes = !inQuotes;
-        } else if (char === ',' && !inQuotes) {
+        } else if (char === delimiter && !inQuotes) {
           values.push(current.trim());
           current = '';
         } else {
           current += char;
         }
       }
+      // Push the last value
       values.push(current.trim());
       
+      // Build row object, handling missing values safely
       const row: Record<string, string> = {};
-      headers.forEach((header, index) => {
-        row[header] = values[index]?.replace(/"/g, '') || '';
+      expectedHeaders.forEach((header, index) => {
+        // Use header from file if available, otherwise use expected header
+        const actualHeader = headers[index] || header;
+        const value = values[index];
+        // Handle undefined, null, and clean quotes
+        row[actualHeader] = (value !== undefined && value !== null) 
+          ? value.replace(/"/g, '').trim() 
+          : '';
       });
+      
       return row as unknown as CSVRow;
-    }).filter(row => row.Tag && row.Tag.trim() !== '');
+    }).filter((row): row is CSVRow => row !== null && row.Tag && row.Tag.trim() !== '');
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
