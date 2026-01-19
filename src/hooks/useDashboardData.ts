@@ -8,6 +8,51 @@ export interface DashboardFilters {
   searchTerm?: string;
 }
 
+interface EquipmentWithReport {
+  id: string;
+  tag: string;
+  name: string;
+  criticality: string;
+  systems: {
+    id: string;
+    name: string;
+    areas: {
+      id: string;
+      name: string;
+    };
+  };
+  currentStatus: string;
+  currentReport?: {
+    id: string;
+    week_number: number;
+    year: number;
+    status: string;
+    sap_notification: string | null;
+    sap_order: string | null;
+    technical_description: string | null;
+    planned_date: string | null;
+  };
+}
+
+export interface GroupedStats {
+  id: string;
+  name: string;
+  total: number;
+  operativo: number;
+  alerta: number;
+  falla: number;
+}
+
+function calculateStats(equipment: EquipmentWithReport[]) {
+  return {
+    total: equipment.length,
+    operativo: equipment.filter((e) => e.currentStatus === "Operativo").length,
+    alerta: equipment.filter((e) => e.currentStatus === "Alerta").length,
+    falla: equipment.filter((e) => e.currentStatus === "Falla").length,
+    sinRegistro: equipment.filter((e) => e.currentStatus === "Sin Registro").length,
+  };
+}
+
 export function useDashboardData(filters: DashboardFilters) {
   // Fetch areas
   const areasQuery = useQuery({
@@ -16,6 +61,19 @@ export function useDashboardData(filters: DashboardFilters) {
       const { data, error } = await supabase
         .from("areas")
         .select("id, name")
+        .order("name");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch systems for grouping
+  const systemsQuery = useQuery({
+    queryKey: ["systems"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("systems")
+        .select("id, name, area_id")
         .order("name");
       if (error) throw error;
       return data;
@@ -86,21 +144,46 @@ export function useDashboardData(filters: DashboardFilters) {
         };
       });
 
-      return equipmentWithCurrentWeek;
+      return equipmentWithCurrentWeek as EquipmentWithReport[];
     },
   });
 
-  // Calculate statistics
+  // Calculate overall statistics
   const stats = equipmentQuery.data
-    ? {
-        total: equipmentQuery.data.length,
-        operativo: equipmentQuery.data.filter((e) => e.currentStatus === "Operativo").length,
-        alerta: equipmentQuery.data.filter((e) => e.currentStatus === "Alerta").length,
-        falla: equipmentQuery.data.filter((e) => e.currentStatus === "Falla").length,
-        standby: equipmentQuery.data.filter((e) => e.currentStatus === "Stand By").length,
-        sinRegistro: equipmentQuery.data.filter((e) => e.currentStatus === "Sin Registro").length,
-      }
-    : { total: 0, operativo: 0, alerta: 0, falla: 0, standby: 0, sinRegistro: 0 };
+    ? calculateStats(equipmentQuery.data)
+    : { total: 0, operativo: 0, alerta: 0, falla: 0, sinRegistro: 0 };
+
+  // Calculate stats grouped by area (when "all" is selected)
+  const statsByArea: GroupedStats[] = equipmentQuery.data && areasQuery.data
+    ? areasQuery.data.map((area) => {
+        const areaEquipment = equipmentQuery.data.filter(
+          (eq) => eq.systems.areas.id === area.id
+        );
+        const areaStats = calculateStats(areaEquipment);
+        return {
+          id: area.id,
+          name: area.name,
+          ...areaStats,
+        };
+      }).filter((area) => area.total > 0)
+    : [];
+
+  // Calculate stats grouped by system (when a specific area is selected)
+  const statsBySystem: GroupedStats[] = equipmentQuery.data && systemsQuery.data && filters.areaId !== "all"
+    ? systemsQuery.data
+        .filter((system) => system.area_id === filters.areaId)
+        .map((system) => {
+          const systemEquipment = equipmentQuery.data.filter(
+            (eq) => eq.systems.id === system.id
+          );
+          const systemStats = calculateStats(systemEquipment);
+          return {
+            id: system.id,
+            name: system.name,
+            ...systemStats,
+          };
+        }).filter((system) => system.total > 0)
+    : [];
 
   // Get critical alerts (Falla or Alerta)
   const criticalAlerts = equipmentQuery.data
@@ -118,10 +201,13 @@ export function useDashboardData(filters: DashboardFilters) {
 
   return {
     areas: areasQuery.data || [],
+    systems: systemsQuery.data || [],
     equipment: equipmentQuery.data || [],
     stats,
+    statsByArea,
+    statsBySystem,
     criticalAlerts,
-    isLoading: areasQuery.isLoading || equipmentQuery.isLoading,
-    error: areasQuery.error || equipmentQuery.error,
+    isLoading: areasQuery.isLoading || equipmentQuery.isLoading || systemsQuery.isLoading,
+    error: areasQuery.error || equipmentQuery.error || systemsQuery.error,
   };
 }
