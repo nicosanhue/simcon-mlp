@@ -43,6 +43,12 @@ export interface GroupedStats {
   falla: number;
 }
 
+export interface DebugCounts {
+  totalEquipment: number;
+  totalReports: number;
+  reportsInSelectedWeek: number;
+}
+
 function calculateStats(equipment: EquipmentWithReport[]) {
   return {
     total: equipment.length,
@@ -51,6 +57,68 @@ function calculateStats(equipment: EquipmentWithReport[]) {
     falla: equipment.filter((e) => e.currentStatus === "Falla").length,
     sinRegistro: equipment.filter((e) => e.currentStatus === "Sin Registro").length,
   };
+}
+
+// Helper function to fetch all rows with pagination (bypasses 1000 row limit)
+async function fetchAllEquipment(areaId: string, searchTerm?: string) {
+  const PAGE_SIZE = 1000;
+  let allData: any[] = [];
+  let from = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    let query = supabase
+      .from("equipment")
+      .select(`
+        id,
+        tag,
+        name,
+        criticality,
+        systems!inner (
+          id,
+          name,
+          areas!inner (
+            id,
+            name
+          )
+        ),
+        weekly_reports (
+          id,
+          week_number,
+          year,
+          status,
+          sap_notification,
+          sap_order,
+          technical_description,
+          planned_date
+        )
+      `)
+      .range(from, from + PAGE_SIZE - 1);
+
+    // Server-side area filter
+    if (areaId !== "all") {
+      query = query.eq("systems.areas.id", areaId);
+    }
+
+    // Server-side search filter (on tag or name)
+    if (searchTerm && searchTerm.trim() !== "") {
+      const term = searchTerm.trim();
+      query = query.or(`tag.ilike.%${term}%,name.ilike.%${term}%`);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    if (data && data.length > 0) {
+      allData = [...allData, ...data];
+      from += PAGE_SIZE;
+      hasMore = data.length === PAGE_SIZE;
+    } else {
+      hasMore = false;
+    }
+  }
+
+  return allData;
 }
 
 export function useDashboardData(filters: DashboardFilters) {
@@ -80,62 +148,38 @@ export function useDashboardData(filters: DashboardFilters) {
     },
   });
 
-  // Fetch equipment with weekly reports
+  // Debug counts - total equipment and reports
+  const debugCountsQuery = useQuery({
+    queryKey: ["debug-counts", filters.week, filters.year],
+    queryFn: async () => {
+      const [equipmentCount, totalReportsCount, weekReportsCount] = await Promise.all([
+        supabase.from("equipment").select("id", { count: "exact", head: true }),
+        supabase.from("weekly_reports").select("id", { count: "exact", head: true }),
+        supabase
+          .from("weekly_reports")
+          .select("id", { count: "exact", head: true })
+          .eq("week_number", filters.week)
+          .eq("year", filters.year),
+      ]);
+
+      return {
+        totalEquipment: equipmentCount.count || 0,
+        totalReports: totalReportsCount.count || 0,
+        reportsInSelectedWeek: weekReportsCount.count || 0,
+      } as DebugCounts;
+    },
+  });
+
+  // Fetch equipment with weekly reports - NO LIMIT, uses pagination
   const equipmentQuery = useQuery({
     queryKey: ["dashboard-equipment", filters],
     queryFn: async () => {
-      let query = supabase
-        .from("equipment")
-        .select(`
-          id,
-          tag,
-          name,
-          criticality,
-          systems!inner (
-            id,
-            name,
-            areas!inner (
-              id,
-              name
-            )
-          ),
-          weekly_reports (
-            id,
-            week_number,
-            year,
-            status,
-            sap_notification,
-            sap_order,
-            technical_description,
-            planned_date
-          )
-        `);
-
-      const { data, error } = await query;
-      if (error) throw error;
-
-      // Filter by area if selected
-      let filteredData = data;
-      if (filters.areaId !== "all") {
-        filteredData = data.filter(
-          (eq) => eq.systems.areas.id === filters.areaId
-        );
-      }
-
-      // Filter by search term if provided
-      if (filters.searchTerm && filters.searchTerm.trim() !== "") {
-        const term = filters.searchTerm.toLowerCase().trim();
-        filteredData = filteredData.filter(
-          (eq) =>
-            eq.tag.toLowerCase().includes(term) ||
-            eq.name.toLowerCase().includes(term)
-        );
-      }
+      const data = await fetchAllEquipment(filters.areaId, filters.searchTerm);
 
       // Filter weekly reports by week/year
-      const equipmentWithCurrentWeek = filteredData.map((eq) => {
+      const equipmentWithCurrentWeek = data.map((eq: any) => {
         const currentReport = eq.weekly_reports.find(
-          (r) => r.week_number === filters.week && r.year === filters.year
+          (r: any) => r.week_number === filters.week && r.year === filters.year
         );
         return {
           ...eq,
@@ -169,18 +213,14 @@ export function useDashboardData(filters: DashboardFilters) {
     : [];
 
   // Calculate stats grouped by system (when a specific area is selected)
-  // Note: equipmentQuery.data is already filtered by area, so we just need to group by system
   const statsBySystem: GroupedStats[] = equipmentQuery.data && systemsQuery.data && filters.areaId !== "all"
     ? (() => {
         const filteredSystems = systemsQuery.data.filter((system) => system.area_id === filters.areaId);
-        console.log('[DEBUG] Filtered systems for area:', filters.areaId, filteredSystems);
-        console.log('[DEBUG] Equipment data sample:', equipmentQuery.data.slice(0, 3));
         
         const result = filteredSystems.map((system) => {
           const systemEquipment = equipmentQuery.data.filter(
             (eq) => eq.systems.id === system.id
           );
-          console.log('[DEBUG] System:', system.name, 'Equipment count:', systemEquipment.length);
           const systemStats = calculateStats(systemEquipment);
           return {
             id: system.id,
@@ -192,7 +232,6 @@ export function useDashboardData(filters: DashboardFilters) {
           };
         }).filter((system) => system.total > 0);
         
-        console.log('[DEBUG] Final statsBySystem:', result);
         return result;
       })()
     : [];
@@ -219,6 +258,7 @@ export function useDashboardData(filters: DashboardFilters) {
     statsByArea,
     statsBySystem,
     criticalAlerts,
+    debugCounts: debugCountsQuery.data || { totalEquipment: 0, totalReports: 0, reportsInSelectedWeek: 0 },
     isLoading: areasQuery.isLoading || equipmentQuery.isLoading || systemsQuery.isLoading,
     error: areasQuery.error || equipmentQuery.error || systemsQuery.error,
   };

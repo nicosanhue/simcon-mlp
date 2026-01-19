@@ -8,7 +8,7 @@ import { CriticalAlertsList } from "@/components/dashboard/CriticalAlertsList";
 import { WeekSelector } from "@/components/dashboard/WeekSelector";
 import { AreaFilter } from "@/components/dashboard/AreaFilter";
 import { EquipmentSearch } from "@/components/dashboard/EquipmentSearch";
-import { useDashboardData, GroupedStats } from "@/hooks/useDashboardData";
+import { useDashboardData, GroupedStats, DebugCounts } from "@/hooks/useDashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -75,7 +75,7 @@ export default function Dashboard() {
     }
   }, [latestWeekData, week, year, currentDate]);
 
-  const { areas, stats, statsByArea, statsBySystem, criticalAlerts, isLoading } = useDashboardData({
+  const { areas, stats, statsByArea, statsBySystem, criticalAlerts, debugCounts, isLoading } = useDashboardData({
     week: week ?? getWeekNumber(currentDate),
     year: year ?? currentDate.getFullYear(),
     areaId: selectedArea,
@@ -98,6 +98,25 @@ export default function Dashboard() {
   return (
     <MainLayout>
       <div className="space-y-6" ref={dashboardRef}>
+        {/* Debug Counters - Temporary */}
+        <div className="bg-muted/50 border border-border rounded-lg p-4">
+          <h3 className="text-sm font-semibold text-muted-foreground mb-2">🔍 Debug: Contadores de Base de Datos</h3>
+          <div className="grid grid-cols-3 gap-4 text-sm">
+            <div className="bg-background p-3 rounded-md">
+              <p className="text-muted-foreground">Total Equipos en BD</p>
+              <p className="text-2xl font-bold text-foreground">{debugCounts.totalEquipment}</p>
+            </div>
+            <div className="bg-background p-3 rounded-md">
+              <p className="text-muted-foreground">Total Reportes en BD</p>
+              <p className="text-2xl font-bold text-foreground">{debugCounts.totalReports}</p>
+            </div>
+            <div className="bg-background p-3 rounded-md">
+              <p className="text-muted-foreground">Reportes Semana {week}-{year}</p>
+              <p className="text-2xl font-bold text-primary">{debugCounts.reportsInSelectedWeek}</p>
+            </div>
+          </div>
+        </div>
+
         {/* Report Actions */}
         <div className="flex justify-end gap-2">
           <CriticalReportDownload />
