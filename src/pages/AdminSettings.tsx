@@ -411,15 +411,18 @@ export default function AdminSettings() {
 
       console.log(`Inserting ${reportsToInsert.length} new reports for Week ${weekNumber}, Year ${year}`);
 
-      // Batch insert new reports
+      // Batch upsert reports (update if exists, insert if not)
       for (let i = 0; i < reportsToInsert.length; i += BATCH_SIZE) {
         const batch = reportsToInsert.slice(i, i + BATCH_SIZE);
-        const { error: insertError } = await supabase
+        const { error: upsertError } = await supabase
           .from('weekly_reports')
-          .insert(batch);
+          .upsert(batch, { 
+            onConflict: 'equipment_id,week_number,year',
+            ignoreDuplicates: false 
+          });
 
-        if (insertError) {
-          errors.push(`Error insertando lote de reportes: ${insertError.message}`);
+        if (upsertError) {
+          errors.push(`Error procesando lote de reportes: ${upsertError.message}`);
         } else {
           successCount += batch.length;
         }
