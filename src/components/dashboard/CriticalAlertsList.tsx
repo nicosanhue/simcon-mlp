@@ -13,7 +13,7 @@ interface Alert {
   id: string;
   tag: string;
   name: string;
-  status: "Falla" | "Alerta";
+  status: "Falla" | "Alerta" | "Operativo";
   area: string;
   system: string;
   description?: string;
@@ -22,7 +22,7 @@ interface Alert {
 
 interface CriticalAlertsListProps {
   alerts: Alert[];
-  activeFilter?: "Falla" | "Alerta" | null;
+  activeFilter?: "Falla" | "Alerta" | "Operativo" | null;
 }
 
 export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListProps) {
@@ -59,15 +59,15 @@ export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListP
       <div className="industrial-panel p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-foreground">
-            Alertas Críticas
+            {activeFilter === "Operativo" ? "Equipos Operativos" : "Alertas Críticas"}
             {activeFilter && (
               <span className="text-sm font-normal text-muted-foreground ml-2">
                 (filtrando por {activeFilter})
               </span>
             )}
           </h3>
-          <Badge variant="destructive" className="animate-pulse-glow">
-            {alerts.length} {alerts.length === 1 ? "alerta" : "alertas"}
+          <Badge variant={activeFilter === "Operativo" ? "secondary" : "destructive"} className={activeFilter !== "Operativo" ? "animate-pulse-glow" : ""}>
+            {alerts.length} {alerts.length === 1 ? "equipo" : "equipos"}
           </Badge>
         </div>
         <div className="space-y-3 max-h-[400px] overflow-y-auto">
@@ -79,17 +79,23 @@ export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListP
                 "p-4 rounded-lg border transition-all cursor-pointer hover:scale-[1.01] hover:shadow-md",
                 alert.status === "Falla" 
                   ? "bg-status-falla/5 border-status-falla/30 pulse-danger hover:bg-status-falla/10" 
-                  : "bg-status-alerta/5 border-status-alerta/30 hover:bg-status-alerta/10"
+                  : alert.status === "Alerta"
+                    ? "bg-status-alerta/5 border-status-alerta/30 hover:bg-status-alerta/10"
+                    : "bg-status-operativo/5 border-status-operativo/30 hover:bg-status-operativo/10"
               )}
             >
               <div className="flex items-start gap-3">
                 <div className={cn(
                   "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-                  alert.status === "Falla" ? "bg-status-falla/20" : "bg-status-alerta/20"
+                  alert.status === "Falla" ? "bg-status-falla/20" 
+                    : alert.status === "Alerta" ? "bg-status-alerta/20" 
+                    : "bg-status-operativo/20"
                 )}>
                   <AlertTriangle className={cn(
                     "h-4 w-4",
-                    alert.status === "Falla" ? "text-status-falla" : "text-status-alerta"
+                    alert.status === "Falla" ? "text-status-falla" 
+                      : alert.status === "Alerta" ? "text-status-alerta"
+                      : "text-status-operativo"
                   )} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -103,7 +109,9 @@ export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListP
                         "text-xs",
                         alert.status === "Falla" 
                           ? "border-status-falla/50 text-status-falla" 
-                          : "border-status-alerta/50 text-status-alerta"
+                          : alert.status === "Alerta"
+                            ? "border-status-alerta/50 text-status-alerta"
+                            : "border-status-operativo/50 text-status-operativo"
                       )}
                     >
                       {alert.status}
@@ -140,11 +148,15 @@ export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListP
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
-                    selectedAlert.status === "Falla" ? "bg-status-falla/20" : "bg-status-alerta/20"
+                    selectedAlert.status === "Falla" ? "bg-status-falla/20" 
+                      : selectedAlert.status === "Alerta" ? "bg-status-alerta/20"
+                      : "bg-status-operativo/20"
                   )}>
                     <AlertTriangle className={cn(
                       "h-5 w-5",
-                      selectedAlert.status === "Falla" ? "text-status-falla" : "text-status-alerta"
+                      selectedAlert.status === "Falla" ? "text-status-falla" 
+                        : selectedAlert.status === "Alerta" ? "text-status-alerta"
+                        : "text-status-operativo"
                     )} />
                   </div>
                   <div>
@@ -156,7 +168,9 @@ export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListP
                           "text-xs",
                           selectedAlert.status === "Falla" 
                             ? "border-status-falla/50 text-status-falla bg-status-falla/10" 
-                            : "border-status-alerta/50 text-status-alerta bg-status-alerta/10"
+                            : selectedAlert.status === "Alerta"
+                              ? "border-status-alerta/50 text-status-alerta bg-status-alerta/10"
+                              : "border-status-operativo/50 text-status-operativo bg-status-operativo/10"
                         )}
                       >
                         {selectedAlert.status}
@@ -187,7 +201,9 @@ export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListP
                     "p-3 rounded-lg border text-sm",
                     selectedAlert.status === "Falla" 
                       ? "bg-status-falla/5 border-status-falla/20" 
-                      : "bg-status-alerta/5 border-status-alerta/20"
+                      : selectedAlert.status === "Alerta"
+                        ? "bg-status-alerta/5 border-status-alerta/20"
+                        : "bg-status-operativo/5 border-status-operativo/20"
                   )}>
                     {selectedAlert.description || "Sin descripción disponible"}
                   </div>
