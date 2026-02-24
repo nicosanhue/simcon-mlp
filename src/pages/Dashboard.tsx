@@ -263,7 +263,7 @@ export default function Dashboard() {
             Semana {week} del {year} • {selectedArea === "all" ? "Todas las áreas" : areas.find(a => a.id === selectedArea)?.name}
           </p>
           <p>
-            Última actualización: {new Date().toLocaleString("es-CL")}
+            Última carga de datos: {latestWeekData ? `Semana ${latestWeekData.week_number} / ${latestWeekData.year}` : "Sin datos"}
           </p>
         </div>
       </div>
