@@ -23,19 +23,39 @@ function getWeekNumber(date: Date): number {
   return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
 }
 
-function createChartData(stats: { operativo: number; alerta: number; falla: number }) {
+interface EquipmentItem {
+  tag: string;
+  name: string;
+  currentStatus: string;
+  systems: { id: string; name: string; areas: { id: string; name: string } };
+}
+
+function createChartData(stats: { operativo: number; alerta: number; falla: number }, equipment?: EquipmentItem[]) {
+  const getEquipmentByStatus = (status: string) =>
+    equipment?.filter(eq => eq.currentStatus === status).map(eq => ({
+      tag: eq.tag,
+      name: eq.name,
+      status: eq.currentStatus,
+    })) || [];
+
   return [
-    { name: "Operativo", value: stats.operativo, color: "hsl(142, 76%, 36%)" },
-    { name: "Alerta", value: stats.alerta, color: "hsl(45, 93%, 47%)" },
-    { name: "Crítico", value: stats.falla, color: "hsl(0, 84%, 60%)" },
+    { name: "Operativo", value: stats.operativo, color: "hsl(142, 76%, 36%)", equipment: getEquipmentByStatus("Operativo") },
+    { name: "Alerta", value: stats.alerta, color: "hsl(45, 93%, 47%)", equipment: getEquipmentByStatus("Alerta") },
+    { name: "Crítico", value: stats.falla, color: "hsl(0, 84%, 60%)", equipment: getEquipmentByStatus("Falla") },
   ].filter(item => item.value > 0);
 }
 
-function createGroupedCharts(groupedStats: GroupedStats[]) {
-  return groupedStats.map((group) => ({
-    title: group.name,
-    data: createChartData(group),
-  }));
+function createGroupedCharts(groupedStats: GroupedStats[], equipment?: EquipmentItem[]) {
+  return groupedStats.map((group) => {
+    const groupEquipment = equipment?.filter(eq => {
+      // Match by area or system name
+      return eq.systems.areas.name === group.name || eq.systems.name === group.name;
+    });
+    return {
+      title: group.name,
+      data: createChartData(group, groupEquipment),
+    };
+  });
 }
 
 export default function Dashboard() {
@@ -43,7 +63,7 @@ export default function Dashboard() {
   const [week, setWeek] = useState<number | null>(null);
   const [year, setYear] = useState<number | null>(null);
   const [selectedArea, setSelectedArea] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<"Falla" | "Alerta" | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"Falla" | "Alerta" | "Operativo" | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const dashboardRef = useRef<HTMLDivElement>(null);
 
@@ -75,25 +95,38 @@ export default function Dashboard() {
     }
   }, [latestWeekData, week, year, currentDate]);
 
-  const { areas, stats, statsByArea, statsBySystem, criticalAlerts, debugCounts, isLoading } = useDashboardData({
+  const { areas, stats, statsByArea, statsBySystem, criticalAlerts, equipment, debugCounts, isLoading } = useDashboardData({
     week: week ?? getWeekNumber(currentDate),
     year: year ?? currentDate.getFullYear(),
     areaId: selectedArea,
     searchTerm,
   });
 
-  // Filter critical alerts based on selected status
-  const filteredAlerts = statusFilter 
-    ? criticalAlerts.filter(alert => alert.status === statusFilter)
-    : criticalAlerts;
+  // Build alerts list including Operativo when filtered
+  const allAlerts = statusFilter === "Operativo"
+    ? equipment
+        .filter(eq => eq.currentStatus === "Operativo")
+        .map(eq => ({
+          id: eq.id,
+          tag: eq.tag,
+          name: eq.name,
+          status: "Operativo" as const,
+          area: eq.systems.areas.name,
+          system: eq.systems.name,
+          description: eq.currentReport?.technical_description || undefined,
+          plannedDate: eq.currentReport?.planned_date || undefined,
+        }))
+    : statusFilter
+      ? criticalAlerts.filter(alert => alert.status === statusFilter)
+      : criticalAlerts;
 
-  const handleStatusClick = (status: "Falla" | "Alerta") => {
+  const handleStatusClick = (status: "Falla" | "Alerta" | "Operativo") => {
     setStatusFilter(prev => prev === status ? null : status);
   };
 
-  const chartData = createChartData(stats);
-  const areaCharts = createGroupedCharts(statsByArea);
-  const systemCharts = createGroupedCharts(statsBySystem);
+  const chartData = createChartData(stats, equipment as EquipmentItem[]);
+  const areaCharts = createGroupedCharts(statsByArea, equipment as EquipmentItem[]);
+  const systemCharts = createGroupedCharts(statsBySystem, equipment as EquipmentItem[]);
 
   return (
     <MainLayout>
@@ -192,6 +225,8 @@ export default function Dashboard() {
               subtitle={`${stats.total > 0 ? ((stats.operativo / stats.total) * 100).toFixed(0) : 0}% del total`}
               icon={<CheckCircle2 className="h-6 w-6" />}
               variant="success"
+              onClick={() => handleStatusClick("Operativo")}
+              isActive={statusFilter === "Operativo"}
             />
             <StatusCard
               title="En Alerta"
@@ -253,7 +288,7 @@ export default function Dashboard() {
           {isLoading ? (
             <Skeleton className="h-[380px] rounded-lg" />
           ) : (
-            <CriticalAlertsList alerts={filteredAlerts} activeFilter={statusFilter ?? undefined} />
+            <CriticalAlertsList alerts={allAlerts} activeFilter={statusFilter ?? undefined} />
           )}
         </div>
 

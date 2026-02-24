@@ -1,9 +1,16 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
+interface EquipmentInfo {
+  tag: string;
+  name: string;
+  status: string;
+}
+
 interface StatusData {
   name: string;
   value: number;
   color: string;
+  equipment?: EquipmentInfo[];
 }
 
 interface StatusPieChartProps {
@@ -16,14 +23,24 @@ export function StatusPieChart({ data, title }: StatusPieChartProps) {
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
-      const item = payload[0].payload;
+      const item = payload[0].payload as StatusData;
       const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
       return (
-        <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+        <div className="bg-card border border-border rounded-lg p-3 shadow-lg max-h-[300px] overflow-y-auto min-w-[200px]">
           <p className="font-medium text-foreground">{item.name}</p>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground mb-2">
             {item.value} equipos ({percentage}%)
           </p>
+          {item.equipment && item.equipment.length > 0 && (
+            <div className="border-t border-border pt-2 space-y-1">
+              {item.equipment.map((eq, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs">
+                  <span className="font-mono font-semibold text-primary">{eq.tag}</span>
+                  <span className="text-muted-foreground truncate">{eq.status}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       );
     }

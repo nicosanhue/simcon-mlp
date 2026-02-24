@@ -1,9 +1,16 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 
+interface EquipmentInfo {
+  tag: string;
+  name: string;
+  status: string;
+}
+
 interface StatusData {
   name: string;
   value: number;
   color: string;
+  equipment?: EquipmentInfo[];
 }
 
 interface ChartData {
@@ -21,14 +28,24 @@ function MiniPieChart({ title, data }: ChartData) {
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
-      const item = payload[0].payload;
+      const item = payload[0].payload as StatusData;
       const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : 0;
       return (
-        <div className="bg-card border border-border rounded-lg p-2 shadow-lg">
+        <div className="bg-card border border-border rounded-lg p-2 shadow-lg max-h-[250px] overflow-y-auto min-w-[180px]">
           <p className="font-medium text-foreground text-xs">{item.name}</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-muted-foreground mb-1">
             {item.value} equipos ({percentage}%)
           </p>
+          {item.equipment && item.equipment.length > 0 && (
+            <div className="border-t border-border pt-1 space-y-0.5">
+              {item.equipment.map((eq, i) => (
+                <div key={i} className="flex items-center gap-1.5 text-[10px]">
+                  <span className="font-mono font-semibold text-primary">{eq.tag}</span>
+                  <span className="text-muted-foreground truncate">{eq.status}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       );
     }
