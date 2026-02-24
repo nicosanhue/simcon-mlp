@@ -10,72 +10,72 @@
 
 @layer base {
   :root {
-    /* Dark industrial theme - default */
-    --background: 220 20% 8%;
-    --foreground: 210 20% 92%;
+    /* Light TriboWatch-inspired theme */
+    --background: 210 20% 97%;
+    --foreground: 215 30% 18%;
 
-    --card: 220 18% 11%;
-    --card-foreground: 210 20% 92%;
+    --card: 0 0% 100%;
+    --card-foreground: 215 30% 18%;
 
-    --popover: 220 18% 11%;
-    --popover-foreground: 210 20% 92%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 215 30% 18%;
 
-    --primary: 199 89% 48%;
-    --primary-foreground: 220 20% 8%;
+    --primary: 213 72% 37%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 16% 16%;
-    --secondary-foreground: 210 20% 92%;
+    --secondary: 210 18% 93%;
+    --secondary-foreground: 215 30% 18%;
 
-    --muted: 220 14% 14%;
-    --muted-foreground: 215 15% 55%;
+    --muted: 210 14% 93%;
+    --muted-foreground: 215 14% 46%;
 
-    --accent: 199 89% 48%;
-    --accent-foreground: 220 20% 8%;
+    --accent: 213 72% 37%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
-    --destructive-foreground: 210 20% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 220 16% 18%;
-    --input: 220 16% 18%;
-    --ring: 199 89% 48%;
+    --border: 214 18% 86%;
+    --input: 214 18% 86%;
+    --ring: 213 72% 37%;
 
-    --radius: 0.5rem;
+    --radius: 0.625rem;
 
-    /* Status Colors */
-    --status-operativo: 142 76% 36%;
-    --status-operativo-foreground: 142 76% 95%;
-    --status-alerta: 45 93% 47%;
-    --status-alerta-foreground: 45 93% 10%;
-    --status-standby: 45 93% 47%;
-    --status-standby-foreground: 45 93% 10%;
-    --status-falla: 0 84% 60%;
-    --status-falla-foreground: 0 84% 98%;
+    /* Status Colors - TriboWatch style */
+    --status-operativo: 152 69% 42%;
+    --status-operativo-foreground: 152 69% 15%;
+    --status-alerta: 36 95% 52%;
+    --status-alerta-foreground: 36 95% 15%;
+    --status-standby: 36 95% 52%;
+    --status-standby-foreground: 36 95% 15%;
+    --status-falla: 0 76% 55%;
+    --status-falla-foreground: 0 0% 100%;
 
     /* Chart Colors */
-    --chart-operativo: 142 76% 36%;
-    --chart-alerta: 45 93% 47%;
-    --chart-falla: 0 84% 60%;
-    --chart-standby: 38 92% 50%;
+    --chart-operativo: 152 69% 42%;
+    --chart-alerta: 36 95% 52%;
+    --chart-falla: 0 76% 55%;
+    --chart-standby: 36 95% 52%;
 
-    /* Sidebar - Dark industrial */
-    --sidebar-background: 220 22% 6%;
-    --sidebar-foreground: 210 20% 75%;
-    --sidebar-primary: 199 89% 48%;
-    --sidebar-primary-foreground: 220 20% 8%;
-    --sidebar-accent: 220 16% 12%;
-    --sidebar-accent-foreground: 210 20% 92%;
-    --sidebar-border: 220 16% 14%;
-    --sidebar-ring: 199 89% 48%;
+    /* Sidebar - Deep navy */
+    --sidebar-background: 215 50% 18%;
+    --sidebar-foreground: 210 20% 80%;
+    --sidebar-primary: 210 100% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 215 45% 24%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 215 40% 25%;
+    --sidebar-ring: 210 100% 60%;
 
     /* Glow effects */
-    --glow-primary: 199 89% 48%;
-    --glow-success: 142 76% 36%;
-    --glow-warning: 45 93% 47%;
-    --glow-danger: 0 84% 60%;
+    --glow-primary: 213 72% 37%;
+    --glow-success: 152 69% 42%;
+    --glow-warning: 36 95% 52%;
+    --glow-danger: 0 76% 55%;
   }
 
   .dark {
-    /* Same as root - app is dark by default */
+    /* Same as root */
   }
 }
 
@@ -128,8 +128,7 @@
 
   /* Industrial panel style */
   .industrial-panel {
-    @apply bg-card border border-border rounded-lg;
-    background: linear-gradient(180deg, hsl(220 18% 12%) 0%, hsl(220 18% 10%) 100%);
+    @apply bg-card border border-border rounded-lg shadow-sm;
   }
 
   /* Data grid styling */
@@ -151,22 +150,8 @@
     }
   }
 
-  /* Subtle scan line effect for industrial feel */
+  /* Subtle scan line effect - disabled in light theme */
   .scanline {
     position: relative;
-  }
-
-  .scanline::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      hsl(var(--foreground) / 0.015) 2px,
-      hsl(var(--foreground) / 0.015) 4px
-    );
-    pointer-events: none;
   }
 }
