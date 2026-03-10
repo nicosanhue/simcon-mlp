@@ -38,7 +38,9 @@ export function AppSidebar() {
   const isCollapsed = state === "collapsed";
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border" style={{ backgroundImage: 'url(/images/sidebar-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: 'rgba(26, 35, 126, 0.85)' }} />
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
