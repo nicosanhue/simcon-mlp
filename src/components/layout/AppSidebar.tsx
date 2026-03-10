@@ -55,9 +55,9 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-4">
+      <SidebarContent className="relative z-10 px-2 py-4">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2 mb-2">
+          <SidebarGroupLabel className="text-xs font-medium text-white/60 uppercase tracking-wider px-2 mb-2">
             {!isCollapsed && "Navegación"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -68,8 +68,8 @@ export function AppSidebar() {
                     <NavLink 
                       to={item.url} 
                       end={item.url === "/"} 
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
-                      activeClassName="bg-sidebar-accent text-primary font-medium"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-md text-white/80 hover:bg-white/10 hover:text-white transition-colors"
+                      activeClassName="bg-white/15 text-white font-medium"
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
                       {!isCollapsed && <span>{item.title}</span>}
@@ -82,12 +82,12 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-2">
+      <SidebarFooter className="relative z-10 border-t border-white/20 p-2">
         <Button 
           variant="ghost" 
           size="sm" 
           onClick={toggleSidebar}
-          className="w-full justify-center text-muted-foreground hover:text-foreground"
+          className="w-full justify-center text-white/70 hover:text-white hover:bg-white/10"
         >
           {isCollapsed ? (
             <ChevronRight className="h-4 w-4" />
