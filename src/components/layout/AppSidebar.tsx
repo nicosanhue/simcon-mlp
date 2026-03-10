@@ -9,6 +9,7 @@ import {
   GitBranch
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { SidebarDebugPanel } from "./SidebarDebugPanel";
 import {
   Sidebar,
   SidebarContent,
