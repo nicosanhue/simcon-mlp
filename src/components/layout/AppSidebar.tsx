@@ -81,6 +81,10 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
+      <div className="border-t border-sidebar-border">
+        <SidebarDebugPanel />
+      </div>
+
       <SidebarFooter className="border-t border-sidebar-border p-2">
         <Button 
           variant="ghost" 
