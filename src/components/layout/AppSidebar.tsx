@@ -40,7 +40,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border relative overflow-hidden"
-      style={{ backgroundImage: `url(${sidebarBg})`, backgroundSize: 'cover', backgroundPosition: 'center top' }}
+      style={{ backgroundImage: `url(${sidebarBg})`, backgroundSize: '100% 100%', backgroundPosition: 'top left' }}
     >
       {/* Semi-transparent overlay for text readability */}
       <div className="absolute inset-0 bg-sidebar/70 backdrop-blur-sm z-0 pointer-events-none" />
