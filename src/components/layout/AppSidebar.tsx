@@ -41,15 +41,15 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border" style={{ backgroundImage: 'url(/images/sidebar-bg.png)', backgroundSize: 'cover', backgroundPosition: 'center' }}>
       {/* Dark overlay for readability */}
       <div className="absolute inset-0 pointer-events-none" style={{ backgroundColor: 'rgba(26, 35, 126, 0.85)' }} />
-      <SidebarHeader className="border-b border-sidebar-border p-4">
+      <SidebarHeader className="relative z-10 border-b border-white/20 p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
-            <Activity className="h-5 w-5 text-primary" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/10 border border-white/20">
+            <Activity className="h-5 w-5 text-white" />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-sidebar-foreground">SCIM</span>
-              <span className="text-xs text-muted-foreground">Condition Monitoring</span>
+              <span className="text-sm font-semibold text-white">SCIM</span>
+              <span className="text-xs text-white/70">Condition Monitoring</span>
             </div>
           )}
         </div>
