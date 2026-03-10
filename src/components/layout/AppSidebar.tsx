@@ -9,6 +9,7 @@ import {
   GitBranch
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { SidebarDebugPanel } from "./SidebarDebugPanel";
 import {
   Sidebar,
   SidebarContent,
@@ -79,6 +80,10 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <div className="border-t border-sidebar-border">
+        <SidebarDebugPanel />
+      </div>
 
       <SidebarFooter className="border-t border-sidebar-border p-2">
         <Button 
