@@ -8,6 +8,7 @@ import {
   ChevronRight,
   GitBranch
 } from "lucide-react";
+import sidebarBg from "@/assets/sidebar-bg.png";
 import { NavLink } from "@/components/NavLink";
 import {
   Sidebar,
