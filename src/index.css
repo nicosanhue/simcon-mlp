@@ -154,9 +154,4 @@
   .scanline {
     position: relative;
   }
-
-  /* Sidebar background image override */
-  [data-sidebar="sidebar"] {
-    background: transparent !important;
-  }
 }
