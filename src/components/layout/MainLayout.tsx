@@ -3,6 +3,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "./AppSidebar";
 import { CriticalReportDownload } from "@/components/reports/CriticalReportDownload";
 import { Separator } from "@/components/ui/separator";
+import bgCorporate from "@/assets/bg-corporate.png";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -11,7 +12,17 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+        <div className="flex min-h-screen w-full relative">
+          <div
+            className="fixed inset-0 z-0 pointer-events-none"
+            style={{
+              backgroundImage: `url(${bgCorporate})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'blur(8px)',
+              opacity: 0.07,
+            }}
+          />
         <AppSidebar />
         <SidebarInset className="flex-1">
           <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4">
