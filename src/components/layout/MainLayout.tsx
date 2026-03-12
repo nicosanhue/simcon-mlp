@@ -20,7 +20,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               filter: 'blur(8px)',
-              opacity: 0.07,
+              opacity: 0.16,
             }}
           />
         <AppSidebar />
