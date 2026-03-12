@@ -3,6 +3,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/s
 import { AppSidebar } from "./AppSidebar";
 import { CriticalReportDownload } from "@/components/reports/CriticalReportDownload";
 import { Separator } from "@/components/ui/separator";
+import bgCorporate from "@/assets/bg-corporate.png";
 
 interface MainLayoutProps {
   children: ReactNode;
