@@ -24,11 +24,11 @@ export function SidebarDebugPanel() {
   if (isCollapsed) {
     return (
       <div className="flex flex-col items-center gap-2 py-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted" title={`Equipos: ${counts?.totalEquipment ?? "..."}`}>
-          <HardDrive className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white/15" title={`Equipos: ${counts?.totalEquipment ?? "..."}`}>
+          <HardDrive className="h-3.5 w-3.5 text-white/70" />
         </div>
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted" title={`Reportes: ${counts?.totalReports ?? "..."}`}>
-          <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white/15" title={`Reportes: ${counts?.totalReports ?? "..."}`}>
+          <FileText className="h-3.5 w-3.5 text-white/70" />
         </div>
       </div>
     );
