@@ -24,11 +24,11 @@ export function SidebarDebugPanel() {
   if (isCollapsed) {
     return (
       <div className="flex flex-col items-center gap-2 py-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted" title={`Equipos: ${counts?.totalEquipment ?? "..."}`}>
-          <HardDrive className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white/15" title={`Equipos: ${counts?.totalEquipment ?? "..."}`}>
+          <HardDrive className="h-3.5 w-3.5 text-white/70" />
         </div>
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted" title={`Reportes: ${counts?.totalReports ?? "..."}`}>
-          <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white/15" title={`Reportes: ${counts?.totalReports ?? "..."}`}>
+          <FileText className="h-3.5 w-3.5 text-white/70" />
         </div>
       </div>
     );
@@ -36,18 +36,18 @@ export function SidebarDebugPanel() {
 
   return (
     <div className="px-3 py-3 space-y-2">
-      <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+      <div className="flex items-center gap-2 text-xs font-medium text-white/60 uppercase tracking-wider">
         <Database className="h-3.5 w-3.5" />
         <span>Debug BD</span>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <div className="bg-muted/50 rounded-md p-2">
-          <p className="text-[10px] text-muted-foreground">Equipos</p>
-          <p className="text-sm font-bold text-sidebar-foreground">{counts?.totalEquipment ?? "..."}</p>
+        <div className="bg-white/10 rounded-md p-2">
+          <p className="text-[10px] text-white/60">Equipos</p>
+          <p className="text-sm font-bold text-white">{counts?.totalEquipment ?? "..."}</p>
         </div>
-        <div className="bg-muted/50 rounded-md p-2">
-          <p className="text-[10px] text-muted-foreground">Reportes</p>
-          <p className="text-sm font-bold text-sidebar-foreground">{counts?.totalReports ?? "..."}</p>
+        <div className="bg-white/10 rounded-md p-2">
+          <p className="text-[10px] text-white/60">Reportes</p>
+          <p className="text-sm font-bold text-white">{counts?.totalReports ?? "..."}</p>
         </div>
       </div>
     </div>

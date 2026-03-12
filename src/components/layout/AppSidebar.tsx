@@ -42,13 +42,13 @@ export function AppSidebar() {
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 border border-primary/20">
-            <Activity className="h-5 w-5 text-primary" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white/15 border border-white/20">
+            <Activity className="h-5 w-5 text-white" />
           </div>
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-sidebar-foreground">SCIM</span>
-              <span className="text-xs text-muted-foreground">Condition Monitoring</span>
+              <span className="text-sm font-semibold text-white">SCIM</span>
+              <span className="text-xs text-white/70">Condition Monitoring</span>
             </div>
           )}
         </div>
@@ -56,7 +56,7 @@ export function AppSidebar() {
 
       <SidebarContent className="px-2 py-4">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2 mb-2">
+          <SidebarGroupLabel className="text-xs font-medium text-white/60 uppercase tracking-wider px-2 mb-2">
             {!isCollapsed && "Navegación"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -67,8 +67,8 @@ export function AppSidebar() {
                     <NavLink 
                       to={item.url} 
                       end={item.url === "/"} 
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-md text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors"
-                      activeClassName="bg-sidebar-accent text-primary font-medium"
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-md text-white/85 hover:bg-white/15 hover:text-white transition-colors"
+                      activeClassName="bg-white/20 text-white font-medium"
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
                       {!isCollapsed && <span>{item.title}</span>}
@@ -90,7 +90,7 @@ export function AppSidebar() {
           variant="ghost" 
           size="sm" 
           onClick={toggleSidebar}
-          className="w-full justify-center text-muted-foreground hover:text-foreground"
+          className="w-full justify-center text-white/70 hover:text-white hover:bg-white/15"
         >
           {isCollapsed ? (
             <ChevronRight className="h-4 w-4" />
