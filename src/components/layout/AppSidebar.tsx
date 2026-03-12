@@ -56,7 +56,7 @@ export function AppSidebar() {
 
       <SidebarContent className="px-2 py-4">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2 mb-2">
+          <SidebarGroupLabel className="text-xs font-medium text-white/60 uppercase tracking-wider px-2 mb-2">
             {!isCollapsed && "Navegación"}
           </SidebarGroupLabel>
           <SidebarGroupContent>
