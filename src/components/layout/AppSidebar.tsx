@@ -90,7 +90,7 @@ export function AppSidebar() {
           variant="ghost" 
           size="sm" 
           onClick={toggleSidebar}
-          className="w-full justify-center text-muted-foreground hover:text-foreground"
+          className="w-full justify-center text-white/70 hover:text-white hover:bg-white/15"
         >
           {isCollapsed ? (
             <ChevronRight className="h-4 w-4" />
