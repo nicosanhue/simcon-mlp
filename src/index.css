@@ -58,15 +58,15 @@
     --chart-falla: 0 76% 55%;
     --chart-standby: 45 80% 55%;
 
-    /* Sidebar - Deep navy complementario al teal (#44546A) */
-    --sidebar-background: 215 22% 34%;
-    --sidebar-foreground: 186 35% 85%;
-    --sidebar-primary: 187 51% 43%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 20% 40%;
+    /* Sidebar - Color #3899A8 de Minera Los Pelambres */
+    --sidebar-background: 187 51% 43%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 0 0% 100%;
+    --sidebar-primary-foreground: 187 51% 43%;
+    --sidebar-accent: 187 60% 50%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 215 20% 38%;
-    --sidebar-ring: 187 51% 43%;
+    --sidebar-border: 187 40% 35%;
+    --sidebar-ring: 0 0% 100%;
 
     /* Glow effects */
     --glow-primary: 187 51% 43%;
