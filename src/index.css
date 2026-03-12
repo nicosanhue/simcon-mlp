@@ -60,12 +60,12 @@
 
     /* Sidebar - Color #3899A8 de Minera Los Pelambres */
     --sidebar-background: 187 51% 43%;
-    --sidebar-foreground: 0 0% 100%;
+    --sidebar-foreground: 0 0% 96%;
     --sidebar-primary: 0 0% 100%;
     --sidebar-primary-foreground: 187 51% 43%;
-    --sidebar-accent: 187 60% 50%;
+    --sidebar-accent: 187 60% 35%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 187 40% 35%;
+    --sidebar-border: 187 40% 50%;
     --sidebar-ring: 0 0% 100%;
 
     /* Glow effects */
