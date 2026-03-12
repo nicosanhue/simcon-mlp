@@ -10,67 +10,68 @@
 
 @layer base {
   :root {
-    /* Light TriboWatch-inspired theme */
-    --background: 210 20% 97%;
-    --foreground: 215 30% 18%;
+    /* TriboWatch AI - Minera Los Pelambres Brand Colors */
+    --background: 0 0% 98%;
+    --foreground: 215 22% 25%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 30% 18%;
+    --card-foreground: 215 22% 25%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 30% 18%;
+    --popover-foreground: 215 22% 25%;
 
-    --primary: 213 72% 37%;
+    /* Primary: #3899A8 (Teal principal) */
+    --primary: 187 51% 43%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 18% 93%;
-    --secondary-foreground: 215 30% 18%;
+    --secondary: 186 35% 90%;
+    --secondary-foreground: 215 22% 25%;
 
-    --muted: 210 14% 93%;
+    --muted: 186 20% 93%;
     --muted-foreground: 215 14% 46%;
 
-    --accent: 213 72% 37%;
+    --accent: 187 51% 43%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 76% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 18% 86%;
-    --input: 214 18% 86%;
-    --ring: 213 72% 37%;
+    --border: 186 25% 85%;
+    --input: 186 25% 85%;
+    --ring: 187 51% 43%;
 
     --radius: 0.625rem;
 
-    /* Status Colors - TriboWatch style */
-    --status-operativo: 152 69% 42%;
-    --status-operativo-foreground: 152 69% 15%;
-    --status-alerta: 36 95% 52%;
-    --status-alerta-foreground: 36 95% 15%;
-    --status-standby: 36 95% 52%;
-    --status-standby-foreground: 36 95% 15%;
+    /* Status Colors - Adaptados al nuevo tema */
+    --status-operativo: 152 60% 45%;
+    --status-operativo-foreground: 152 60% 15%;
+    --status-alerta: 36 90% 55%;
+    --status-alerta-foreground: 36 90% 15%;
+    --status-standby: 45 80% 55%;
+    --status-standby-foreground: 45 80% 15%;
     --status-falla: 0 76% 55%;
     --status-falla-foreground: 0 0% 100%;
 
-    /* Chart Colors */
-    --chart-operativo: 152 69% 42%;
-    --chart-alerta: 36 95% 52%;
+    /* Chart Colors - Coordinados con el teal */
+    --chart-operativo: 152 60% 45%;
+    --chart-alerta: 36 90% 55%;
     --chart-falla: 0 76% 55%;
-    --chart-standby: 36 95% 52%;
+    --chart-standby: 45 80% 55%;
 
-    /* Sidebar - Deep navy */
-    --sidebar-background: 215 50% 18%;
-    --sidebar-foreground: 210 20% 80%;
-    --sidebar-primary: 210 100% 60%;
+    /* Sidebar - Deep navy complementario al teal (#44546A) */
+    --sidebar-background: 215 22% 34%;
+    --sidebar-foreground: 186 35% 85%;
+    --sidebar-primary: 187 51% 43%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 45% 24%;
+    --sidebar-accent: 215 20% 40%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 215 40% 25%;
-    --sidebar-ring: 210 100% 60%;
+    --sidebar-border: 215 20% 38%;
+    --sidebar-ring: 187 51% 43%;
 
     /* Glow effects */
-    --glow-primary: 213 72% 37%;
-    --glow-success: 152 69% 42%;
-    --glow-warning: 36 95% 52%;
+    --glow-primary: 187 51% 43%;
+    --glow-success: 152 60% 45%;
+    --glow-warning: 36 90% 55%;
     --glow-danger: 0 76% 55%;
   }
 
