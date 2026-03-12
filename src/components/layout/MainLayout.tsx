@@ -12,7 +12,17 @@ interface MainLayoutProps {
 export function MainLayout({ children }: MainLayoutProps) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+        <div className="flex min-h-screen w-full relative">
+          <div
+            className="fixed inset-0 z-0 pointer-events-none"
+            style={{
+              backgroundImage: `url(${bgCorporate})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              filter: 'blur(8px)',
+              opacity: 0.07,
+            }}
+          />
         <AppSidebar />
         <SidebarInset className="flex-1">
           <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4">
