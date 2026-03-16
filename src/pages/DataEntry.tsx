@@ -14,7 +14,7 @@ import { WeekSelector } from "@/components/dashboard/WeekSelector";
 import { getISOWeek, getYear, startOfWeek, addDays, format } from "date-fns";
 import { es } from "date-fns/locale";
 
-type EquipmentStatus = 'Operativo' | 'Stand By' | 'Falla' | 'Alerta';
+type EquipmentStatus = 'Satisfactorio' | 'Seguimiento' | 'Crítico' | 'Alerta';
 
 interface EquipmentWithReport {
   id: string;
@@ -33,10 +33,10 @@ interface EquipmentWithReport {
 }
 
 const statusConfig: Record<EquipmentStatus, { label: string; color: string; icon: React.ReactNode }> = {
-  'Operativo': { label: 'Operativo', color: 'bg-green-500/20 text-green-400 border-green-500/30', icon: <CheckCircle className="h-3 w-3" /> },
-  'Stand By': { label: 'Stand By', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: <Clock className="h-3 w-3" /> },
-  'Alerta': { label: 'Alerta', color: 'bg-amber-500/20 text-amber-400 border-amber-500/30', icon: <AlertTriangle className="h-3 w-3" /> },
-  'Falla': { label: 'Falla', color: 'bg-red-500/20 text-red-400 border-red-500/30', icon: <XCircle className="h-3 w-3" /> },
+  'Satisfactorio': { label: 'Satisfactorio', color: 'bg-status-operativo/20 text-status-operativo border-status-operativo/30', icon: <CheckCircle className="h-3 w-3" /> },
+  'Seguimiento': { label: 'Seguimiento', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: <Clock className="h-3 w-3" /> },
+  'Alerta': { label: 'Alerta', color: 'bg-status-alerta/20 text-status-alerta border-status-alerta/30', icon: <AlertTriangle className="h-3 w-3" /> },
+  'Crítico': { label: 'Crítico', color: 'bg-status-falla/20 text-status-falla border-status-falla/30', icon: <XCircle className="h-3 w-3" /> },
 };
 
 export default function DataEntry() {
@@ -124,7 +124,7 @@ export default function DataEntry() {
             area_name: eq.systems.areas.name,
             area_id: eq.systems.areas.id,
             report_id: report?.id || null,
-            status: report?.status || 'Operativo',
+            status: (report?.status as EquipmentStatus) || 'Satisfactorio',
             technical_description: report?.technical_description || null,
             sap_notification: report?.sap_notification || null,
             sap_order: report?.sap_order || null,

@@ -6,7 +6,7 @@ interface StatusCardProps {
   value: number | string;
   subtitle?: string;
   icon: ReactNode;
-  variant?: "default" | "success" | "warning" | "danger";
+  variant?: "default" | "success" | "info" | "warning" | "danger";
   onClick?: () => void;
   isActive?: boolean;
 }
@@ -14,6 +14,7 @@ interface StatusCardProps {
 const variantStyles = {
   default: "border-border",
   success: "border-status-operativo/30 card-glow-success",
+  info: "border-blue-500/30",
   warning: "border-status-alerta/30 card-glow-warning",
   danger: "border-status-falla/30 card-glow-danger",
 };
@@ -21,6 +22,7 @@ const variantStyles = {
 const iconVariantStyles = {
   default: "bg-primary/10 text-primary",
   success: "bg-status-operativo/10 text-status-operativo",
+  info: "bg-blue-500/10 text-blue-500",
   warning: "bg-status-alerta/10 text-status-alerta",
   danger: "bg-status-falla/10 text-status-falla",
 };

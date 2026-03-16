@@ -5,7 +5,7 @@ import {
   CheckCircle2, 
   AlertTriangle, 
   XCircle, 
-  PauseCircle,
+  Eye,
   Calendar,
   FileText,
   Wrench
@@ -17,12 +17,19 @@ interface EquipmentTimelineProps {
 }
 
 const statusConfig = {
-  Operativo: {
+  Satisfactorio: {
     icon: CheckCircle2,
     color: "text-green-500",
     bgColor: "bg-green-500/10",
     borderColor: "border-green-500/30",
-    label: "Operativo",
+    label: "Satisfactorio",
+  },
+  Seguimiento: {
+    icon: Eye,
+    color: "text-blue-500",
+    bgColor: "bg-blue-500/10",
+    borderColor: "border-blue-500/30",
+    label: "Seguimiento",
   },
   Alerta: {
     icon: AlertTriangle,
@@ -31,19 +38,12 @@ const statusConfig = {
     borderColor: "border-yellow-500/30",
     label: "Alerta",
   },
-  Falla: {
+  "Crítico": {
     icon: XCircle,
     color: "text-red-500",
     bgColor: "bg-red-500/10",
     borderColor: "border-red-500/30",
-    label: "Falla",
-  },
-  "Stand By": {
-    icon: PauseCircle,
-    color: "text-blue-500",
-    bgColor: "bg-blue-500/10",
-    borderColor: "border-blue-500/30",
-    label: "Stand By",
+    label: "Crítico",
   },
 };
 
@@ -116,7 +116,7 @@ export function EquipmentTimeline({ equipment }: EquipmentTimelineProps) {
             
             <div className="space-y-4">
               {equipment.reports.map((report, index) => {
-                const config = statusConfig[report.status as keyof typeof statusConfig] || statusConfig.Operativo;
+                const config = statusConfig[report.status as keyof typeof statusConfig] || statusConfig.Satisfactorio;
                 const Icon = config.icon;
                 
                 return (

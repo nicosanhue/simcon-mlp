@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Activity, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { Activity, CheckCircle2, AlertTriangle, XCircle, Eye } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { StatusPieChart } from "@/components/dashboard/StatusPieChart";
 import { MultipleStatusCharts } from "@/components/dashboard/MultipleStatusCharts";
@@ -30,7 +30,7 @@ interface EquipmentItem {
   systems: { id: string; name: string; areas: { id: string; name: string } };
 }
 
-function createChartData(stats: { operativo: number; alerta: number; falla: number }, equipment?: EquipmentItem[]) {
+function createChartData(stats: { satisfactorio: number; seguimiento: number; alerta: number; critico: number }, equipment?: EquipmentItem[]) {
   const getEquipmentByStatus = (status: string) =>
     equipment?.filter(eq => eq.currentStatus === status).map(eq => ({
       tag: eq.tag,
@@ -39,16 +39,16 @@ function createChartData(stats: { operativo: number; alerta: number; falla: numb
     })) || [];
 
   return [
-    { name: "Operativo", value: stats.operativo, color: "hsl(142, 76%, 36%)", equipment: getEquipmentByStatus("Operativo") },
+    { name: "Satisfactorio", value: stats.satisfactorio, color: "hsl(142, 76%, 36%)", equipment: getEquipmentByStatus("Satisfactorio") },
+    { name: "Seguimiento", value: stats.seguimiento, color: "hsl(210, 80%, 55%)", equipment: getEquipmentByStatus("Seguimiento") },
     { name: "Alerta", value: stats.alerta, color: "hsl(45, 93%, 47%)", equipment: getEquipmentByStatus("Alerta") },
-    { name: "Crítico", value: stats.falla, color: "hsl(0, 84%, 60%)", equipment: getEquipmentByStatus("Falla") },
+    { name: "Crítico", value: stats.critico, color: "hsl(0, 84%, 60%)", equipment: getEquipmentByStatus("Crítico") },
   ].filter(item => item.value > 0);
 }
 
 function createGroupedCharts(groupedStats: GroupedStats[], equipment?: EquipmentItem[]) {
   return groupedStats.map((group) => {
     const groupEquipment = equipment?.filter(eq => {
-      // Match by area or system name
       return eq.systems.areas.name === group.name || eq.systems.name === group.name;
     });
     return {
@@ -63,11 +63,10 @@ export default function Dashboard() {
   const [week, setWeek] = useState<number | null>(null);
   const [year, setYear] = useState<number | null>(null);
   const [selectedArea, setSelectedArea] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<"Falla" | "Alerta" | "Operativo" | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const dashboardRef = useRef<HTMLDivElement>(null);
 
-  // Fetch the latest week with data
   const { data: latestWeekData } = useQuery({
     queryKey: ['latest-week'],
     queryFn: async () => {
@@ -83,13 +82,11 @@ export default function Dashboard() {
     }
   });
 
-  // Initialize week/year once we have the latest data
   useEffect(() => {
     if (latestWeekData && week === null && year === null) {
       setWeek(latestWeekData.week_number);
       setYear(latestWeekData.year);
     } else if (!latestWeekData && week === null && year === null) {
-      // Fallback to current week if no data exists
       setWeek(getWeekNumber(currentDate));
       setYear(currentDate.getFullYear());
     }
@@ -102,15 +99,15 @@ export default function Dashboard() {
     searchTerm,
   });
 
-  // Build alerts list including Operativo when filtered
-  const allAlerts = statusFilter === "Operativo"
+  // Build alerts list based on filter
+  const allAlerts = statusFilter === "Satisfactorio" || statusFilter === "Seguimiento"
     ? equipment
-        .filter(eq => eq.currentStatus === "Operativo")
+        .filter(eq => eq.currentStatus === statusFilter)
         .map(eq => ({
           id: eq.id,
           tag: eq.tag,
           name: eq.name,
-          status: "Operativo" as const,
+          status: statusFilter as "Satisfactorio" | "Seguimiento",
           area: eq.systems.areas.name,
           system: eq.systems.name,
           description: eq.currentReport?.technical_description || undefined,
@@ -120,7 +117,7 @@ export default function Dashboard() {
       ? criticalAlerts.filter(alert => alert.status === statusFilter)
       : criticalAlerts;
 
-  const handleStatusClick = (status: "Falla" | "Alerta" | "Operativo") => {
+  const handleStatusClick = (status: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento") => {
     setStatusFilter(prev => prev === status ? null : status);
   };
 
@@ -186,13 +183,13 @@ export default function Dashboard() {
 
         {/* Stats Cards */}
         {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, i) => (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+            {Array.from({ length: 5 }).map((_, i) => (
               <Skeleton key={i} className="h-[120px] rounded-lg" />
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             <StatusCard
               title="Total Equipos"
               value={stats.total}
@@ -201,16 +198,25 @@ export default function Dashboard() {
               variant="default"
             />
             <StatusCard
-              title="Operativo"
-              value={stats.operativo}
-              subtitle={`${stats.total > 0 ? ((stats.operativo / stats.total) * 100).toFixed(0) : 0}% del total`}
+              title="Satisfactorio"
+              value={stats.satisfactorio}
+              subtitle={`${stats.total > 0 ? ((stats.satisfactorio / stats.total) * 100).toFixed(0) : 0}% del total`}
               icon={<CheckCircle2 className="h-6 w-6" />}
               variant="success"
-              onClick={() => handleStatusClick("Operativo")}
-              isActive={statusFilter === "Operativo"}
+              onClick={() => handleStatusClick("Satisfactorio")}
+              isActive={statusFilter === "Satisfactorio"}
             />
             <StatusCard
-              title="En Alerta"
+              title="Seguimiento"
+              value={stats.seguimiento}
+              subtitle="En seguimiento"
+              icon={<Eye className="h-6 w-6" />}
+              variant="info"
+              onClick={() => handleStatusClick("Seguimiento")}
+              isActive={statusFilter === "Seguimiento"}
+            />
+            <StatusCard
+              title="Alerta"
               value={stats.alerta}
               subtitle="Requiere monitoreo"
               icon={<AlertTriangle className="h-6 w-6" />}
@@ -220,52 +226,39 @@ export default function Dashboard() {
             />
             <StatusCard
               title="Crítico"
-              value={stats.falla}
+              value={stats.critico}
               subtitle="Intervención requerida"
               icon={<XCircle className="h-6 w-6" />}
               variant="danger"
-              onClick={() => handleStatusClick("Falla")}
-              isActive={statusFilter === "Falla"}
+              onClick={() => handleStatusClick("Crítico")}
+              isActive={statusFilter === "Crítico"}
             />
           </div>
         )}
 
         {/* Main Content Grid */}
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* Pie Charts Section */}
           {isLoading ? (
             <Skeleton className="h-[380px] rounded-lg" />
           ) : selectedArea === "all" ? (
-            // When "All Areas" is selected: Show total chart + charts by area
             <div className="space-y-6">
-              <StatusPieChart
-                data={chartData}
-                title="Distribución Total"
-              />
+              <StatusPieChart data={chartData} title="Distribución Total" />
               {areaCharts.length > 0 && (
-                <MultipleStatusCharts
-                  charts={areaCharts}
-                  mainTitle="Distribución por Área"
-                />
+                <MultipleStatusCharts charts={areaCharts} mainTitle="Distribución por Área" />
               )}
             </div>
           ) : (
-            // When a specific area is selected: Show total for that area + charts by system
             <div className="space-y-6">
               <StatusPieChart
                 data={chartData}
                 title={`Distribución - ${areas.find(a => a.id === selectedArea)?.name || 'Área'}`}
               />
               {systemCharts.length > 0 && (
-                <MultipleStatusCharts
-                  charts={systemCharts}
-                  mainTitle="Distribución por Sistema"
-                />
+                <MultipleStatusCharts charts={systemCharts} mainTitle="Distribución por Sistema" />
               )}
             </div>
           )}
 
-          {/* Critical Alerts */}
           {isLoading ? (
             <Skeleton className="h-[380px] rounded-lg" />
           ) : (
