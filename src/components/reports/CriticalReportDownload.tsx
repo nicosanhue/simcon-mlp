@@ -62,7 +62,7 @@ export function CriticalReportDownload() {
           )
         )
       `)
-      .in('status', ['Falla', 'Alerta'])
+      .in('status', ['Crítico', 'Alerta'])
       .eq('week_number', latestWeek)
       .eq('year', latestYear);
 
