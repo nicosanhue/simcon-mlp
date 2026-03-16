@@ -28,12 +28,13 @@ interface UploadResult {
 }
 
 // Map CSV status values to database enum values
-const mapStatus = (csvStatus: string): 'Operativo' | 'Stand By' | 'Falla' | 'Alerta' => {
+const mapStatus = (csvStatus: string): 'Satisfactorio' | 'Seguimiento' | 'Crítico' | 'Alerta' => {
   const statusLower = csvStatus?.toLowerCase().trim();
-  if (statusLower === 'critico' || statusLower === 'crítico') return 'Falla';
+  if (statusLower === 'critico' || statusLower === 'crítico') return 'Crítico';
   if (statusLower === 'alerta') return 'Alerta';
-  if (statusLower === 'stand by' || statusLower === 'standby') return 'Stand By';
-  return 'Operativo'; // Default
+  if (statusLower === 'seguimiento' || statusLower === 'stand by' || statusLower === 'standby') return 'Seguimiento';
+  if (statusLower === 'satisfactorio' || statusLower === 'operativo') return 'Satisfactorio';
+  return 'Satisfactorio'; // Default
 };
 
 // Parse week and year from filename like "Estado Equipos Semana 52 2025.csv"
