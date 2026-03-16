@@ -38,9 +38,10 @@ export interface GroupedStats {
   id: string;
   name: string;
   total: number;
-  operativo: number;
+  satisfactorio: number;
+  seguimiento: number;
   alerta: number;
-  falla: number;
+  critico: number;
 }
 
 export interface DebugCounts {
@@ -52,9 +53,10 @@ export interface DebugCounts {
 function calculateStats(equipment: EquipmentWithReport[]) {
   return {
     total: equipment.length,
-    operativo: equipment.filter((e) => e.currentStatus === "Operativo").length,
+    satisfactorio: equipment.filter((e) => e.currentStatus === "Satisfactorio").length,
+    seguimiento: equipment.filter((e) => e.currentStatus === "Seguimiento").length,
     alerta: equipment.filter((e) => e.currentStatus === "Alerta").length,
-    falla: equipment.filter((e) => e.currentStatus === "Falla").length,
+    critico: equipment.filter((e) => e.currentStatus === "Crítico").length,
     sinRegistro: equipment.filter((e) => e.currentStatus === "Sin Registro").length,
   };
 }
@@ -95,12 +97,10 @@ async function fetchAllEquipment(areaId: string, searchTerm?: string) {
       `)
       .range(from, from + PAGE_SIZE - 1);
 
-    // Server-side area filter
     if (areaId !== "all") {
       query = query.eq("systems.areas.id", areaId);
     }
 
-    // Server-side search filter (on tag or name)
     if (searchTerm && searchTerm.trim() !== "") {
       const term = searchTerm.trim();
       query = query.or(`tag.ilike.%${term}%,name.ilike.%${term}%`);
@@ -122,7 +122,6 @@ async function fetchAllEquipment(areaId: string, searchTerm?: string) {
 }
 
 export function useDashboardData(filters: DashboardFilters) {
-  // Fetch areas
   const areasQuery = useQuery({
     queryKey: ["areas"],
     queryFn: async () => {
@@ -135,7 +134,6 @@ export function useDashboardData(filters: DashboardFilters) {
     },
   });
 
-  // Fetch systems for grouping
   const systemsQuery = useQuery({
     queryKey: ["systems"],
     queryFn: async () => {
@@ -148,7 +146,6 @@ export function useDashboardData(filters: DashboardFilters) {
     },
   });
 
-  // Debug counts - total equipment and reports
   const debugCountsQuery = useQuery({
     queryKey: ["debug-counts", filters.week, filters.year],
     queryFn: async () => {
@@ -170,13 +167,11 @@ export function useDashboardData(filters: DashboardFilters) {
     },
   });
 
-  // Fetch equipment with weekly reports - NO LIMIT, uses pagination
   const equipmentQuery = useQuery({
     queryKey: ["dashboard-equipment", filters],
     queryFn: async () => {
       const data = await fetchAllEquipment(filters.areaId, filters.searchTerm);
 
-      // Filter weekly reports by week/year
       const equipmentWithCurrentWeek = data.map((eq: any) => {
         const currentReport = eq.weekly_reports.find(
           (r: any) => r.week_number === filters.week && r.year === filters.year
@@ -192,12 +187,10 @@ export function useDashboardData(filters: DashboardFilters) {
     },
   });
 
-  // Calculate overall statistics
   const stats = equipmentQuery.data
     ? calculateStats(equipmentQuery.data)
-    : { total: 0, operativo: 0, alerta: 0, falla: 0, sinRegistro: 0 };
+    : { total: 0, satisfactorio: 0, seguimiento: 0, alerta: 0, critico: 0, sinRegistro: 0 };
 
-  // Calculate stats grouped by area (when "all" is selected)
   const statsByArea: GroupedStats[] = equipmentQuery.data && areasQuery.data
     ? areasQuery.data.map((area) => {
         const areaEquipment = equipmentQuery.data.filter(
@@ -212,7 +205,6 @@ export function useDashboardData(filters: DashboardFilters) {
       }).filter((area) => area.total > 0)
     : [];
 
-  // Calculate stats grouped by system (when a specific area is selected)
   const statsBySystem: GroupedStats[] = equipmentQuery.data && systemsQuery.data && filters.areaId !== "all"
     ? (() => {
         const filteredSystems = systemsQuery.data.filter((system) => system.area_id === filters.areaId);
@@ -226,9 +218,10 @@ export function useDashboardData(filters: DashboardFilters) {
             id: system.id,
             name: system.name,
             total: systemStats.total,
-            operativo: systemStats.operativo,
+            satisfactorio: systemStats.satisfactorio,
+            seguimiento: systemStats.seguimiento,
             alerta: systemStats.alerta,
-            falla: systemStats.falla,
+            critico: systemStats.critico,
           };
         }).filter((system) => system.total > 0);
         
@@ -236,14 +229,14 @@ export function useDashboardData(filters: DashboardFilters) {
       })()
     : [];
 
-  // Get critical alerts (Falla or Alerta)
+  // Get critical alerts (Crítico or Alerta)
   const criticalAlerts = equipmentQuery.data
-    ?.filter((eq) => eq.currentStatus === "Falla" || eq.currentStatus === "Alerta")
+    ?.filter((eq) => eq.currentStatus === "Crítico" || eq.currentStatus === "Alerta")
     .map((eq) => ({
       id: eq.id,
       tag: eq.tag,
       name: eq.name,
-      status: eq.currentStatus as "Falla" | "Alerta",
+      status: eq.currentStatus as "Crítico" | "Alerta",
       area: eq.systems.areas.name,
       system: eq.systems.name,
       description: eq.currentReport?.technical_description || undefined,

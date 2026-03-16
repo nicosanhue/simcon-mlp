@@ -369,7 +369,7 @@ export default function AdminSettings() {
         equipment_id: string;
         week_number: number;
         year: number;
-        status: 'Operativo' | 'Stand By' | 'Falla' | 'Alerta';
+        status: 'Satisfactorio' | 'Seguimiento' | 'Crítico' | 'Alerta';
         technical_description: string | null;
         sap_notification: string | null;
         sap_order: string | null;

@@ -124,7 +124,7 @@ export default function DataEntry() {
             area_name: eq.systems.areas.name,
             area_id: eq.systems.areas.id,
             report_id: report?.id || null,
-            status: report?.status || 'Operativo',
+            status: (report?.status as EquipmentStatus) || 'Satisfactorio',
             technical_description: report?.technical_description || null,
             sap_notification: report?.sap_notification || null,
             sap_order: report?.sap_order || null,

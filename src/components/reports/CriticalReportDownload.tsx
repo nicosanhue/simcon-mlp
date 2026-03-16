@@ -271,8 +271,8 @@ export function CriticalReportDownload() {
         yPos += 6; // spacing after section
       };
 
-      // Render Fallas first (red background, white text)
-      renderEquipmentList(fallas, "EN FALLA", [220, 53, 69], [255, 255, 255]);
+      // Render Críticos first (red background, white text)
+      renderEquipmentList(fallas, "CRÍTICO", [220, 53, 69], [255, 255, 255]);
 
       // Render Alertas second (yellow/amber background, dark text)
       renderEquipmentList(alertas, "EN ALERTA", [255, 193, 7], [40, 40, 40]);
