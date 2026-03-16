@@ -89,7 +89,7 @@ export function CriticalReportDownload() {
         year: report.year,
       };
 
-      if (report.status === 'Falla') {
+      if (report.status === 'Crítico') {
         fallas.push(criticalEquip);
       } else {
         alertas.push(criticalEquip);
