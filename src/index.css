@@ -42,9 +42,11 @@
 
     --radius: 0.625rem;
 
-    /* Status Colors - Adaptados al nuevo tema */
+    /* Status Colors */
     --status-operativo: 152 60% 45%;
     --status-operativo-foreground: 152 60% 15%;
+    --status-seguimiento: 210 80% 55%;
+    --status-seguimiento-foreground: 210 80% 15%;
     --status-alerta: 36 90% 55%;
     --status-alerta-foreground: 36 90% 15%;
     --status-standby: 45 80% 55%;
@@ -52,8 +54,9 @@
     --status-falla: 0 76% 55%;
     --status-falla-foreground: 0 0% 100%;
 
-    /* Chart Colors - Coordinados con el teal */
+    /* Chart Colors */
     --chart-operativo: 152 60% 45%;
+    --chart-seguimiento: 210 80% 55%;
     --chart-alerta: 36 90% 55%;
     --chart-falla: 0 76% 55%;
     --chart-standby: 45 80% 55%;

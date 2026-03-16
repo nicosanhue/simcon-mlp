@@ -64,6 +64,8 @@ export default {
         status: {
           operativo: "hsl(var(--status-operativo))",
           "operativo-foreground": "hsl(var(--status-operativo-foreground))",
+          seguimiento: "hsl(var(--status-seguimiento))",
+          "seguimiento-foreground": "hsl(var(--status-seguimiento-foreground))",
           alerta: "hsl(var(--status-alerta))",
           "alerta-foreground": "hsl(var(--status-alerta-foreground))",
           standby: "hsl(var(--status-standby))",
@@ -73,6 +75,7 @@ export default {
         },
         chart: {
           operativo: "hsl(var(--chart-operativo))",
+          seguimiento: "hsl(var(--chart-seguimiento))",
           alerta: "hsl(var(--chart-alerta))",
           falla: "hsl(var(--chart-falla))",
           standby: "hsl(var(--chart-standby))",
