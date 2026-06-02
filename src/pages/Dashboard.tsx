@@ -101,14 +101,14 @@ export default function Dashboard() {
   });
 
   // Build alerts list based on filter
-  const allAlerts = statusFilter === "Satisfactorio" || statusFilter === "Seguimiento"
+  const allAlerts = statusFilter === "Satisfactorio" || statusFilter === "Seguimiento" || statusFilter === "Sin medición"
     ? equipment
         .filter(eq => eq.currentStatus === statusFilter)
         .map(eq => ({
           id: eq.id,
           tag: eq.tag,
           name: eq.name,
-          status: statusFilter as "Satisfactorio" | "Seguimiento",
+          status: statusFilter as "Satisfactorio" | "Seguimiento" | "Sin medición",
           area: eq.systems.areas.name,
           system: eq.systems.name,
           description: eq.currentReport?.technical_description || undefined,
