@@ -89,6 +89,7 @@ const getStatusIcon = (status: string, className: string) => {
     case "Alerta": return <AlertTriangle className={className} />;
     case "Satisfactorio": return <CheckCircle2 className={className} />;
     case "Seguimiento": return <Clock className={className} />;
+    case "Sin medición": return <HelpCircle className={className} />;
     default: return <AlertCircle className={className} />;
   }
 };
