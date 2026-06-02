@@ -403,7 +403,7 @@ export default function AdminSettings() {
           equipment_id: equipmentId,
           week_number: weekNumber,
           year: year,
-          status: status as 'Satisfactorio' | 'Seguimiento' | 'Crítico' | 'Alerta',
+          status: status as Database['public']['Enums']['equipment_status'],
           technical_description: row.Condicion_Tecnica || null,
           sap_notification: row.Aviso_SAP || null,
           sap_order: row.Orden_SAP || null,
