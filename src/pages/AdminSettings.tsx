@@ -28,12 +28,13 @@ interface UploadResult {
 }
 
 // Map CSV status values to database enum values
-const mapStatus = (csvStatus: string): 'Satisfactorio' | 'Seguimiento' | 'Crítico' | 'Alerta' => {
+const mapStatus = (csvStatus: string): 'Satisfactorio' | 'Seguimiento' | 'Crítico' | 'Alerta' | 'Sin medición' => {
   const statusLower = csvStatus?.toLowerCase().trim();
   if (statusLower === 'critico' || statusLower === 'crítico') return 'Crítico';
   if (statusLower === 'alerta') return 'Alerta';
   if (statusLower === 'seguimiento' || statusLower === 'stand by' || statusLower === 'standby') return 'Seguimiento';
   if (statusLower === 'satisfactorio' || statusLower === 'operativo') return 'Satisfactorio';
+  if (statusLower === 'sin medicion' || statusLower === 'sin medición' || statusLower === 'sin medida') return 'Sin medición';
   return 'Satisfactorio'; // Default
 };
 
