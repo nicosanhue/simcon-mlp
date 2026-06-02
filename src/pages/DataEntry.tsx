@@ -37,6 +37,7 @@ const statusConfig: Record<EquipmentStatus, { label: string; color: string; icon
   'Seguimiento': { label: 'Seguimiento', color: 'bg-blue-500/20 text-blue-400 border-blue-500/30', icon: <Clock className="h-3 w-3" /> },
   'Alerta': { label: 'Alerta', color: 'bg-status-alerta/20 text-status-alerta border-status-alerta/30', icon: <AlertTriangle className="h-3 w-3" /> },
   'Crítico': { label: 'Crítico', color: 'bg-status-falla/20 text-status-falla border-status-falla/30', icon: <XCircle className="h-3 w-3" /> },
+  'Sin medición': { label: 'Sin medición', color: 'bg-status-sinmedicion/20 text-status-sinmedicion border-status-sinmedicion/30', icon: <HelpCircle className="h-3 w-3" /> },
 };
 
 export default function DataEntry() {
