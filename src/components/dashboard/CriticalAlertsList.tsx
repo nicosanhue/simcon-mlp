@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, AlertCircle, Clock, X, CheckCircle2, XCircle } from "lucide-react";
+import { AlertTriangle, AlertCircle, Clock, X, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
