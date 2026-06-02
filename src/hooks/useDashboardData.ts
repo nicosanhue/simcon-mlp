@@ -224,6 +224,7 @@ export function useDashboardData(filters: DashboardFilters) {
             seguimiento: systemStats.seguimiento,
             alerta: systemStats.alerta,
             critico: systemStats.critico,
+            sinMedicion: systemStats.sinMedicion,
           };
         }).filter((system) => system.total > 0);
         
