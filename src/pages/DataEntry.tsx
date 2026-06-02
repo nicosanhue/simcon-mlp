@@ -9,12 +9,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Search, Save, Calendar, Filter, CheckCircle, AlertTriangle, XCircle, Clock } from "lucide-react";
+import { Search, Save, Calendar, Filter, CheckCircle, AlertTriangle, XCircle, Clock, HelpCircle } from "lucide-react";
 import { WeekSelector } from "@/components/dashboard/WeekSelector";
 import { getISOWeek, getYear, startOfWeek, addDays, format } from "date-fns";
 import { es } from "date-fns/locale";
 
-type EquipmentStatus = 'Satisfactorio' | 'Seguimiento' | 'Crítico' | 'Alerta';
+type EquipmentStatus = 'Satisfactorio' | 'Seguimiento' | 'Crítico' | 'Alerta' | 'Sin medición';
 
 interface EquipmentWithReport {
   id: string;
