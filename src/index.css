@@ -53,6 +53,8 @@
     --status-standby-foreground: 45 80% 15%;
     --status-falla: 0 76% 55%;
     --status-falla-foreground: 0 0% 100%;
+    --status-sinmedicion: 220 9% 55%;
+    --status-sinmedicion-foreground: 0 0% 100%;
 
     /* Chart Colors */
     --chart-operativo: 152 60% 45%;
