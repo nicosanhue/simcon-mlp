@@ -70,6 +70,17 @@ const statusStyles = {
     badgeBg: "bg-blue-500/10",
     pulse: "",
   },
+  "Sin medición": {
+    bg: "bg-status-sinmedicion/5",
+    border: "border-status-sinmedicion/30",
+    hoverBg: "hover:bg-status-sinmedicion/10",
+    iconBg: "bg-status-sinmedicion/20",
+    iconColor: "text-status-sinmedicion",
+    badgeBorder: "border-status-sinmedicion/50",
+    badgeText: "text-status-sinmedicion",
+    badgeBg: "bg-status-sinmedicion/10",
+    pulse: "",
+  },
 };
 
 const getStatusIcon = (status: string, className: string) => {
