@@ -42,6 +42,7 @@ export interface GroupedStats {
   seguimiento: number;
   alerta: number;
   critico: number;
+  sinMedicion: number;
 }
 
 export interface DebugCounts {
@@ -57,6 +58,7 @@ function calculateStats(equipment: EquipmentWithReport[]) {
     seguimiento: equipment.filter((e) => e.currentStatus === "Seguimiento").length,
     alerta: equipment.filter((e) => e.currentStatus === "Alerta").length,
     critico: equipment.filter((e) => e.currentStatus === "Crítico").length,
+    sinMedicion: equipment.filter((e) => e.currentStatus === "Sin medición").length,
     sinRegistro: equipment.filter((e) => e.currentStatus === "Sin Registro").length,
   };
 }
