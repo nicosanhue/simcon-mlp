@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Activity, CheckCircle2, AlertTriangle, XCircle, Eye } from "lucide-react";
+import { Activity, CheckCircle2, AlertTriangle, XCircle, Eye, HelpCircle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { StatusPieChart } from "@/components/dashboard/StatusPieChart";
 import { MultipleStatusCharts } from "@/components/dashboard/MultipleStatusCharts";
