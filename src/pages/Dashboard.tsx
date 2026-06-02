@@ -30,7 +30,7 @@ interface EquipmentItem {
   systems: { id: string; name: string; areas: { id: string; name: string } };
 }
 
-function createChartData(stats: { satisfactorio: number; seguimiento: number; alerta: number; critico: number }, equipment?: EquipmentItem[]) {
+function createChartData(stats: { satisfactorio: number; seguimiento: number; alerta: number; critico: number; sinMedicion: number }, equipment?: EquipmentItem[]) {
   const getEquipmentByStatus = (status: string) =>
     equipment?.filter(eq => eq.currentStatus === status).map(eq => ({
       tag: eq.tag,
@@ -43,6 +43,7 @@ function createChartData(stats: { satisfactorio: number; seguimiento: number; al
     { name: "Seguimiento", value: stats.seguimiento, color: "hsl(210, 80%, 55%)", equipment: getEquipmentByStatus("Seguimiento") },
     { name: "Alerta", value: stats.alerta, color: "hsl(45, 93%, 47%)", equipment: getEquipmentByStatus("Alerta") },
     { name: "Crítico", value: stats.critico, color: "hsl(0, 84%, 60%)", equipment: getEquipmentByStatus("Crítico") },
+    { name: "Sin medición", value: stats.sinMedicion, color: "hsl(220, 9%, 55%)", equipment: getEquipmentByStatus("Sin medición") },
   ].filter(item => item.value > 0);
 }
 
