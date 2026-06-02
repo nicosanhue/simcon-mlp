@@ -123,7 +123,7 @@ export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListP
     );
   }
 
-  const isSafeFilter = activeFilter === "Satisfactorio" || activeFilter === "Seguimiento";
+  const isSafeFilter = activeFilter === "Satisfactorio" || activeFilter === "Seguimiento" || activeFilter === "Sin medición";
 
   return (
     <>
