@@ -184,13 +184,13 @@ export default function Dashboard() {
 
         {/* Stats Cards */}
         {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {Array.from({ length: 5 }).map((_, i) => (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-[120px] rounded-lg" />
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
             <StatusCard
               title="Total Equipos"
               value={stats.total}
@@ -233,6 +233,15 @@ export default function Dashboard() {
               variant="danger"
               onClick={() => handleStatusClick("Crítico")}
               isActive={statusFilter === "Crítico"}
+            />
+            <StatusCard
+              title="Sin medición"
+              value={stats.sinMedicion}
+              subtitle="Sin dato registrado"
+              icon={<HelpCircle className="h-6 w-6" />}
+              variant="neutral"
+              onClick={() => handleStatusClick("Sin medición")}
+              isActive={statusFilter === "Sin medición"}
             />
           </div>
         )}
