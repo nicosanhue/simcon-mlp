@@ -191,7 +191,7 @@ export function useDashboardData(filters: DashboardFilters) {
 
   const stats = equipmentQuery.data
     ? calculateStats(equipmentQuery.data)
-    : { total: 0, satisfactorio: 0, seguimiento: 0, alerta: 0, critico: 0, sinRegistro: 0 };
+    : { total: 0, satisfactorio: 0, seguimiento: 0, alerta: 0, critico: 0, sinMedicion: 0, sinRegistro: 0 };
 
   const statsByArea: GroupedStats[] = equipmentQuery.data && areasQuery.data
     ? areasQuery.data.map((area) => {
