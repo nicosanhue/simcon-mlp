@@ -173,7 +173,12 @@ export type Database = {
     }
     Enums: {
       criticality_level: "Alta" | "Media" | "Baja"
-      equipment_status: "Satisfactorio" | "Seguimiento" | "Crítico" | "Alerta"
+      equipment_status:
+        | "Satisfactorio"
+        | "Seguimiento"
+        | "Crítico"
+        | "Alerta"
+        | "Sin medición"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -302,7 +307,13 @@ export const Constants = {
   public: {
     Enums: {
       criticality_level: ["Alta", "Media", "Baja"],
-      equipment_status: ["Satisfactorio", "Seguimiento", "Crítico", "Alerta"],
+      equipment_status: [
+        "Satisfactorio",
+        "Seguimiento",
+        "Crítico",
+        "Alerta",
+        "Sin medición",
+      ],
     },
   },
 } as const

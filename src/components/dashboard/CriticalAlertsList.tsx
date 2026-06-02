@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, AlertCircle, Clock, X, CheckCircle2, XCircle } from "lucide-react";
+import { AlertTriangle, AlertCircle, Clock, X, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
@@ -13,7 +13,7 @@ interface Alert {
   id: string;
   tag: string;
   name: string;
-  status: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento";
+  status: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | "Sin medición";
   area: string;
   system: string;
   description?: string;
@@ -22,7 +22,7 @@ interface Alert {
 
 interface CriticalAlertsListProps {
   alerts: Alert[];
-  activeFilter?: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | null;
+  activeFilter?: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | "Sin medición" | null;
 }
 
 const statusStyles = {
@@ -70,6 +70,17 @@ const statusStyles = {
     badgeBg: "bg-blue-500/10",
     pulse: "",
   },
+  "Sin medición": {
+    bg: "bg-status-sinmedicion/5",
+    border: "border-status-sinmedicion/30",
+    hoverBg: "hover:bg-status-sinmedicion/10",
+    iconBg: "bg-status-sinmedicion/20",
+    iconColor: "text-status-sinmedicion",
+    badgeBorder: "border-status-sinmedicion/50",
+    badgeText: "text-status-sinmedicion",
+    badgeBg: "bg-status-sinmedicion/10",
+    pulse: "",
+  },
 };
 
 const getStatusIcon = (status: string, className: string) => {
@@ -78,6 +89,7 @@ const getStatusIcon = (status: string, className: string) => {
     case "Alerta": return <AlertTriangle className={className} />;
     case "Satisfactorio": return <CheckCircle2 className={className} />;
     case "Seguimiento": return <Clock className={className} />;
+    case "Sin medición": return <HelpCircle className={className} />;
     default: return <AlertCircle className={className} />;
   }
 };
@@ -111,7 +123,7 @@ export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListP
     );
   }
 
-  const isSafeFilter = activeFilter === "Satisfactorio" || activeFilter === "Seguimiento";
+  const isSafeFilter = activeFilter === "Satisfactorio" || activeFilter === "Seguimiento" || activeFilter === "Sin medición";
 
   return (
     <>

@@ -42,6 +42,7 @@ export interface GroupedStats {
   seguimiento: number;
   alerta: number;
   critico: number;
+  sinMedicion: number;
 }
 
 export interface DebugCounts {
@@ -57,6 +58,7 @@ function calculateStats(equipment: EquipmentWithReport[]) {
     seguimiento: equipment.filter((e) => e.currentStatus === "Seguimiento").length,
     alerta: equipment.filter((e) => e.currentStatus === "Alerta").length,
     critico: equipment.filter((e) => e.currentStatus === "Crítico").length,
+    sinMedicion: equipment.filter((e) => e.currentStatus === "Sin medición").length,
     sinRegistro: equipment.filter((e) => e.currentStatus === "Sin Registro").length,
   };
 }
@@ -189,7 +191,7 @@ export function useDashboardData(filters: DashboardFilters) {
 
   const stats = equipmentQuery.data
     ? calculateStats(equipmentQuery.data)
-    : { total: 0, satisfactorio: 0, seguimiento: 0, alerta: 0, critico: 0, sinRegistro: 0 };
+    : { total: 0, satisfactorio: 0, seguimiento: 0, alerta: 0, critico: 0, sinMedicion: 0, sinRegistro: 0 };
 
   const statsByArea: GroupedStats[] = equipmentQuery.data && areasQuery.data
     ? areasQuery.data.map((area) => {
@@ -222,6 +224,7 @@ export function useDashboardData(filters: DashboardFilters) {
             seguimiento: systemStats.seguimiento,
             alerta: systemStats.alerta,
             critico: systemStats.critico,
+            sinMedicion: systemStats.sinMedicion,
           };
         }).filter((system) => system.total > 0);
         

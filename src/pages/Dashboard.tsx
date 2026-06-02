@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Activity, CheckCircle2, AlertTriangle, XCircle, Eye } from "lucide-react";
+import { Activity, CheckCircle2, AlertTriangle, XCircle, Eye, HelpCircle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { StatusPieChart } from "@/components/dashboard/StatusPieChart";
 import { MultipleStatusCharts } from "@/components/dashboard/MultipleStatusCharts";
@@ -30,7 +30,7 @@ interface EquipmentItem {
   systems: { id: string; name: string; areas: { id: string; name: string } };
 }
 
-function createChartData(stats: { satisfactorio: number; seguimiento: number; alerta: number; critico: number }, equipment?: EquipmentItem[]) {
+function createChartData(stats: { satisfactorio: number; seguimiento: number; alerta: number; critico: number; sinMedicion: number }, equipment?: EquipmentItem[]) {
   const getEquipmentByStatus = (status: string) =>
     equipment?.filter(eq => eq.currentStatus === status).map(eq => ({
       tag: eq.tag,
@@ -43,6 +43,7 @@ function createChartData(stats: { satisfactorio: number; seguimiento: number; al
     { name: "Seguimiento", value: stats.seguimiento, color: "hsl(210, 80%, 55%)", equipment: getEquipmentByStatus("Seguimiento") },
     { name: "Alerta", value: stats.alerta, color: "hsl(45, 93%, 47%)", equipment: getEquipmentByStatus("Alerta") },
     { name: "Crítico", value: stats.critico, color: "hsl(0, 84%, 60%)", equipment: getEquipmentByStatus("Crítico") },
+    { name: "Sin medición", value: stats.sinMedicion, color: "hsl(220, 9%, 55%)", equipment: getEquipmentByStatus("Sin medición") },
   ].filter(item => item.value > 0);
 }
 
@@ -63,7 +64,7 @@ export default function Dashboard() {
   const [week, setWeek] = useState<number | null>(null);
   const [year, setYear] = useState<number | null>(null);
   const [selectedArea, setSelectedArea] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<"Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | "Sin medición" | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const dashboardRef = useRef<HTMLDivElement>(null);
 
@@ -100,14 +101,14 @@ export default function Dashboard() {
   });
 
   // Build alerts list based on filter
-  const allAlerts = statusFilter === "Satisfactorio" || statusFilter === "Seguimiento"
+  const allAlerts = statusFilter === "Satisfactorio" || statusFilter === "Seguimiento" || statusFilter === "Sin medición"
     ? equipment
         .filter(eq => eq.currentStatus === statusFilter)
         .map(eq => ({
           id: eq.id,
           tag: eq.tag,
           name: eq.name,
-          status: statusFilter as "Satisfactorio" | "Seguimiento",
+          status: statusFilter as "Satisfactorio" | "Seguimiento" | "Sin medición",
           area: eq.systems.areas.name,
           system: eq.systems.name,
           description: eq.currentReport?.technical_description || undefined,
@@ -117,7 +118,7 @@ export default function Dashboard() {
       ? criticalAlerts.filter(alert => alert.status === statusFilter)
       : criticalAlerts;
 
-  const handleStatusClick = (status: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento") => {
+  const handleStatusClick = (status: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | "Sin medición") => {
     setStatusFilter(prev => prev === status ? null : status);
   };
 
@@ -183,13 +184,13 @@ export default function Dashboard() {
 
         {/* Stats Cards */}
         {isLoading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {Array.from({ length: 5 }).map((_, i) => (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-[120px] rounded-lg" />
             ))}
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
             <StatusCard
               title="Total Equipos"
               value={stats.total}
@@ -232,6 +233,15 @@ export default function Dashboard() {
               variant="danger"
               onClick={() => handleStatusClick("Crítico")}
               isActive={statusFilter === "Crítico"}
+            />
+            <StatusCard
+              title="Sin medición"
+              value={stats.sinMedicion}
+              subtitle="Sin dato registrado"
+              icon={<HelpCircle className="h-6 w-6" />}
+              variant="neutral"
+              onClick={() => handleStatusClick("Sin medición")}
+              isActive={statusFilter === "Sin medición"}
             />
           </div>
         )}

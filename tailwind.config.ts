@@ -72,6 +72,8 @@ export default {
           "standby-foreground": "hsl(var(--status-standby-foreground))",
           falla: "hsl(var(--status-falla))",
           "falla-foreground": "hsl(var(--status-falla-foreground))",
+          sinmedicion: "hsl(var(--status-sinmedicion))",
+          "sinmedicion-foreground": "hsl(var(--status-sinmedicion-foreground))",
         },
         chart: {
           operativo: "hsl(var(--chart-operativo))",

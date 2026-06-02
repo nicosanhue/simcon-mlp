@@ -6,7 +6,7 @@ interface StatusCardProps {
   value: number | string;
   subtitle?: string;
   icon: ReactNode;
-  variant?: "default" | "success" | "info" | "warning" | "danger";
+  variant?: "default" | "success" | "info" | "warning" | "danger" | "neutral";
   onClick?: () => void;
   isActive?: boolean;
 }
@@ -17,6 +17,7 @@ const variantStyles = {
   info: "border-blue-500/30",
   warning: "border-status-alerta/30 card-glow-warning",
   danger: "border-status-falla/30 card-glow-danger",
+  neutral: "border-status-sinmedicion/30",
 };
 
 const iconVariantStyles = {
@@ -25,6 +26,7 @@ const iconVariantStyles = {
   info: "bg-blue-500/10 text-blue-500",
   warning: "bg-status-alerta/10 text-status-alerta",
   danger: "bg-status-falla/10 text-status-falla",
+  neutral: "bg-status-sinmedicion/10 text-status-sinmedicion",
 };
 
 export function StatusCard({ title, value, subtitle, icon, variant = "default", onClick, isActive }: StatusCardProps) {
