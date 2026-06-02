@@ -13,7 +13,7 @@ interface Alert {
   id: string;
   tag: string;
   name: string;
-  status: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento";
+  status: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | "Sin medición";
   area: string;
   system: string;
   description?: string;
@@ -22,7 +22,7 @@ interface Alert {
 
 interface CriticalAlertsListProps {
   alerts: Alert[];
-  activeFilter?: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | null;
+  activeFilter?: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | "Sin medición" | null;
 }
 
 const statusStyles = {

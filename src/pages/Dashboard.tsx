@@ -64,7 +64,7 @@ export default function Dashboard() {
   const [week, setWeek] = useState<number | null>(null);
   const [year, setYear] = useState<number | null>(null);
   const [selectedArea, setSelectedArea] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<"Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | "Sin medición" | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const dashboardRef = useRef<HTMLDivElement>(null);
 
@@ -118,7 +118,7 @@ export default function Dashboard() {
       ? criticalAlerts.filter(alert => alert.status === statusFilter)
       : criticalAlerts;
 
-  const handleStatusClick = (status: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento") => {
+  const handleStatusClick = (status: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | "Sin medición") => {
     setStatusFilter(prev => prev === status ? null : status);
   };
 
