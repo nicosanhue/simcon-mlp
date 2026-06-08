@@ -244,6 +244,8 @@ export function useDashboardData(filters: DashboardFilters) {
       system: eq.systems.name,
       description: eq.currentReport?.technical_description || undefined,
       plannedDate: eq.currentReport?.planned_date || undefined,
+      sapNotification: eq.currentReport?.sap_notification || undefined,
+      sapOrder: eq.currentReport?.sap_order || undefined,
     })) || [];
 
   return {

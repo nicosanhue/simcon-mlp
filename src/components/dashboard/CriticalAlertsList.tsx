@@ -18,6 +18,8 @@ interface Alert {
   system: string;
   description?: string;
   plannedDate?: string;
+  sapNotification?: string;
+  sapOrder?: string;
 }
 
 interface CriticalAlertsListProps {
@@ -216,6 +218,26 @@ export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListP
                       {selectedAlert.description || "Sin descripción disponible"}
                     </div>
                   </div>
+                  {(selectedAlert.sapNotification || selectedAlert.sapOrder) && (
+                    <div className="grid grid-cols-2 gap-3">
+                      {selectedAlert.sapNotification && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Aviso SAP</p>
+                          <div className="p-2 rounded-md border bg-muted/30 text-sm font-mono text-foreground">
+                            {selectedAlert.sapNotification}
+                          </div>
+                        </div>
+                      )}
+                      {selectedAlert.sapOrder && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Orden de Trabajo (OT)</p>
+                          <div className="p-2 rounded-md border bg-muted/30 text-sm font-mono text-foreground">
+                            {selectedAlert.sapOrder}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {selectedAlert.plannedDate && (
                     <div>
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Fecha Planificada</p>
