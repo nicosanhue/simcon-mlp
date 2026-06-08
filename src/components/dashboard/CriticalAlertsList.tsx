@@ -18,6 +18,8 @@ interface Alert {
   system: string;
   description?: string;
   plannedDate?: string;
+  sapNotification?: string;
+  sapOrder?: string;
 }
 
 interface CriticalAlertsListProps {
