@@ -1,6 +1,5 @@
 import { 
   LayoutDashboard, 
-  ClipboardEdit, 
   Settings2, 
   History,
   Activity,
