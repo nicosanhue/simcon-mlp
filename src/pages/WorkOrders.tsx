@@ -29,11 +29,10 @@ interface WorkOrderRow {
 const PAGE_SIZE = 1000;
 
 async function fetchLatestWeekWorkOrders(): Promise<WorkOrderRow[]> {
-  // 1) Discover the latest week that has any notification/OT/planned date
+  // 1) Discover the latest week overall
   const { data: latestRows, error: latestErr } = await supabase
     .from("weekly_reports")
     .select("year, week_number")
-    .or("sap_notification.not.is.null,sap_order.not.is.null,planned_date.not.is.null")
     .order("year", { ascending: false })
     .order("week_number", { ascending: false })
     .limit(1);
@@ -44,7 +43,7 @@ async function fetchLatestWeekWorkOrders(): Promise<WorkOrderRow[]> {
   const latestYear = latestRows[0].year;
   const latestWeek = latestRows[0].week_number;
 
-  // 2) Fetch all records for that latest week
+  // 2) Fetch records for latest week: anything Crítico/Alerta OR with aviso/OT/fecha
   let all: any[] = [];
   let from = 0;
   let hasMore = true;
@@ -60,9 +59,7 @@ async function fetchLatestWeekWorkOrders(): Promise<WorkOrderRow[]> {
       `)
       .eq("year", latestYear)
       .eq("week_number", latestWeek)
-      .or("sap_notification.not.is.null,sap_order.not.is.null,planned_date.not.is.null")
-      .order("year", { ascending: false })
-      .order("week_number", { ascending: false })
+      .or("status.eq.Crítico,status.eq.Alerta,sap_notification.not.is.null,sap_order.not.is.null,planned_date.not.is.null")
       .range(from, from + PAGE_SIZE - 1);
     if (error) throw error;
     if (data && data.length > 0) {
