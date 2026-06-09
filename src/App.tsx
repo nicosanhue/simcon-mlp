@@ -9,6 +9,7 @@ import History from "./pages/History";
 import Assets from "./pages/Assets";
 import AdminSettings from "./pages/AdminSettings";
 import EquipmentTree from "./pages/EquipmentTree";
+import WorkOrders from "./pages/WorkOrders";
 import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
@@ -23,6 +24,7 @@ const App = () => (
           <Route path="/equipment-tree" element={<EquipmentTree />} />
           <Route path="/data-entry" element={<DataEntry />} />
           <Route path="/history" element={<History />} />
+          <Route path="/work-orders" element={<WorkOrders />} />
           <Route path="/assets" element={<Assets />} />
           <Route path="/admin" element={<AdminSettings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
