@@ -54,7 +54,7 @@ async function fetchLatestWeekWorkOrders(): Promise<WorkOrderRow[]> {
       .select(`
         id, week_number, year, status, sap_notification, sap_order, planned_date,
         equipment:equipment_id (
-          id, tag, name,
+          id, tag, name, criticality,
           systems:system_id ( name, areas:area_id ( id, name ) )
         )
       `)
