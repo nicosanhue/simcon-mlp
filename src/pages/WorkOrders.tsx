@@ -109,9 +109,9 @@ export default function WorkOrders() {
     },
   });
 
-  const ordersQuery = useQuery({
+  const ordersQuery = useQuery<WorkOrderRow[]>({
     queryKey: ["work-orders"],
-    queryFn: fetchAllWorkOrders,
+    queryFn: fetchLatestWeekWorkOrders,
   });
 
   const filtered = useMemo(() => {
