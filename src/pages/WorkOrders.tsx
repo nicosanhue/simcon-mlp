@@ -83,6 +83,7 @@ async function fetchLatestWeekWorkOrders(): Promise<WorkOrderRow[]> {
       areaName: r.equipment.systems?.areas?.name ?? "—",
       systemName: r.equipment.systems?.name ?? "—",
       status: r.status,
+      criticality: r.equipment.criticality ?? "Media",
       sapNotification: r.sap_notification,
       sapOrder: r.sap_order,
       plannedDate: r.planned_date,
