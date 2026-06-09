@@ -18,6 +18,7 @@ interface WorkOrderRow {
   areaName: string;
   systemName: string;
   status: string;
+  criticality: string;
   sapNotification: string | null;
   sapOrder: string | null;
   plannedDate: string | null;
