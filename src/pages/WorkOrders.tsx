@@ -129,15 +129,19 @@ export default function WorkOrders() {
     });
   }, [ordersQuery.data, areaId, search]);
 
-  // Group by area then equipment
+  // Group by area only
   const grouped = useMemo(() => {
-    const byArea = new Map<string, Map<string, WorkOrderRow[]>>();
+    const byArea = new Map<string, WorkOrderRow[]>();
     for (const row of filtered) {
-      if (!byArea.has(row.areaName)) byArea.set(row.areaName, new Map());
-      const byEq = byArea.get(row.areaName)!;
-      const key = `${row.tag} — ${row.equipmentName}`;
-      if (!byEq.has(key)) byEq.set(key, []);
-      byEq.get(key)!.push(row);
+      if (!byArea.has(row.areaName)) byArea.set(row.areaName, []);
+      byArea.get(row.areaName)!.push(row);
+    }
+    // Sort each area's rows by tag then equipment name
+    for (const [, rows] of byArea) {
+      rows.sort((a, b) => {
+        const tagCmp = a.tag.localeCompare(b.tag);
+        return tagCmp !== 0 ? tagCmp : a.equipmentName.localeCompare(b.equipmentName);
+      });
     }
     return byArea;
   }, [filtered]);
@@ -213,46 +217,43 @@ export default function WorkOrders() {
           </div>
         ) : (
           <div className="space-y-6">
-            {[...grouped.entries()].map(([area, byEq]) => (
+            {[...grouped.entries()].map(([area, rows]) => (
               <div key={area} className="industrial-panel p-4">
                 <h2 className="text-lg font-semibold text-foreground mb-3">{area}</h2>
-                <div className="space-y-4">
-                  {[...byEq.entries()].map(([eqKey, rows]) => (
-                    <div key={eqKey}>
-                      <h3 className="text-sm font-medium text-foreground mb-2">
-                        {eqKey} <span className="text-muted-foreground font-normal">· {rows[0].systemName}</span>
-                      </h3>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Semana</TableHead>
-                            <TableHead>Estado</TableHead>
-                            <TableHead>Aviso SAP</TableHead>
-                            <TableHead>OT</TableHead>
-                            <TableHead>Fecha Programada</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {rows.map((r) => (
-                            <TableRow key={r.reportId}>
-                              <TableCell className="whitespace-nowrap">S{r.week}-{r.year}</TableCell>
-                              <TableCell>
-                                <Badge variant={statusVariant(r.status)}>{r.status}</Badge>
-                              </TableCell>
-                              <TableCell className="font-mono text-xs">{r.sapNotification ?? "—"}</TableCell>
-                              <TableCell className="font-mono text-xs">{r.sapOrder ?? "—"}</TableCell>
-                              <TableCell className="whitespace-nowrap">
-                                {r.plannedDate
-                                  ? new Date(r.plannedDate).toLocaleDateString("es-CL")
-                                  : "—"}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  ))}
-                </div>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Equipo</TableHead>
+                      <TableHead>Semana</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Aviso SAP</TableHead>
+                      <TableHead>OT</TableHead>
+                      <TableHead>Fecha Programada</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {rows.map((r) => (
+                      <TableRow key={r.reportId}>
+                        <TableCell className="whitespace-nowrap">
+                          <span className="font-medium">{r.tag}</span>
+                          <span className="text-muted-foreground ml-1">· {r.equipmentName}</span>
+                          <span className="text-muted-foreground text-xs block">{r.systemName}</span>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">S{r.week}-{r.year}</TableCell>
+                        <TableCell>
+                          <Badge variant={statusVariant(r.status)}>{r.status}</Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">{r.sapNotification ?? "—"}</TableCell>
+                        <TableCell className="font-mono text-xs">{r.sapOrder ?? "—"}</TableCell>
+                        <TableCell className="whitespace-nowrap">
+                          {r.plannedDate
+                            ? new Date(r.plannedDate).toLocaleDateString("es-CL")
+                            : "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             ))}
           </div>
