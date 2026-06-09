@@ -185,15 +185,17 @@ export default function WorkOrders() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={criticality} onValueChange={setCriticality}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Criticidad" />
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full md:w-56">
+              <SelectValue placeholder="Estado" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              <SelectItem value="Alta">Alta</SelectItem>
-              <SelectItem value="Media">Media</SelectItem>
-              <SelectItem value="Baja">Baja</SelectItem>
+              <SelectItem value="all">Todos los estados</SelectItem>
+              <SelectItem value="Satisfactorio">Satisfactorio</SelectItem>
+              <SelectItem value="Seguimiento">Seguimiento</SelectItem>
+              <SelectItem value="Crítico">Crítico</SelectItem>
+              <SelectItem value="Alerta">Alerta</SelectItem>
+              <SelectItem value="Sin medición">Sin medición</SelectItem>
             </SelectContent>
           </Select>
         </div>
