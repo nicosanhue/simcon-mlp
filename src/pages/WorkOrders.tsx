@@ -100,7 +100,7 @@ function statusVariant(status: string): "default" | "destructive" | "secondary" 
 
 export default function WorkOrders() {
   const [areaId, setAreaId] = useState<string>("all");
-  const [criticality, setCriticality] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
 
   const areasQuery = useQuery({
@@ -122,7 +122,7 @@ export default function WorkOrders() {
     const term = search.trim().toLowerCase();
     return rows.filter((r) => {
       if (areaId !== "all" && r.areaId !== areaId) return false;
-      if (criticality !== "all" && r.criticality !== criticality) return false;
+      if (statusFilter !== "all" && r.status !== statusFilter) return false;
       if (!term) return true;
       return (
         r.tag.toLowerCase().includes(term) ||
@@ -131,7 +131,7 @@ export default function WorkOrders() {
         (r.sapOrder ?? "").toLowerCase().includes(term)
       );
     });
-  }, [ordersQuery.data, areaId, criticality, search]);
+  }, [ordersQuery.data, areaId, statusFilter, search]);
 
   // Group by area only
   const grouped = useMemo(() => {
@@ -185,15 +185,17 @@ export default function WorkOrders() {
               ))}
             </SelectContent>
           </Select>
-          <Select value={criticality} onValueChange={setCriticality}>
-            <SelectTrigger className="w-full md:w-48">
-              <SelectValue placeholder="Criticidad" />
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full md:w-56">
+              <SelectValue placeholder="Estado" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              <SelectItem value="Alta">Alta</SelectItem>
-              <SelectItem value="Media">Media</SelectItem>
-              <SelectItem value="Baja">Baja</SelectItem>
+              <SelectItem value="all">Todos los estados</SelectItem>
+              <SelectItem value="Satisfactorio">Satisfactorio</SelectItem>
+              <SelectItem value="Seguimiento">Seguimiento</SelectItem>
+              <SelectItem value="Crítico">Crítico</SelectItem>
+              <SelectItem value="Alerta">Alerta</SelectItem>
+              <SelectItem value="Sin medición">Sin medición</SelectItem>
             </SelectContent>
           </Select>
         </div>
