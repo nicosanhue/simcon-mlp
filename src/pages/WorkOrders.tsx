@@ -43,7 +43,7 @@ async function fetchLatestWeekWorkOrders(): Promise<WorkOrderRow[]> {
   const latestYear = latestRows[0].year;
   const latestWeek = latestRows[0].week_number;
 
-  // 2) Fetch records for latest week: anything Crítico/Alerta OR with aviso/OT/fecha
+  // 2) Fetch ALL records for latest week, then filter client-side
   let all: any[] = [];
   let from = 0;
   let hasMore = true;
@@ -59,7 +59,6 @@ async function fetchLatestWeekWorkOrders(): Promise<WorkOrderRow[]> {
       `)
       .eq("year", latestYear)
       .eq("week_number", latestWeek)
-      .or("status.eq.Crítico,status.eq.Alerta,sap_notification.not.is.null,sap_order.not.is.null,planned_date.not.is.null")
       .range(from, from + PAGE_SIZE - 1);
     if (error) throw error;
     if (data && data.length > 0) {
@@ -71,6 +70,13 @@ async function fetchLatestWeekWorkOrders(): Promise<WorkOrderRow[]> {
 
   return all
     .filter((r: any) => r.equipment)
+    .filter((r: any) =>
+      r.status === "Crítico" ||
+      r.status === "Alerta" ||
+      r.sap_notification ||
+      r.sap_order ||
+      r.planned_date
+    )
     .map((r: any) => ({
       reportId: r.id,
       equipmentId: r.equipment.id,
