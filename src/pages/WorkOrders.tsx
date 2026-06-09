@@ -129,15 +129,19 @@ export default function WorkOrders() {
     });
   }, [ordersQuery.data, areaId, search]);
 
-  // Group by area then equipment
+  // Group by area only
   const grouped = useMemo(() => {
-    const byArea = new Map<string, Map<string, WorkOrderRow[]>>();
+    const byArea = new Map<string, WorkOrderRow[]>();
     for (const row of filtered) {
-      if (!byArea.has(row.areaName)) byArea.set(row.areaName, new Map());
-      const byEq = byArea.get(row.areaName)!;
-      const key = `${row.tag} — ${row.equipmentName}`;
-      if (!byEq.has(key)) byEq.set(key, []);
-      byEq.get(key)!.push(row);
+      if (!byArea.has(row.areaName)) byArea.set(row.areaName, []);
+      byArea.get(row.areaName)!.push(row);
+    }
+    // Sort each area's rows by tag then equipment name
+    for (const [, rows] of byArea) {
+      rows.sort((a, b) => {
+        const tagCmp = a.tag.localeCompare(b.tag);
+        return tagCmp !== 0 ? tagCmp : a.equipmentName.localeCompare(b.equipmentName);
+      });
     }
     return byArea;
   }, [filtered]);
