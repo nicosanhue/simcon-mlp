@@ -122,7 +122,7 @@ export default function WorkOrders() {
     const term = search.trim().toLowerCase();
     return rows.filter((r) => {
       if (areaId !== "all" && r.areaId !== areaId) return false;
-      if (criticality !== "all" && r.criticality !== criticality) return false;
+      if (statusFilter !== "all" && r.status !== statusFilter) return false;
       if (!term) return true;
       return (
         r.tag.toLowerCase().includes(term) ||
@@ -131,7 +131,7 @@ export default function WorkOrders() {
         (r.sapOrder ?? "").toLowerCase().includes(term)
       );
     });
-  }, [ordersQuery.data, areaId, criticality, search]);
+  }, [ordersQuery.data, areaId, statusFilter, search]);
 
   // Group by area only
   const grouped = useMemo(() => {
