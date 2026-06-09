@@ -100,7 +100,7 @@ function statusVariant(status: string): "default" | "destructive" | "secondary" 
 
 export default function WorkOrders() {
   const [areaId, setAreaId] = useState<string>("all");
-  const [criticality, setCriticality] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
 
   const areasQuery = useQuery({
