@@ -18,6 +18,7 @@ interface WorkOrderRow {
   areaName: string;
   systemName: string;
   status: string;
+  criticality: string;
   sapNotification: string | null;
   sapOrder: string | null;
   plannedDate: string | null;
@@ -53,7 +54,7 @@ async function fetchLatestWeekWorkOrders(): Promise<WorkOrderRow[]> {
       .select(`
         id, week_number, year, status, sap_notification, sap_order, planned_date,
         equipment:equipment_id (
-          id, tag, name,
+          id, tag, name, criticality,
           systems:system_id ( name, areas:area_id ( id, name ) )
         )
       `)
@@ -82,6 +83,7 @@ async function fetchLatestWeekWorkOrders(): Promise<WorkOrderRow[]> {
       areaName: r.equipment.systems?.areas?.name ?? "—",
       systemName: r.equipment.systems?.name ?? "—",
       status: r.status,
+      criticality: r.equipment.criticality ?? "Media",
       sapNotification: r.sap_notification,
       sapOrder: r.sap_order,
       plannedDate: r.planned_date,
@@ -98,6 +100,7 @@ function statusVariant(status: string): "default" | "destructive" | "secondary" 
 
 export default function WorkOrders() {
   const [areaId, setAreaId] = useState<string>("all");
+  const [criticality, setCriticality] = useState<string>("all");
   const [search, setSearch] = useState("");
 
   const areasQuery = useQuery({
@@ -119,6 +122,7 @@ export default function WorkOrders() {
     const term = search.trim().toLowerCase();
     return rows.filter((r) => {
       if (areaId !== "all" && r.areaId !== areaId) return false;
+      if (criticality !== "all" && r.criticality !== criticality) return false;
       if (!term) return true;
       return (
         r.tag.toLowerCase().includes(term) ||
@@ -127,7 +131,7 @@ export default function WorkOrders() {
         (r.sapOrder ?? "").toLowerCase().includes(term)
       );
     });
-  }, [ordersQuery.data, areaId, search]);
+  }, [ordersQuery.data, areaId, criticality, search]);
 
   // Group by area only
   const grouped = useMemo(() => {
@@ -171,7 +175,7 @@ export default function WorkOrders() {
             />
           </div>
           <Select value={areaId} onValueChange={setAreaId}>
-            <SelectTrigger className="w-full md:w-64">
+            <SelectTrigger className="w-full md:w-56">
               <SelectValue placeholder="Filtrar por área" />
             </SelectTrigger>
             <SelectContent>
@@ -179,6 +183,17 @@ export default function WorkOrders() {
               {areasQuery.data?.map((a) => (
                 <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select value={criticality} onValueChange={setCriticality}>
+            <SelectTrigger className="w-full md:w-48">
+              <SelectValue placeholder="Criticidad" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="Alta">Alta</SelectItem>
+              <SelectItem value="Media">Media</SelectItem>
+              <SelectItem value="Baja">Baja</SelectItem>
             </SelectContent>
           </Select>
         </div>
