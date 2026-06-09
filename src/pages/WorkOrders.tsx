@@ -151,7 +151,7 @@ export default function WorkOrders() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Avisos y Órdenes de Trabajo</h1>
           <p className="text-muted-foreground mt-1">
-            Listado de avisos SAP y OT por área y equipo, con fecha de programación.
+            Listado de avisos SAP y OT por área y equipo, correspondientes a la última semana registrada.
           </p>
         </div>
 
