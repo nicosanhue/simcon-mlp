@@ -27,7 +27,23 @@ interface WorkOrderRow {
 
 const PAGE_SIZE = 1000;
 
-async function fetchAllWorkOrders(): Promise<WorkOrderRow[]> {
+async function fetchLatestWeekWorkOrders(): Promise<WorkOrderRow[]> {
+  // 1) Discover the latest week that has any notification/OT/planned date
+  const { data: latestRows, error: latestErr } = await supabase
+    .from("weekly_reports")
+    .select("year, week_number")
+    .or("sap_notification.not.is.null,sap_order.not.is.null,planned_date.not.is.null")
+    .order("year", { ascending: false })
+    .order("week_number", { ascending: false })
+    .limit(1);
+
+  if (latestErr) throw latestErr;
+  if (!latestRows || latestRows.length === 0) return [];
+
+  const latestYear = latestRows[0].year;
+  const latestWeek = latestRows[0].week_number;
+
+  // 2) Fetch all records for that latest week
   let all: any[] = [];
   let from = 0;
   let hasMore = true;
@@ -41,6 +57,8 @@ async function fetchAllWorkOrders(): Promise<WorkOrderRow[]> {
           systems:system_id ( name, areas:area_id ( id, name ) )
         )
       `)
+      .eq("year", latestYear)
+      .eq("week_number", latestWeek)
       .or("sap_notification.not.is.null,sap_order.not.is.null,planned_date.not.is.null")
       .order("year", { ascending: false })
       .order("week_number", { ascending: false })
@@ -91,9 +109,9 @@ export default function WorkOrders() {
     },
   });
 
-  const ordersQuery = useQuery({
+  const ordersQuery = useQuery<WorkOrderRow[]>({
     queryKey: ["work-orders"],
-    queryFn: fetchAllWorkOrders,
+    queryFn: fetchLatestWeekWorkOrders,
   });
 
   const filtered = useMemo(() => {
@@ -133,7 +151,7 @@ export default function WorkOrders() {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Avisos y Órdenes de Trabajo</h1>
           <p className="text-muted-foreground mt-1">
-            Listado de avisos SAP y OT por área y equipo, con fecha de programación.
+            Listado de avisos SAP y OT por área y equipo, correspondientes a la última semana registrada.
           </p>
         </div>
 
@@ -190,7 +208,7 @@ export default function WorkOrders() {
             </div>
             <h2 className="text-lg font-semibold text-foreground">Sin resultados</h2>
             <p className="text-muted-foreground mt-2 max-w-md">
-              No se encontraron avisos u órdenes de trabajo con los filtros actuales.
+              No se encontraron avisos u órdenes de trabajo para la última semana registrada.
             </p>
           </div>
         ) : (
