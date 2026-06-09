@@ -208,7 +208,7 @@ export default function WorkOrders() {
             </div>
             <h2 className="text-lg font-semibold text-foreground">Sin resultados</h2>
             <p className="text-muted-foreground mt-2 max-w-md">
-              No se encontraron avisos u órdenes de trabajo con los filtros actuales.
+              No se encontraron avisos u órdenes de trabajo para la última semana registrada.
             </p>
           </div>
         ) : (
