@@ -175,7 +175,7 @@ export default function WorkOrders() {
             />
           </div>
           <Select value={areaId} onValueChange={setAreaId}>
-            <SelectTrigger className="w-full md:w-64">
+            <SelectTrigger className="w-full md:w-56">
               <SelectValue placeholder="Filtrar por área" />
             </SelectTrigger>
             <SelectContent>
@@ -183,6 +183,17 @@ export default function WorkOrders() {
               {areasQuery.data?.map((a) => (
                 <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+          <Select value={criticality} onValueChange={setCriticality}>
+            <SelectTrigger className="w-full md:w-48">
+              <SelectValue placeholder="Criticidad" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas</SelectItem>
+              <SelectItem value="Alta">Alta</SelectItem>
+              <SelectItem value="Media">Media</SelectItem>
+              <SelectItem value="Baja">Baja</SelectItem>
             </SelectContent>
           </Select>
         </div>
