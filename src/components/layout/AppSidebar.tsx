@@ -1,6 +1,5 @@
 import { 
   LayoutDashboard, 
-  ClipboardEdit, 
   Settings2, 
   History,
   Activity,
@@ -29,7 +28,6 @@ import { Button } from "@/components/ui/button";
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Organigrama", url: "/equipment-tree", icon: GitBranch },
-  { title: "Registro Semanal", url: "/data-entry", icon: ClipboardEdit },
   { title: "Avisos y OT", url: "/work-orders", icon: ClipboardList },
   { title: "Historial", url: "/history", icon: History },
   { title: "Activos", url: "/assets", icon: Settings2 },
