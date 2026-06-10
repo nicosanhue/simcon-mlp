@@ -439,7 +439,57 @@ export default function AdminSettings() {
         }
       }
 
-      setResult({ success: successCount, errors });
+      // ============================================================
+      // SYNC: eliminar equipos del maestro que NO están en la planilla
+      // (junto con todos sus weekly_reports históricos)
+      // ============================================================
+      const csvTags = new Set(rowsToProcess.map(({ row }) => row.Tag?.trim()).filter(Boolean));
+      const orphanIds: string[] = [];
+      const orphanTags: string[] = [];
+      for (const [tag, eqId] of equipmentMap.entries()) {
+        if (!csvTags.has(tag)) {
+          orphanIds.push(eqId);
+          orphanTags.push(tag);
+        }
+      }
+
+      let deletedEquipmentCount = 0;
+      if (orphanIds.length > 0) {
+        console.log(`Sincronizando: eliminando ${orphanIds.length} equipos que no están en la planilla:`, orphanTags);
+        // Borrar primero todos los reportes históricos de esos equipos
+        for (let i = 0; i < orphanIds.length; i += BATCH_SIZE) {
+          const batchIds = orphanIds.slice(i, i + BATCH_SIZE);
+          const { error: delReportsError } = await supabase
+            .from('weekly_reports')
+            .delete()
+            .in('equipment_id', batchIds);
+          if (delReportsError) {
+            errors.push(`Error eliminando reportes históricos: ${delReportsError.message}`);
+          }
+        }
+        // Luego borrar los equipos
+        for (let i = 0; i < orphanIds.length; i += BATCH_SIZE) {
+          const batchIds = orphanIds.slice(i, i + BATCH_SIZE);
+          const { error: delEqError, count } = await supabase
+            .from('equipment')
+            .delete({ count: 'exact' })
+            .in('id', batchIds);
+          if (delEqError) {
+            errors.push(`Error eliminando equipos huérfanos: ${delEqError.message}`);
+          } else {
+            deletedEquipmentCount += count ?? batchIds.length;
+          }
+        }
+        console.log(`Eliminados ${deletedEquipmentCount} equipos huérfanos del maestro`);
+      }
+
+      setResult({
+        success: successCount,
+        errors: deletedEquipmentCount > 0
+          ? [`ℹ️ Sincronización: ${deletedEquipmentCount} equipos eliminados del maestro porque no estaban en la planilla (${orphanTags.slice(0, 10).join(', ')}${orphanTags.length > 10 ? '...' : ''})`, ...errors]
+          : errors,
+      });
+
       
       if (successCount > 0) {
         // Invalidate all related queries to refresh data across the app
