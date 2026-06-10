@@ -230,13 +230,13 @@ export default function AdminSettings() {
     }).filter((row): row is CSVRow => row !== null && row.Tag && row.Tag.trim() !== '');
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
     setResult(null);
     setParsedFileInfo(null);
+    setPendingImport(null);
 
     // Parse week and year from filename
     const fileInfo = parseFilename(file.name);
@@ -246,26 +246,82 @@ export default function AdminSettings() {
         description: "El nombre del archivo debe seguir el formato: 'Estado Equipos Semana [Semana] [Año].csv' (ej: 'Estado Equipos Semana 52 2025.csv')",
         variant: "destructive",
       });
-      setIsUploading(false);
       event.target.value = '';
       return;
     }
 
     setParsedFileInfo(fileInfo);
     const { week: weekNumber, year } = fileInfo;
-    console.log(`Parsed from filename: Week ${weekNumber}, Year ${year}`);
 
     try {
-      // Force UTF-8 encoding to handle special characters like 'ñ'
       const text = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve(e.target?.result as string);
         reader.onerror = reject;
         reader.readAsText(file, 'UTF-8');
       });
-      
+
       const rows = parseCSV(text);
-      console.log(`Parsed ${rows.length} rows from CSV (UTF-8 encoding)`);
+
+      // Compute preview stats
+      const tagCounts = new Map<string, number>();
+      for (const r of rows) {
+        const t = r.Tag?.trim();
+        if (t) tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
+      }
+      const uniqueTagsArr = Array.from(tagCounts.keys()).sort();
+      const duplicates = Array.from(tagCounts.entries())
+        .filter(([, c]) => c > 1)
+        .map(([tag, count]) => ({ tag, count }));
+
+      // Fetch current equipment to compute orphans / new tags
+      const { data: currentEq, error: eqErr } = await supabase
+        .from('equipment')
+        .select('id, tag');
+      if (eqErr) throw eqErr;
+
+      const dbTags = new Set((currentEq ?? []).map(e => e.tag));
+      const csvTagSet = new Set(uniqueTagsArr);
+      const orphanTags = Array.from(dbTags).filter(t => !csvTagSet.has(t)).sort();
+      const newTags = uniqueTagsArr.filter(t => !dbTags.has(t));
+
+      setPendingImport({
+        rows,
+        weekNumber,
+        year,
+        fileName: file.name,
+        stats: {
+          totalRows: rows.length,
+          uniqueTags: uniqueTagsArr.length,
+          duplicates,
+          orphanTags,
+          newTags,
+          tagsInDb: dbTags.size,
+          sampleTagsFirst: uniqueTagsArr.slice(0, 5),
+          sampleTagsLast: uniqueTagsArr.slice(-5),
+        },
+      });
+      setConfirmOpen(true);
+    } catch (error) {
+      console.error('Error analizando CSV:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo leer el archivo CSV",
+        variant: "destructive",
+      });
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const runImport = async () => {
+    if (!pendingImport) return;
+    const { rows, weekNumber, year } = pendingImport;
+    setConfirmOpen(false);
+    setIsUploading(true);
+
+    try {
+
 
       // DELETE existing records for this week/year (clean overwrite)
       console.log(`Deleting existing records for Week ${weekNumber}, Year ${year}...`);
