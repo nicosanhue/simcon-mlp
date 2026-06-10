@@ -3,10 +3,21 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, Database } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, Database, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 interface CSVRow {
   Area: string;
@@ -65,8 +76,26 @@ export default function AdminSettings() {
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [parsedFileInfo, setParsedFileInfo] = useState<{ week: number; year: number } | null>(null);
+  const [pendingImport, setPendingImport] = useState<{
+    rows: CSVRow[];
+    weekNumber: number;
+    year: number;
+    fileName: string;
+    stats: {
+      totalRows: number;
+      uniqueTags: number;
+      duplicates: { tag: string; count: number }[];
+      orphanTags: string[];
+      newTags: string[];
+      tagsInDb: number;
+      sampleTagsFirst: string[];
+      sampleTagsLast: string[];
+    };
+  } | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
 
   // Debug: Fetch all areas from database
   const { data: dbAreas, refetch: refetchAreas } = useQuery({
@@ -201,13 +230,13 @@ export default function AdminSettings() {
     }).filter((row): row is CSVRow => row !== null && row.Tag && row.Tag.trim() !== '');
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
     setResult(null);
     setParsedFileInfo(null);
+    setPendingImport(null);
 
     // Parse week and year from filename
     const fileInfo = parseFilename(file.name);
@@ -217,26 +246,82 @@ export default function AdminSettings() {
         description: "El nombre del archivo debe seguir el formato: 'Estado Equipos Semana [Semana] [Año].csv' (ej: 'Estado Equipos Semana 52 2025.csv')",
         variant: "destructive",
       });
-      setIsUploading(false);
       event.target.value = '';
       return;
     }
 
     setParsedFileInfo(fileInfo);
     const { week: weekNumber, year } = fileInfo;
-    console.log(`Parsed from filename: Week ${weekNumber}, Year ${year}`);
 
     try {
-      // Force UTF-8 encoding to handle special characters like 'ñ'
       const text = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve(e.target?.result as string);
         reader.onerror = reject;
         reader.readAsText(file, 'UTF-8');
       });
-      
+
       const rows = parseCSV(text);
-      console.log(`Parsed ${rows.length} rows from CSV (UTF-8 encoding)`);
+
+      // Compute preview stats
+      const tagCounts = new Map<string, number>();
+      for (const r of rows) {
+        const t = r.Tag?.trim();
+        if (t) tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1);
+      }
+      const uniqueTagsArr = Array.from(tagCounts.keys()).sort();
+      const duplicates = Array.from(tagCounts.entries())
+        .filter(([, c]) => c > 1)
+        .map(([tag, count]) => ({ tag, count }));
+
+      // Fetch current equipment to compute orphans / new tags
+      const { data: currentEq, error: eqErr } = await supabase
+        .from('equipment')
+        .select('id, tag');
+      if (eqErr) throw eqErr;
+
+      const dbTags = new Set((currentEq ?? []).map(e => e.tag));
+      const csvTagSet = new Set(uniqueTagsArr);
+      const orphanTags = Array.from(dbTags).filter(t => !csvTagSet.has(t)).sort();
+      const newTags = uniqueTagsArr.filter(t => !dbTags.has(t));
+
+      setPendingImport({
+        rows,
+        weekNumber,
+        year,
+        fileName: file.name,
+        stats: {
+          totalRows: rows.length,
+          uniqueTags: uniqueTagsArr.length,
+          duplicates,
+          orphanTags,
+          newTags,
+          tagsInDb: dbTags.size,
+          sampleTagsFirst: uniqueTagsArr.slice(0, 5),
+          sampleTagsLast: uniqueTagsArr.slice(-5),
+        },
+      });
+      setConfirmOpen(true);
+    } catch (error) {
+      console.error('Error analizando CSV:', error);
+      toast({
+        title: "Error",
+        description: "No se pudo leer el archivo CSV",
+        variant: "destructive",
+      });
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  const runImport = async () => {
+    if (!pendingImport) return;
+    const { rows, weekNumber, year } = pendingImport;
+    setConfirmOpen(false);
+    setIsUploading(true);
+
+    try {
+
 
       // DELETE existing records for this week/year (clean overwrite)
       console.log(`Deleting existing records for Week ${weekNumber}, Year ${year}...`);
@@ -515,9 +600,9 @@ export default function AdminSettings() {
       });
     } finally {
       setIsUploading(false);
-      // Reset file input
-      event.target.value = '';
+      setPendingImport(null);
     }
+
   };
 
   return (
@@ -546,7 +631,7 @@ export default function AdminSettings() {
               <Input
                 type="file"
                 accept=".csv"
-                onChange={handleFileUpload}
+                onChange={handleFileSelect}
                 disabled={isUploading}
                 className="max-w-sm"
               />
@@ -667,6 +752,99 @@ export default function AdminSettings() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Confirmar sincronización · Semana {pendingImport?.weekNumber} / {pendingImport?.year}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4 text-sm">
+                <div className="text-muted-foreground">
+                  Archivo: <strong>{pendingImport?.fileName}</strong>
+                </div>
+
+                {pendingImport && (
+                  <>
+                    {/* Counts */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-muted p-3 rounded-md text-center">
+                        <div className="text-2xl font-bold text-foreground">{pendingImport.stats.totalRows}</div>
+                        <div className="text-xs text-muted-foreground">Filas en planilla</div>
+                      </div>
+                      <div className="bg-muted p-3 rounded-md text-center">
+                        <div className="text-2xl font-bold text-foreground">{pendingImport.stats.uniqueTags}</div>
+                        <div className="text-xs text-muted-foreground">Tags únicos</div>
+                      </div>
+                      <div className="bg-muted p-3 rounded-md text-center">
+                        <div className="text-2xl font-bold text-foreground">{pendingImport.stats.tagsInDb}</div>
+                        <div className="text-xs text-muted-foreground">Tags actuales en BD</div>
+                      </div>
+                    </div>
+
+                    {/* Tag range */}
+                    <div className="bg-muted/50 p-3 rounded-md">
+                      <div className="text-xs font-medium mb-1">Rango de Tags en la planilla (orden alfabético):</div>
+                      <div className="text-xs font-mono text-muted-foreground">
+                        <strong>Primeros 5:</strong> {pendingImport.stats.sampleTagsFirst.join(', ')}
+                      </div>
+                      <div className="text-xs font-mono text-muted-foreground">
+                        <strong>Últimos 5:</strong> {pendingImport.stats.sampleTagsLast.join(', ')}
+                      </div>
+                    </div>
+
+                    {/* Duplicates */}
+                    {pendingImport.stats.duplicates.length > 0 && (
+                      <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
+                        <div className="text-xs font-medium text-amber-900 mb-1">
+                          ⚠️ {pendingImport.stats.duplicates.length} Tag(s) duplicado(s) — se conservará el último valor:
+                        </div>
+                        <div className="text-xs font-mono text-amber-900 max-h-20 overflow-y-auto">
+                          {pendingImport.stats.duplicates.map(d => `${d.tag} (×${d.count})`).join(', ')}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* New tags */}
+                    {pendingImport.stats.newTags.length > 0 && (
+                      <div className="bg-green-50 border border-green-200 p-3 rounded-md">
+                        <div className="text-xs font-medium text-green-900 mb-1">
+                          ➕ {pendingImport.stats.newTags.length} Tag(s) nuevo(s) se crearán en Activos
+                        </div>
+                        <div className="text-xs font-mono text-green-900 max-h-20 overflow-y-auto">
+                          {pendingImport.stats.newTags.slice(0, 30).join(', ')}
+                          {pendingImport.stats.newTags.length > 30 && ` ... +${pendingImport.stats.newTags.length - 30} más`}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Orphans to delete */}
+                    {pendingImport.stats.orphanTags.length > 0 && (
+                      <div className="bg-destructive/10 border border-destructive p-3 rounded-md">
+                        <div className="text-xs font-bold text-destructive mb-1">
+                          🗑️ {pendingImport.stats.orphanTags.length} Tag(s) se ELIMINARÁN del maestro (no están en la planilla, incluye su histórico):
+                        </div>
+                        <div className="text-xs font-mono text-destructive max-h-32 overflow-y-auto">
+                          {pendingImport.stats.orphanTags.join(', ')}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingImport(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={runImport} className="bg-primary">
+              Confirmar y sincronizar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 }
+
