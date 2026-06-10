@@ -76,8 +76,26 @@ export default function AdminSettings() {
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [parsedFileInfo, setParsedFileInfo] = useState<{ week: number; year: number } | null>(null);
+  const [pendingImport, setPendingImport] = useState<{
+    rows: CSVRow[];
+    weekNumber: number;
+    year: number;
+    fileName: string;
+    stats: {
+      totalRows: number;
+      uniqueTags: number;
+      duplicates: { tag: string; count: number }[];
+      orphanTags: string[];
+      newTags: string[];
+      tagsInDb: number;
+      sampleTagsFirst: string[];
+      sampleTagsLast: string[];
+    };
+  } | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
 
   // Debug: Fetch all areas from database
   const { data: dbAreas, refetch: refetchAreas } = useQuery({
