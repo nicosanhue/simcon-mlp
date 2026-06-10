@@ -600,9 +600,9 @@ export default function AdminSettings() {
       });
     } finally {
       setIsUploading(false);
-      // Reset file input
-      event.target.value = '';
+      setPendingImport(null);
     }
+
   };
 
   return (
