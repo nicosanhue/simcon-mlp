@@ -752,6 +752,99 @@ export default function AdminSettings() {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              Confirmar sincronización · Semana {pendingImport?.weekNumber} / {pendingImport?.year}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-4 text-sm">
+                <div className="text-muted-foreground">
+                  Archivo: <strong>{pendingImport?.fileName}</strong>
+                </div>
+
+                {pendingImport && (
+                  <>
+                    {/* Counts */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-muted p-3 rounded-md text-center">
+                        <div className="text-2xl font-bold text-foreground">{pendingImport.stats.totalRows}</div>
+                        <div className="text-xs text-muted-foreground">Filas en planilla</div>
+                      </div>
+                      <div className="bg-muted p-3 rounded-md text-center">
+                        <div className="text-2xl font-bold text-foreground">{pendingImport.stats.uniqueTags}</div>
+                        <div className="text-xs text-muted-foreground">Tags únicos</div>
+                      </div>
+                      <div className="bg-muted p-3 rounded-md text-center">
+                        <div className="text-2xl font-bold text-foreground">{pendingImport.stats.tagsInDb}</div>
+                        <div className="text-xs text-muted-foreground">Tags actuales en BD</div>
+                      </div>
+                    </div>
+
+                    {/* Tag range */}
+                    <div className="bg-muted/50 p-3 rounded-md">
+                      <div className="text-xs font-medium mb-1">Rango de Tags en la planilla (orden alfabético):</div>
+                      <div className="text-xs font-mono text-muted-foreground">
+                        <strong>Primeros 5:</strong> {pendingImport.stats.sampleTagsFirst.join(', ')}
+                      </div>
+                      <div className="text-xs font-mono text-muted-foreground">
+                        <strong>Últimos 5:</strong> {pendingImport.stats.sampleTagsLast.join(', ')}
+                      </div>
+                    </div>
+
+                    {/* Duplicates */}
+                    {pendingImport.stats.duplicates.length > 0 && (
+                      <div className="bg-amber-50 border border-amber-200 p-3 rounded-md">
+                        <div className="text-xs font-medium text-amber-900 mb-1">
+                          ⚠️ {pendingImport.stats.duplicates.length} Tag(s) duplicado(s) — se conservará el último valor:
+                        </div>
+                        <div className="text-xs font-mono text-amber-900 max-h-20 overflow-y-auto">
+                          {pendingImport.stats.duplicates.map(d => `${d.tag} (×${d.count})`).join(', ')}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* New tags */}
+                    {pendingImport.stats.newTags.length > 0 && (
+                      <div className="bg-green-50 border border-green-200 p-3 rounded-md">
+                        <div className="text-xs font-medium text-green-900 mb-1">
+                          ➕ {pendingImport.stats.newTags.length} Tag(s) nuevo(s) se crearán en Activos
+                        </div>
+                        <div className="text-xs font-mono text-green-900 max-h-20 overflow-y-auto">
+                          {pendingImport.stats.newTags.slice(0, 30).join(', ')}
+                          {pendingImport.stats.newTags.length > 30 && ` ... +${pendingImport.stats.newTags.length - 30} más`}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Orphans to delete */}
+                    {pendingImport.stats.orphanTags.length > 0 && (
+                      <div className="bg-destructive/10 border border-destructive p-3 rounded-md">
+                        <div className="text-xs font-bold text-destructive mb-1">
+                          🗑️ {pendingImport.stats.orphanTags.length} Tag(s) se ELIMINARÁN del maestro (no están en la planilla, incluye su histórico):
+                        </div>
+                        <div className="text-xs font-mono text-destructive max-h-32 overflow-y-auto">
+                          {pendingImport.stats.orphanTags.join(', ')}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingImport(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={runImport} className="bg-primary">
+              Confirmar y sincronizar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 }
+
