@@ -631,7 +631,7 @@ export default function AdminSettings() {
               <Input
                 type="file"
                 accept=".csv"
-                onChange={handleFileUpload}
+                onChange={handleFileSelect}
                 disabled={isUploading}
                 className="max-w-sm"
               />
