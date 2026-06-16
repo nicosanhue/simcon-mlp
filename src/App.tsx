@@ -11,6 +11,7 @@ import AdminSettings from "./pages/AdminSettings";
 import EquipmentTree from "./pages/EquipmentTree";
 import WorkOrders from "./pages/WorkOrders";
 import NotFound from "./pages/NotFound";
+import LubricacionEquipos from "./pages/LubricacionEquipos";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/history" element={<History />} />
           <Route path="/work-orders" element={<WorkOrders />} />
           <Route path="/assets" element={<Assets />} />
+          <Route path="/lubricacion-equipos" element={<LubricacionEquipos />} />
           <Route path="/admin" element={<AdminSettings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
