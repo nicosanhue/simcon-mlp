@@ -195,9 +195,8 @@ function LubricacionTable({
                     const isNewEquipo = span > 0;
                     const hist = history[m.key] ?? [];
                     return (
-                      <>
+                      <Fragment key={m.key}>
                         <TableRow
-                          key={m.key}
                           className={isNewEquipo && i > 0 ? "border-t-2 border-t-primary/20" : ""}
                         >
                           {isNewEquipo && (
