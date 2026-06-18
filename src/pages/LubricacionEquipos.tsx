@@ -301,7 +301,7 @@ function LubricacionTable({
                             </TableCell>
                           </TableRow>
                         )}
-                      </>
+                      </Fragment>
                     );
                   })}
                 </TableBody>
