@@ -12,6 +12,7 @@ import EquipmentTree from "./pages/EquipmentTree";
 import WorkOrders from "./pages/WorkOrders";
 import NotFound from "./pages/NotFound";
 import LubricacionEquipos from "./pages/LubricacionEquipos";
+import Reports from "./pages/Reports";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/work-orders" element={<WorkOrders />} />
           <Route path="/assets" element={<Assets />} />
           <Route path="/lubricacion-equipos" element={<LubricacionEquipos />} />
+          <Route path="/reports" element={<Reports />} />
           <Route path="/admin" element={<AdminSettings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

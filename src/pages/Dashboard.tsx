@@ -274,7 +274,12 @@ export default function Dashboard() {
           {isLoading ? (
             <Skeleton className="h-[380px] rounded-lg" />
           ) : (
-            <CriticalAlertsList alerts={allAlerts} activeFilter={statusFilter ?? undefined} />
+            <CriticalAlertsList
+              alerts={allAlerts}
+              activeFilter={statusFilter ?? undefined}
+              week={week ?? getWeekNumber(currentDate)}
+              year={year ?? currentDate.getFullYear()}
+            />
           )}
         </div>
 

@@ -79,6 +79,104 @@ export type Database = {
           },
         ]
       }
+      report_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          orden: number
+          report_id: string
+          storage_path: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          orden?: number
+          report_id: string
+          storage_path: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          orden?: number
+          report_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_photos_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reports: {
+        Row: {
+          created_at: string
+          equipment_id: string
+          fecha_inspeccion: string
+          hallazgos: string | null
+          id: string
+          recomendacion: string | null
+          status_resultante: Database["public"]["Enums"]["equipment_status"]
+          tecnico: string | null
+          tipo: string
+          updated_at: string
+          week_number: number
+          weekly_report_id: string | null
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          equipment_id: string
+          fecha_inspeccion?: string
+          hallazgos?: string | null
+          id?: string
+          recomendacion?: string | null
+          status_resultante?: Database["public"]["Enums"]["equipment_status"]
+          tecnico?: string | null
+          tipo: string
+          updated_at?: string
+          week_number: number
+          weekly_report_id?: string | null
+          year: number
+        }
+        Update: {
+          created_at?: string
+          equipment_id?: string
+          fecha_inspeccion?: string
+          hallazgos?: string | null
+          id?: string
+          recomendacion?: string | null
+          status_resultante?: Database["public"]["Enums"]["equipment_status"]
+          tecnico?: string | null
+          tipo?: string
+          updated_at?: string
+          week_number?: number
+          weekly_report_id?: string | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reports_weekly_report_id_fkey"
+            columns: ["weekly_report_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       systems: {
         Row: {
           area_id: string

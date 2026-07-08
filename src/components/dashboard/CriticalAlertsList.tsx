@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, AlertCircle, Clock, X, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
+import { AlertTriangle, AlertCircle, Clock, CheckCircle2, XCircle, HelpCircle, FileWarning } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
@@ -8,6 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useReportsIndex } from "@/hooks/useReports";
+import { EquipmentReportsSection } from "@/components/reports/EquipmentReportsSection";
 
 interface Alert {
   id: string;
@@ -25,6 +27,8 @@ interface Alert {
 interface CriticalAlertsListProps {
   alerts: Alert[];
   activeFilter?: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | "Sin medición" | null;
+  week: number;
+  year: number;
 }
 
 const statusStyles = {
@@ -96,8 +100,13 @@ const getStatusIcon = (status: string, className: string) => {
   }
 };
 
-export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListProps) {
+export function CriticalAlertsList({ alerts, activeFilter, week, year }: CriticalAlertsListProps) {
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+  const { data: reportsIndex } = useReportsIndex(week, year);
+
+  const pendingCount = alerts.filter(
+    (a) => (a.status === "Crítico" || a.status === "Alerta") && !reportsIndex?.has(a.id)
+  ).length;
 
   if (alerts.length === 0) {
     return (
@@ -139,9 +148,16 @@ export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListP
               </span>
             )}
           </h3>
-          <Badge variant={isSafeFilter ? "secondary" : "destructive"} className={!isSafeFilter ? "animate-pulse-glow" : ""}>
-            {alerts.length} {alerts.length === 1 ? "equipo" : "equipos"}
-          </Badge>
+          <div className="flex items-center gap-2">
+            {pendingCount > 0 && (
+              <Badge variant="outline" className="border-status-alerta/50 text-status-alerta bg-status-alerta/10 gap-1">
+                <FileWarning className="h-3 w-3" /> {pendingCount} sin informe
+              </Badge>
+            )}
+            <Badge variant={isSafeFilter ? "secondary" : "destructive"} className={!isSafeFilter ? "animate-pulse-glow" : ""}>
+              {alerts.length} {alerts.length === 1 ? "equipo" : "equipos"}
+            </Badge>
+          </div>
         </div>
         <div className="space-y-3 max-h-[400px] overflow-y-auto">
           {alerts.map((alert) => {
@@ -165,6 +181,11 @@ export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListP
                       <Badge variant="outline" className={cn("text-xs", styles.badgeBorder, styles.badgeText)}>
                         {alert.status}
                       </Badge>
+                      {(alert.status === "Crítico" || alert.status === "Alerta") && !reportsIndex?.has(alert.id) && (
+                        <Badge variant="outline" className="text-xs border-status-alerta/50 text-status-alerta bg-status-alerta/10 gap-1">
+                          <FileWarning className="h-3 w-3" /> Informe pendiente
+                        </Badge>
+                      )}
                     </div>
                     <p className="text-sm text-foreground mt-1 truncate">{alert.name}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{alert.area} • {alert.system}</p>
@@ -186,7 +207,7 @@ export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListP
       </div>
 
       <Dialog open={!!selectedAlert} onOpenChange={() => setSelectedAlert(null)}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           {selectedAlert && (() => {
             const styles = statusStyles[selectedAlert.status] || statusStyles.Satisfactorio;
             return (
@@ -247,6 +268,18 @@ export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListP
                       </div>
                     </div>
                   )}
+                  <div className="pt-4 border-t">
+                    <EquipmentReportsSection
+                      equipmentId={selectedAlert.id}
+                      equipmentTag={selectedAlert.tag}
+                      equipmentName={selectedAlert.name}
+                      area={selectedAlert.area}
+                      system={selectedAlert.system}
+                      defaultWeek={week}
+                      defaultYear={year}
+                      defaultStatus={selectedAlert.status}
+                    />
+                  </div>
                 </div>
               </>
             );
