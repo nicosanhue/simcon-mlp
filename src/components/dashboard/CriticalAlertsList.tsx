@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, AlertCircle, Clock, X, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
+import { AlertTriangle, AlertCircle, Clock, CheckCircle2, XCircle, HelpCircle, FileWarning } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
@@ -8,6 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useReportsIndex } from "@/hooks/useReports";
+import { EquipmentReportsSection } from "@/components/reports/EquipmentReportsSection";
 
 interface Alert {
   id: string;
@@ -25,6 +27,8 @@ interface Alert {
 interface CriticalAlertsListProps {
   alerts: Alert[];
   activeFilter?: "Crítico" | "Alerta" | "Satisfactorio" | "Seguimiento" | "Sin medición" | null;
+  week: number;
+  year: number;
 }
 
 const statusStyles = {
@@ -96,8 +100,13 @@ const getStatusIcon = (status: string, className: string) => {
   }
 };
 
-export function CriticalAlertsList({ alerts, activeFilter }: CriticalAlertsListProps) {
+export function CriticalAlertsList({ alerts, activeFilter, week, year }: CriticalAlertsListProps) {
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
+  const { data: reportsIndex } = useReportsIndex(week, year);
+
+  const pendingCount = alerts.filter(
+    (a) => (a.status === "Crítico" || a.status === "Alerta") && !reportsIndex?.has(a.id)
+  ).length;
 
   if (alerts.length === 0) {
     return (
