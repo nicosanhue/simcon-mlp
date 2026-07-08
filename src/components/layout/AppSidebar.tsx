@@ -7,7 +7,8 @@ import {
   ChevronRight,
   GitBranch,
   ClipboardList,
-  Droplet
+  Droplet,
+  FileText
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { SidebarDebugPanel } from "./SidebarDebugPanel";
@@ -30,6 +31,7 @@ const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Organigrama", url: "/equipment-tree", icon: GitBranch },
   { title: "Avisos y OT", url: "/work-orders", icon: ClipboardList },
+  { title: "Informes", url: "/reports", icon: FileText },
   { title: "Historial", url: "/history", icon: History },
   { title: "Lubricación Equipos", url: "/lubricacion-equipos", icon: Droplet },
   { title: "Activos", url: "/assets", icon: Settings2 },
