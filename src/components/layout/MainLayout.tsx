@@ -29,7 +29,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             <div className="flex items-center gap-2">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="h-4" />
-              <span className="text-sm font-medium text-muted-foreground">SCIM</span>
+              <span className="text-sm font-medium text-muted-foreground" title="Sistema Monitoreo de Condiciones">SIMCON</span>
             </div>
             <div className="flex items-center gap-2">
               <CriticalReportDownload />
