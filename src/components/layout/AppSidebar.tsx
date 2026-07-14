@@ -51,8 +51,8 @@ export function AppSidebar() {
           </div>
           {!isCollapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-white">SCIM</span>
-              <span className="text-xs text-white/70">Condition Monitoring</span>
+              <span className="text-sm font-semibold text-white">SIMCON</span>
+              <span className="text-xs text-white/70">Sistema Monitoreo de Condiciones</span>
             </div>
           )}
         </div>
