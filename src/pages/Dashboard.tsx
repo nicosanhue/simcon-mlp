@@ -135,6 +135,10 @@ export default function Dashboard() {
         {/* Report Actions */}
         <div className="flex justify-end gap-2">
           <CriticalReportDownload />
+          <ConditionsExcelDownload
+            week={week ?? getWeekNumber(currentDate)}
+            year={year ?? currentDate.getFullYear()}
+          />
           <DashboardScreenshotDownload
             areas={areas}
             currentWeek={week ?? getWeekNumber(currentDate)}
