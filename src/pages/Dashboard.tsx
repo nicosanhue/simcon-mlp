@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { CriticalReportDownload } from "@/components/reports/CriticalReportDownload";
 import { DashboardScreenshotDownload } from "@/components/reports/DashboardScreenshotDownload";
+import { ConditionsExcelDownload } from "@/components/reports/ConditionsExcelDownload";
 
 function getWeekNumber(date: Date): number {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
