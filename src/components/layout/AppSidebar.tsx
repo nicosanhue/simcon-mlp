@@ -12,6 +12,7 @@ import {
   Thermometer
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import simconLogo from "@/assets/simcon-logo.png.asset.json";
 import { SidebarDebugPanel } from "./SidebarDebugPanel";
 import { ProfileMenu } from "@/components/profile/ProfileMenu";
 import {
