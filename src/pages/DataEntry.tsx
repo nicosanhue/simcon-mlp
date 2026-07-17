@@ -42,6 +42,7 @@ const statusConfig: Record<EquipmentStatus, { label: string; color: string; icon
 };
 
 export default function DataEntry() {
+  const { isEditor } = useProfile();
   const [selectedWeek, setSelectedWeek] = useState<number>(getISOWeek(new Date()));
   const [selectedYear, setSelectedYear] = useState<number>(getYear(new Date()));
   const [equipment, setEquipment] = useState<EquipmentWithReport[]>([]);
