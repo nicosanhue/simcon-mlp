@@ -82,6 +82,9 @@ export default {
           falla: "hsl(var(--chart-falla))",
           standby: "hsl(var(--chart-standby))",
         },
+        stc: {
+          orange: "hsl(var(--stc-orange))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
