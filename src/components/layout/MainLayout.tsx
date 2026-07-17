@@ -26,7 +26,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           />
         <AppSidebar />
         <SidebarInset className="flex-1">
-          <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4">
+          <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="h-4" />
