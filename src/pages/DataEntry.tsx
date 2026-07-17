@@ -302,19 +302,23 @@ export default function DataEntry() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {changesCount > 0 && (
+            {isEditor && changesCount > 0 && (
               <Badge variant="secondary" className="bg-amber-500/20 text-amber-400">
                 {changesCount} cambio{changesCount > 1 ? 's' : ''} pendiente{changesCount > 1 ? 's' : ''}
               </Badge>
             )}
-            <Button 
-              onClick={saveChanges} 
-              disabled={isSaving || changesCount === 0}
-              className="gap-2"
-            >
-              <Save className="h-4 w-4" />
-              {isSaving ? "Guardando..." : "Guardar Cambios"}
-            </Button>
+            {isEditor ? (
+              <Button
+                onClick={saveChanges}
+                disabled={isSaving || changesCount === 0}
+                className="gap-2"
+              >
+                <Save className="h-4 w-4" />
+                {isSaving ? "Guardando..." : "Guardar Cambios"}
+              </Button>
+            ) : (
+              <Badge variant="outline" className="text-xs">Modo lectura — ingresa a un perfil para editar</Badge>
+            )}
           </div>
         </div>
 
