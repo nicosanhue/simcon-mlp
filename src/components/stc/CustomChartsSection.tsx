@@ -3,6 +3,7 @@ import {
   useCustomCharts,
   useCreateCustomChart,
   useDeleteCustomChart,
+  useUpdateCustomChart,
   type StcSpool,
   type StcStation,
   type StcReading,
