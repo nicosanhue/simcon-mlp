@@ -110,7 +110,7 @@ export default function StcTemperatura() {
       if (!set.has(k)) set.set(k, { week: r.week_number, year: r.year });
     });
     return Array.from(set.values()).sort(
-      (a, b) => b.year - a.year || b.week_number - a.week_number,
+      (a, b) => b.year - a.year || b.week - a.week,
     );
   }, [readings]);
 
