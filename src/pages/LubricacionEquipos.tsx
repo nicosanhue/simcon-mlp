@@ -496,6 +496,7 @@ export default function LubricacionEquipos() {
                 overrides={overrides}
                 history={history}
                 onEdit={openEdit}
+                canEdit={isEditor}
               />
             )}
           </CardContent>
