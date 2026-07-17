@@ -134,14 +134,18 @@ export default function Reports() {
                         <Button size="sm" variant="ghost" onClick={() => download(r)} disabled={downloadingId === r.id}>
                           {downloadingId === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => { setEditing(r); setOpen(true); }}>
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => {
-                          if (confirm("¿Eliminar informe?")) del.mutate(r.id);
-                        }}>
-                          <Trash2 className="h-3 w-3 text-destructive" />
-                        </Button>
+                        {isEditor && (
+                          <>
+                            <Button size="sm" variant="ghost" onClick={() => { setEditing(r); setOpen(true); }}>
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => {
+                              if (confirm("¿Eliminar informe?")) del.mutate(r.id);
+                            }}>
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>
