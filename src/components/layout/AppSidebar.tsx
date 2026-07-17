@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { SidebarDebugPanel } from "./SidebarDebugPanel";
+import { ProfileMenu } from "@/components/profile/ProfileMenu";
 import {
   Sidebar,
   SidebarContent,
