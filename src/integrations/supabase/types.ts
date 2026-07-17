@@ -271,6 +271,7 @@ export type Database = {
       }
       stc_temperature_readings: {
         Row: {
+          confirmed: boolean
           created_at: string
           delta_t: number | null
           id: string
@@ -283,6 +284,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          confirmed?: boolean
           created_at?: string
           delta_t?: number | null
           id?: string
@@ -295,6 +297,7 @@ export type Database = {
           year: number
         }
         Update: {
+          confirmed?: boolean
           created_at?: string
           delta_t?: number | null
           id?: string
@@ -315,6 +318,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      stc_tracking_weeks: {
+        Row: {
+          created_at: string
+          id: string
+          published: boolean
+          published_at: string | null
+          updated_at: string
+          week_number: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          published?: boolean
+          published_at?: string | null
+          updated_at?: string
+          week_number: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          published?: boolean
+          published_at?: string | null
+          updated_at?: string
+          week_number?: number
+          year?: number
+        }
+        Relationships: []
       }
       systems: {
         Row: {
