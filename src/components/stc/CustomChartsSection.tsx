@@ -53,6 +53,7 @@ import {
 } from "recharts";
 import { Plus, Trash2, LineChart as LineChartIcon } from "lucide-react";
 import { toast } from "sonner";
+import { useProfile } from "@/contexts/ProfileContext";
 
 interface Props {
   stations: StcStation[];
