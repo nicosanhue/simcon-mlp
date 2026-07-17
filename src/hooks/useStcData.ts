@@ -97,6 +97,54 @@ export function useUpdateReading() {
   });
 }
 
+export interface StcCustomChart {
+  id: string;
+  name: string;
+  spool_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export function useCustomCharts() {
+  return useQuery({
+    queryKey: ["stc_custom_charts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("stc_custom_charts")
+        .select("*")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return data as StcCustomChart[];
+    },
+  });
+}
+
+export function useCreateCustomChart() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { name: string; spool_ids: string[] }) => {
+      const { error } = await supabase.from("stc_custom_charts").insert({
+        name: input.name,
+        spool_ids: input.spool_ids,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["stc_custom_charts"] }),
+  });
+}
+
+export function useDeleteCustomChart() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("stc_custom_charts").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["stc_custom_charts"] }),
+  });
+}
+
+
 export function useAddWeek() {
   const qc = useQueryClient();
   return useMutation({

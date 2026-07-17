@@ -177,6 +177,30 @@ export type Database = {
           },
         ]
       }
+      stc_custom_charts: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          spool_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          spool_ids?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          spool_ids?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       stc_spools: {
         Row: {
           branch: Database["public"]["Enums"]["stc_branch"]

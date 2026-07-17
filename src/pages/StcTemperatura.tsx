@@ -33,6 +33,11 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   BarChart,
   Bar,
   XAxis,
@@ -43,9 +48,10 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { ArrowDown, ArrowUp, Minus, Plus, Thermometer } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Minus, Plus, Thermometer } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { CustomChartsSection } from "@/components/stc/CustomChartsSection";
 
 function fmt(n: number | null | undefined) {
   if (n === null || n === undefined || Number.isNaN(n)) return "—";
@@ -54,15 +60,9 @@ function fmt(n: number | null | undefined) {
 
 function DeltaCell({
   reading,
-  spool_id,
-  week,
-  year,
   onSave,
 }: {
   reading: StcReading | undefined;
-  spool_id: string;
-  week: number;
-  year: number;
   onSave: (v: number | null) => void;
 }) {
   const [val, setVal] = useState<string>(
@@ -101,8 +101,9 @@ export default function StcTemperatura() {
   const addWeek = useAddWeek();
   const [showAll, setShowAll] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [chartsOpen, setChartsOpen] = useState(false);
+  const [openStations, setOpenStations] = useState<Record<string, boolean>>({});
 
-  // All week/year combos present, sorted desc
   const allWeeks = useMemo(() => {
     const set = new Map<string, { week: number; year: number }>();
     readings.forEach((r) => {
@@ -118,7 +119,6 @@ export default function StcTemperatura() {
   const prev = allWeeks[1];
   const visibleWeeks = showAll ? allWeeks : allWeeks.slice(0, 3);
 
-  // spool -> week -> reading
   const readingsIndex = useMemo(() => {
     const m = new Map<string, Map<string, StcReading>>();
     readings.forEach((r) => {
@@ -148,6 +148,24 @@ export default function StcTemperatura() {
       if (v > max) max = v;
     });
     return max;
+  };
+
+  // Trend: compare spool-by-spool between latest and prev.
+  const stationTrend = (stationId: string): "up" | "down" | "flat" => {
+    if (!latest || !prev) return "flat";
+    const arr = spoolsByStation.get(stationId) ?? [];
+    let anyUp = false;
+    let anyDown = false;
+    for (const sp of arr) {
+      const cur = readingsIndex.get(sp.id)?.get(`${latest.year}-${latest.week}`)?.delta_t ?? 0;
+      const pre = readingsIndex.get(sp.id)?.get(`${prev.year}-${prev.week}`)?.delta_t ?? 0;
+      const diff = cur - pre;
+      if (diff >= 0.5) anyUp = true;
+      else if (diff <= -0.5) anyDown = true;
+    }
+    if (anyUp) return "up";
+    if (anyDown) return "down";
+    return "flat";
   };
 
   const [addWeekNum, setAddWeekNum] = useState<number>(
@@ -237,36 +255,30 @@ export default function StcTemperatura() {
               <TableRow>
                 <TableHead>Estación</TableHead>
                 <TableHead className="text-right">ΔT máx (°C)</TableHead>
-                <TableHead className="text-right">Tendencia</TableHead>
+                <TableHead className="text-center">Tendencia</TableHead>
                 <TableHead>Estado</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {stations.map((st) => {
                 const currMax = stationMax(st.id, latest);
-                const prevMax = stationMax(st.id, prev);
-                const diff = currMax - prevMax;
                 const status = getStcStatus(currMax);
+                const trend = stationTrend(st.id);
                 const TrendIcon =
-                  Math.abs(diff) < 0.05 ? Minus : diff > 0 ? ArrowUp : ArrowDown;
+                  trend === "up" ? ArrowUp : trend === "down" ? ArrowDown : Minus;
                 const trendColor =
-                  Math.abs(diff) < 0.05
-                    ? "text-muted-foreground"
-                    : diff > 0
-                      ? "text-status-falla"
-                      : "text-status-operativo";
+                  trend === "up"
+                    ? "text-status-falla"
+                    : trend === "down"
+                      ? "text-status-operativo"
+                      : "text-muted-foreground";
                 return (
                   <TableRow key={st.id}>
                     <TableCell className="font-medium">{st.code}</TableCell>
-                    <TableCell className="text-right font-mono">
-                      {fmt(currMax)}
-                    </TableCell>
+                    <TableCell className="text-right font-mono">{fmt(currMax)}</TableCell>
                     <TableCell>
-                      <div className={cn("flex items-center justify-end gap-1", trendColor)}>
+                      <div className={cn("flex items-center justify-center", trendColor)}>
                         <TrendIcon className="h-4 w-4" />
-                        <span className="text-xs font-mono">
-                          {prev ? `${diff >= 0 ? "+" : ""}${diff.toFixed(2)}` : "—"}
-                        </span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -284,51 +296,75 @@ export default function StcTemperatura() {
           </Table>
         </Card>
 
-        {/* Charts per station */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {stations.map((st) => {
-            const arr = spoolsByStation.get(st.id) ?? [];
-            const chartData = arr.map((sp) => {
-              const r = latest
-                ? readingsIndex.get(sp.id)?.get(`${latest.year}-${latest.week}`)
-                : undefined;
-              const v = r?.delta_t ?? 0;
-              return { tag: sp.tag, delta: v, fill: getStcStatus(v).hex };
-            });
-            return (
-              <Card key={st.id} className="p-4">
-                <h3 className="font-semibold mb-2">{st.code} — ΔT por Spool</h3>
-                <div className="h-64">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 40 }}>
-                      <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                      <XAxis
-                        dataKey="tag"
-                        angle={-60}
-                        textAnchor="end"
-                        interval={0}
-                        height={60}
-                        tick={{ fontSize: 9 }}
-                      />
-                      <YAxis domain={[0, "auto"]} tick={{ fontSize: 10 }} />
-                      <ReTooltip
-                        formatter={(v: number) => [`${Number(v).toFixed(2)} °C`, "ΔT"]}
-                      />
-                      <ReferenceLine y={2.5} stroke="#eab308" strokeDasharray="3 3" />
-                      <ReferenceLine y={3.0} stroke="#f97316" strokeDasharray="3 3" />
-                      <ReferenceLine y={3.5} stroke="#ef4444" strokeDasharray="3 3" />
-                      <Bar dataKey="delta">
-                        {chartData.map((d, i) => (
-                          <Cell key={i} fill={d.fill} />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+        {/* Charts per station — collapsible group */}
+        <Card className="p-4">
+          <Collapsible open={chartsOpen} onOpenChange={setChartsOpen}>
+            <CollapsibleTrigger asChild>
+              <button className="flex items-center justify-between w-full">
+                <h2 className="font-semibold">Gráfico por Estación — Línea Principal</h2>
+                <ChevronDown
+                  className={cn(
+                    "h-4 w-4 transition-transform",
+                    chartsOpen && "rotate-180",
+                  )}
+                />
+              </button>
+            </CollapsibleTrigger>
+            <CollapsibleContent className="pt-4">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                {stations.map((st) => {
+                  const arr = (spoolsByStation.get(st.id) ?? []).filter(
+                    (s) => s.branch === "principal",
+                  );
+                  const chartData = arr.map((sp) => {
+                    const r = latest
+                      ? readingsIndex.get(sp.id)?.get(`${latest.year}-${latest.week}`)
+                      : undefined;
+                    const v = r?.delta_t ?? 0;
+                    return { tag: sp.tag, delta: v, fill: getStcStatus(v).hex };
+                  });
+                  return (
+                    <Card key={st.id} className="p-4">
+                      <h3 className="font-semibold mb-2 text-sm">
+                        {st.code} — Línea Principal (ΔT por Spool)
+                      </h3>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart
+                            data={chartData}
+                            margin={{ top: 8, right: 8, left: 0, bottom: 40 }}
+                          >
+                            <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                            <XAxis
+                              dataKey="tag"
+                              angle={-60}
+                              textAnchor="end"
+                              interval={0}
+                              height={60}
+                              tick={{ fontSize: 9 }}
+                            />
+                            <YAxis domain={[0, "auto"]} tick={{ fontSize: 10 }} />
+                            <ReTooltip
+                              formatter={(v: number) => [`${Number(v).toFixed(2)} °C`, "ΔT"]}
+                            />
+                            <ReferenceLine y={2.5} stroke="#eab308" strokeDasharray="3 3" />
+                            <ReferenceLine y={3.0} stroke="#f97316" strokeDasharray="3 3" />
+                            <ReferenceLine y={3.5} stroke="#ef4444" strokeDasharray="3 3" />
+                            <Bar dataKey="delta">
+                              {chartData.map((d, i) => (
+                                <Cell key={i} fill={d.fill} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+        </Card>
 
         {/* Full editable table */}
         <Card className="p-4">
@@ -342,11 +378,12 @@ export default function StcTemperatura() {
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-3">
             {stations.map((st) => {
               const arr = spoolsByStation.get(st.id) ?? [];
               const principal = arr.filter((s) => s.branch === "principal");
               const variable = arr.filter((s) => s.branch === "variable_emergencia");
+              const isOpen = !!openStations[st.id];
 
               const renderRows = (list: StcSpool[]) =>
                 list.map((sp) => {
@@ -356,7 +393,9 @@ export default function StcTemperatura() {
                   const status = getStcStatus(latestR?.delta_t ?? null);
                   return (
                     <TableRow key={sp.id}>
-                      <TableCell className="font-mono text-xs">{sp.spool_number ?? "—"}</TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {sp.spool_number ?? "—"}
+                      </TableCell>
                       <TableCell className="font-medium text-sm">{sp.tag}</TableCell>
                       {visibleWeeks.map((w) => {
                         const r = readingsIndex.get(sp.id)?.get(`${w.year}-${w.week}`);
@@ -364,9 +403,6 @@ export default function StcTemperatura() {
                           <TableCell key={`${w.year}-${w.week}`}>
                             <DeltaCell
                               reading={r}
-                              spool_id={sp.id}
-                              week={w.week}
-                              year={w.year}
                               onSave={(v) =>
                                 updateReading.mutate({
                                   spool_id: sp.id,
@@ -392,55 +428,82 @@ export default function StcTemperatura() {
                 });
 
               return (
-                <div key={st.id}>
-                  <h3 className="font-semibold text-base mb-2 pb-1 border-b border-primary/30 text-primary">
-                    {st.code}
-                  </h3>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-16">#</TableHead>
-                          <TableHead className="min-w-[180px]">TAG</TableHead>
-                          {visibleWeeks.map((w) => (
-                            <TableHead key={`${w.year}-${w.week}`} className="text-center">
-                              S{w.week}/{w.year}
-                            </TableHead>
-                          ))}
-                          <TableHead>Estado actual</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {principal.length > 0 && (
-                          <TableRow>
-                            <TableCell
-                              colSpan={2 + visibleWeeks.length + 1}
-                              className="bg-primary/10 font-semibold text-xs uppercase tracking-wide"
-                            >
-                              Rama Principal
-                            </TableCell>
-                          </TableRow>
+                <Collapsible
+                  key={st.id}
+                  open={isOpen}
+                  onOpenChange={(v) =>
+                    setOpenStations((prev) => ({ ...prev, [st.id]: v }))
+                  }
+                >
+                  <CollapsibleTrigger asChild>
+                    <button className="flex items-center justify-between w-full py-2 px-3 rounded bg-primary/5 hover:bg-primary/10 border border-primary/20">
+                      <span className="font-semibold text-primary">{st.code}</span>
+                      <ChevronDown
+                        className={cn(
+                          "h-4 w-4 text-primary transition-transform",
+                          isOpen && "rotate-180",
                         )}
-                        {renderRows(principal)}
-                        {variable.length > 0 && (
+                      />
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pt-2">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
                           <TableRow>
-                            <TableCell
-                              colSpan={2 + visibleWeeks.length + 1}
-                              className="bg-muted font-semibold text-xs uppercase tracking-wide"
-                            >
-                              Rama Variable / Emergencia
-                            </TableCell>
+                            <TableHead className="w-16">#</TableHead>
+                            <TableHead className="min-w-[180px]">TAG</TableHead>
+                            {visibleWeeks.map((w) => (
+                              <TableHead
+                                key={`${w.year}-${w.week}`}
+                                className="text-center"
+                              >
+                                S{w.week}/{w.year}
+                              </TableHead>
+                            ))}
+                            <TableHead>Estado actual</TableHead>
                           </TableRow>
-                        )}
-                        {renderRows(variable)}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
+                        </TableHeader>
+                        <TableBody>
+                          {principal.length > 0 && (
+                            <TableRow>
+                              <TableCell
+                                colSpan={2 + visibleWeeks.length + 1}
+                                className="bg-primary/10 font-semibold text-xs uppercase tracking-wide"
+                              >
+                                Rama Principal
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          {renderRows(principal)}
+                          {variable.length > 0 && (
+                            <TableRow>
+                              <TableCell
+                                colSpan={2 + visibleWeeks.length + 1}
+                                className="bg-muted font-semibold text-xs uppercase tracking-wide"
+                              >
+                                Rama Variable / Emergencia
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          {renderRows(variable)}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               );
             })}
           </div>
         </Card>
+
+        {/* Custom charts section */}
+        <CustomChartsSection
+          stations={stations}
+          spools={spools}
+          readingsIndex={readingsIndex}
+          latest={latest}
+        />
       </div>
     </MainLayout>
   );
