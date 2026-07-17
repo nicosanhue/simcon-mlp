@@ -234,16 +234,18 @@ function LubricacionTable({
                           </TableCell>
                           {showPeriodo && <TableCell>{fmt(r.periodo)}</TableCell>}
                           <TableCell>
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8"
-                              onClick={() => onEdit(m.key, r)}
-                              aria-label="Editar"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
+                            {canEdit && (
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => onEdit(m.key, r)}
+                                aria-label="Editar"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                         {hist.length > 0 && (
