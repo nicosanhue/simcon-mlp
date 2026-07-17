@@ -12,7 +12,7 @@ import {
   Thermometer
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
-import simconLogo from "@/assets/simcon-logo.png.asset.json";
+import simconBar from "@/assets/simcon-bar.png.asset.json";
 import { SidebarDebugPanel } from "./SidebarDebugPanel";
 import { ProfileMenu } from "@/components/profile/ProfileMenu";
 import {
@@ -48,24 +48,20 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
-      <SidebarHeader className="border-b border-sidebar-border p-4">
-        <div className="flex items-center gap-3">
-          <img
-            src={simconLogo.url}
-            alt="SIMCON"
-            className={`${isCollapsed ? "h-12 w-12" : "h-[4.2rem] w-[4.2rem]"} object-contain shrink-0`}
-            style={{
-              WebkitMaskImage: "radial-gradient(circle, black 55%, transparent 78%)",
-              maskImage: "radial-gradient(circle, black 55%, transparent 78%)",
-            }}
-          />
-          {!isCollapsed && (
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-white">SIMCON</span>
-              <span className="text-xs text-white/70">Sistema Monitoreo de Condiciones</span>
-            </div>
-          )}
-        </div>
+      <SidebarHeader className="border-b border-sidebar-border p-3">
+        <img
+          src={simconBar.url}
+          alt="SIMCON - Sistema de Monitoreo de Condiciones"
+          className={`${isCollapsed ? "h-12 w-12" : "h-16 w-full"} object-contain`}
+          style={{
+            WebkitMaskImage: isCollapsed
+              ? "radial-gradient(circle, black 55%, transparent 78%)"
+              : "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+            maskImage: isCollapsed
+              ? "radial-gradient(circle, black 55%, transparent 78%)"
+              : "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
+          }}
+        />
       </SidebarHeader>
 
       <SidebarContent className="px-2 py-4">
