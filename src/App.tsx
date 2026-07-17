@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import LubricacionEquipos from "./pages/LubricacionEquipos";
 import Reports from "./pages/Reports";
 import StcTemperatura from "./pages/StcTemperatura";
+import { ProfileProvider } from "./contexts/ProfileContext";
 const queryClient = new QueryClient();
 
 const App = () => (
