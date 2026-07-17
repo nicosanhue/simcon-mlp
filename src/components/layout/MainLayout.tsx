@@ -26,14 +26,14 @@ export function MainLayout({ children }: MainLayoutProps) {
           />
         <AppSidebar />
         <SidebarInset className="flex-1">
-          <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b px-4">
+          <header className="flex h-16 shrink-0 items-center justify-between gap-2 border-b px-4">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="h-4" />
               <img
                 src={sincomBar.url}
                 alt="SINCOM - Sistema de Monitoreo de Condiciones"
-                className="h-8 w-auto object-contain"
+                className="h-[2.8rem] w-auto object-contain"
               />
             </div>
             <div className="flex items-center gap-2">
