@@ -265,6 +265,7 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       {charts.length === 0 ? (
