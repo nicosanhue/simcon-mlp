@@ -280,6 +280,7 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
               <Card key={c.id} className="p-4 relative">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-sm">{c.name}</h3>
+                  {isEditor && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
@@ -305,6 +306,7 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+                  )}
                 </div>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
