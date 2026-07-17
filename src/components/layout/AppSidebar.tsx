@@ -53,7 +53,7 @@ export function AppSidebar() {
           <img
             src={simconLogo.url}
             alt="SIMCON"
-            className={`${isCollapsed ? "h-10 w-10" : "h-14 w-14"} object-contain shrink-0`}
+            className={`${isCollapsed ? "h-12 w-12" : "h-[4.2rem] w-[4.2rem]"} object-contain shrink-0`}
             style={{
               WebkitMaskImage: "radial-gradient(circle, black 55%, transparent 78%)",
               maskImage: "radial-gradient(circle, black 55%, transparent 78%)",
