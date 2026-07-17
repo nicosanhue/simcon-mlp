@@ -97,6 +97,21 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
     setStationFilter("all");
     setSearch("");
     setSelected(new Set());
+    setEditingId(null);
+  };
+
+  const openCreate = () => {
+    resetForm();
+    setOpen(true);
+  };
+
+  const openEdit = (chart: { id: string; name: string; spool_ids: string[] }) => {
+    setEditingId(chart.id);
+    setName(chart.name);
+    setSelected(new Set(chart.spool_ids));
+    setStationFilter("all");
+    setSearch("");
+    setOpen(true);
   };
 
   const toggleSpool = (id: string) => {
@@ -108,17 +123,26 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
     });
   };
 
-  const handleCreate = async () => {
+  const handleSubmit = async () => {
     try {
-      await createChart.mutateAsync({
-        name: name.trim(),
-        spool_ids: Array.from(selected),
-      });
-      toast.success("Seguimiento creado");
+      if (editingId) {
+        await updateChart.mutateAsync({
+          id: editingId,
+          name: name.trim(),
+          spool_ids: Array.from(selected),
+        });
+        toast.success("Seguimiento actualizado");
+      } else {
+        await createChart.mutateAsync({
+          name: name.trim(),
+          spool_ids: Array.from(selected),
+        });
+        toast.success("Seguimiento creado");
+      }
       setOpen(false);
       resetForm();
     } catch (e: any) {
-      toast.error(e.message ?? "Error al crear seguimiento");
+      toast.error(e.message ?? "Error al guardar seguimiento");
     }
   };
 
