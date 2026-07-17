@@ -42,6 +42,7 @@ interface Equipment {
 }
 
 export default function Assets() {
+  const { isEditor } = useProfile();
   const [areas, setAreas] = useState<Area[]>([]);
   const [systems, setSystems] = useState<System[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
