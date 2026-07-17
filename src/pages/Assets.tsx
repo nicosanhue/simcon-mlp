@@ -615,6 +615,7 @@ export default function Assets() {
           </TabsContent>
         </Tabs>
       </div>
+      )}
     </MainLayout>
   );
 }
