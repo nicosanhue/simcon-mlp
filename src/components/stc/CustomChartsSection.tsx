@@ -147,6 +147,7 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
           <LineChartIcon className="h-5 w-5 text-primary" />
           Seguimiento Especial
         </h2>
+        {isEditor && (
         <Dialog
           open={open}
           onOpenChange={(v) => {
