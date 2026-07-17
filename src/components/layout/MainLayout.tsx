@@ -30,7 +30,11 @@ export function MainLayout({ children }: MainLayoutProps) {
             <div className="flex items-center gap-2">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="h-4" />
-              <span className="text-sm font-medium text-muted-foreground" title="Sistema Monitoreo de Condiciones">SIMCON</span>
+              <img
+                src={sincomBar.url}
+                alt="SINCOM - Sistema de Monitoreo de Condiciones"
+                className="h-8 w-auto object-contain"
+              />
             </div>
             <div className="flex items-center gap-2">
               <CriticalReportDownload />
