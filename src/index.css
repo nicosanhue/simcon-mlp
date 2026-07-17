@@ -63,6 +63,9 @@
     --chart-falla: 0 76% 55%;
     --chart-standby: 45 80% 55%;
 
+    /* STC Naranjo (Alerta Alta) */
+    --stc-orange: 24 95% 53%;
+
     /* Sidebar - Color #3899A8 de Minera Los Pelambres */
     --sidebar-background: 187 51% 43%;
     --sidebar-foreground: 0 0% 96%;
