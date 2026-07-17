@@ -52,7 +52,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { Plus, Trash2, LineChart as LineChartIcon } from "lucide-react";
+import { Plus, Trash2, LineChart as LineChartIcon, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useProfile } from "@/contexts/ProfileContext";
 
