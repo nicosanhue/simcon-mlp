@@ -17,6 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useProfile } from "@/contexts/ProfileContext";
+import { ReadOnlyLock } from "@/components/profile/ReadOnlyLock";
 
 
 interface CSVRow {
