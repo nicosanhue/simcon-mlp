@@ -319,6 +319,7 @@ function LubricacionTable({
 }
 
 export default function LubricacionEquipos() {
+  const { isEditor } = useProfile();
   const [search, setSearch] = useState("");
   const [equipoFilter, setEquipoFilter] = useState("");
   const [activeTab, setActiveTab] = useState(sheets[0]);
