@@ -86,6 +86,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        <ProfileMenu />
       </SidebarContent>
 
       <div className="border-t border-sidebar-border">
