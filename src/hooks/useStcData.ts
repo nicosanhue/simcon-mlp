@@ -194,6 +194,20 @@ export function useCreateCustomChart() {
   });
 }
 
+export function useUpdateCustomChart() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { id: string; name: string; spool_ids: string[] }) => {
+      const { error } = await supabase
+        .from("stc_custom_charts")
+        .update({ name: input.name, spool_ids: input.spool_ids })
+        .eq("id", input.id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["stc_custom_charts"] }),
+  });
+}
+
 export function useDeleteCustomChart() {
   const qc = useQueryClient();
   return useMutation({

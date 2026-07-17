@@ -3,6 +3,7 @@ import {
   useCustomCharts,
   useCreateCustomChart,
   useDeleteCustomChart,
+  useUpdateCustomChart,
   type StcSpool,
   type StcStation,
   type StcReading,
@@ -51,7 +52,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { Plus, Trash2, LineChart as LineChartIcon } from "lucide-react";
+import { Plus, Trash2, LineChart as LineChartIcon, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useProfile } from "@/contexts/ProfileContext";
 
@@ -66,9 +67,11 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
   const { isEditor } = useProfile();
   const charts = useCustomCharts().data ?? [];
   const createChart = useCreateCustomChart();
+  const updateChart = useUpdateCustomChart();
   const deleteChart = useDeleteCustomChart();
 
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [stationFilter, setStationFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
@@ -94,6 +97,21 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
     setStationFilter("all");
     setSearch("");
     setSelected(new Set());
+    setEditingId(null);
+  };
+
+  const openCreate = () => {
+    resetForm();
+    setOpen(true);
+  };
+
+  const openEdit = (chart: { id: string; name: string; spool_ids: string[] }) => {
+    setEditingId(chart.id);
+    setName(chart.name);
+    setSelected(new Set(chart.spool_ids));
+    setStationFilter("all");
+    setSearch("");
+    setOpen(true);
   };
 
   const toggleSpool = (id: string) => {
@@ -105,17 +123,26 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
     });
   };
 
-  const handleCreate = async () => {
+  const handleSubmit = async () => {
     try {
-      await createChart.mutateAsync({
-        name: name.trim(),
-        spool_ids: Array.from(selected),
-      });
-      toast.success("Seguimiento creado");
+      if (editingId) {
+        await updateChart.mutateAsync({
+          id: editingId,
+          name: name.trim(),
+          spool_ids: Array.from(selected),
+        });
+        toast.success("Seguimiento actualizado");
+      } else {
+        await createChart.mutateAsync({
+          name: name.trim(),
+          spool_ids: Array.from(selected),
+        });
+        toast.success("Seguimiento creado");
+      }
       setOpen(false);
       resetForm();
     } catch (e: any) {
-      toast.error(e.message ?? "Error al crear seguimiento");
+      toast.error(e.message ?? "Error al guardar seguimiento");
     }
   };
 
@@ -156,14 +183,16 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
           }}
         >
           <DialogTrigger asChild>
-            <Button size="sm">
+            <Button size="sm" onClick={openCreate}>
               <Plus className="h-4 w-4 mr-1" />
               Agregar seguimiento
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Nuevo Seguimiento Especial</DialogTitle>
+              <DialogTitle>
+                {editingId ? "Editar Seguimiento Especial" : "Nuevo Seguimiento Especial"}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
@@ -255,12 +284,15 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
                 Cancelar
               </Button>
               <Button
-                onClick={handleCreate}
+                onClick={handleSubmit}
                 disabled={
-                  !name.trim() || selected.size === 0 || createChart.isPending
+                  !name.trim() ||
+                  selected.size === 0 ||
+                  createChart.isPending ||
+                  updateChart.isPending
                 }
               >
-                Crear gráfico
+                {editingId ? "Guardar cambios" : "Crear gráfico"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -281,31 +313,41 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-sm">{c.name}</h3>
                   {isEditor && (
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-status-falla"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>¿Eliminar este seguimiento?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          Se eliminará el gráfico "{c.name}". Esta acción no se puede deshacer.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => handleDelete(c.id)}>
-                          Eliminar
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-primary"
+                      onClick={() => openEdit(c)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-muted-foreground hover:text-status-falla"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>¿Eliminar este seguimiento?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Se eliminará el gráfico "{c.name}". Esta acción no se puede deshacer.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDelete(c.id)}>
+                            Eliminar
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
                   )}
                 </div>
                 <div className="h-64">
