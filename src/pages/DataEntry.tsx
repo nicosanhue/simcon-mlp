@@ -13,6 +13,7 @@ import { Search, Save, Calendar, Filter, CheckCircle, AlertTriangle, XCircle, Cl
 import { WeekSelector } from "@/components/dashboard/WeekSelector";
 import { getISOWeek, getYear, startOfWeek, addDays, format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useProfile } from "@/contexts/ProfileContext";
 
 type EquipmentStatus = 'Satisfactorio' | 'Seguimiento' | 'Crítico' | 'Alerta' | 'Sin medición';
 
@@ -41,6 +42,7 @@ const statusConfig: Record<EquipmentStatus, { label: string; color: string; icon
 };
 
 export default function DataEntry() {
+  const { isEditor } = useProfile();
   const [selectedWeek, setSelectedWeek] = useState<number>(getISOWeek(new Date()));
   const [selectedYear, setSelectedYear] = useState<number>(getYear(new Date()));
   const [equipment, setEquipment] = useState<EquipmentWithReport[]>([]);
@@ -300,19 +302,23 @@ export default function DataEntry() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            {changesCount > 0 && (
+            {isEditor && changesCount > 0 && (
               <Badge variant="secondary" className="bg-amber-500/20 text-amber-400">
                 {changesCount} cambio{changesCount > 1 ? 's' : ''} pendiente{changesCount > 1 ? 's' : ''}
               </Badge>
             )}
-            <Button 
-              onClick={saveChanges} 
-              disabled={isSaving || changesCount === 0}
-              className="gap-2"
-            >
-              <Save className="h-4 w-4" />
-              {isSaving ? "Guardando..." : "Guardar Cambios"}
-            </Button>
+            {isEditor ? (
+              <Button
+                onClick={saveChanges}
+                disabled={isSaving || changesCount === 0}
+                className="gap-2"
+              >
+                <Save className="h-4 w-4" />
+                {isSaving ? "Guardando..." : "Guardar Cambios"}
+              </Button>
+            ) : (
+              <Badge variant="outline" className="text-xs">Modo lectura — ingresa a un perfil para editar</Badge>
+            )}
           </div>
         </div>
 

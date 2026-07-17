@@ -29,6 +29,7 @@ import {
 import { Droplet, Search, Layers, Pencil, History, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { useProfile } from "@/contexts/ProfileContext";
 import data from "@/data/lubricacionEquipos.json";
 
 type Row = {
@@ -117,12 +118,14 @@ function LubricacionTable({
   overrides,
   history,
   onEdit,
+  canEdit,
 }: {
   rows: Row[];
   tab: string;
   overrides: Overrides;
   history: HistoryMap;
   onEdit: (key: string, row: Row) => void;
+  canEdit: boolean;
 }) {
   const hasSections = rows.some((r) => r.seccion);
 
@@ -232,16 +235,18 @@ function LubricacionTable({
                           </TableCell>
                           {showPeriodo && <TableCell>{fmt(r.periodo)}</TableCell>}
                           <TableCell>
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="ghost"
-                              className="h-8 w-8"
-                              onClick={() => onEdit(m.key, r)}
-                              aria-label="Editar"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
+                            {canEdit && (
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8"
+                                onClick={() => onEdit(m.key, r)}
+                                aria-label="Editar"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                         {hist.length > 0 && (
@@ -315,6 +320,7 @@ function LubricacionTable({
 }
 
 export default function LubricacionEquipos() {
+  const { isEditor } = useProfile();
   const [search, setSearch] = useState("");
   const [equipoFilter, setEquipoFilter] = useState("");
   const [activeTab, setActiveTab] = useState(sheets[0]);
@@ -490,6 +496,7 @@ export default function LubricacionEquipos() {
                 overrides={overrides}
                 history={history}
                 onEdit={openEdit}
+                canEdit={isEditor}
               />
             )}
           </CardContent>

@@ -4,11 +4,15 @@ import {
   useStcStations,
   useStcSpools,
   useStcReadings,
+  useStcTrackingWeeks,
   useUpdateReading,
   useAddWeek,
+  useConfirmAllPending,
+  usePublishWeek,
   type StcSpool,
   type StcReading,
 } from "@/hooks/useStcData";
+import { useProfile } from "@/contexts/ProfileContext";
 import { getStcStatus } from "@/lib/stcStatus";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,7 +52,17 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { ArrowDown, ArrowUp, ChevronDown, Minus, Plus, Thermometer } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  CheckCircle2,
+  ChevronDown,
+  Minus,
+  Plus,
+  Thermometer,
+  Upload,
+} from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CustomChartsSection } from "@/components/stc/CustomChartsSection";
@@ -61,9 +75,13 @@ function fmt(n: number | null | undefined) {
 function DeltaCell({
   reading,
   onSave,
+  editable,
+  isDraft,
 }: {
   reading: StcReading | undefined;
   onSave: (v: number | null) => void;
+  editable: boolean;
+  isDraft: boolean;
 }) {
   const [val, setVal] = useState<string>(
     reading?.delta_t !== null && reading?.delta_t !== undefined
@@ -71,6 +89,22 @@ function DeltaCell({
       : "",
   );
   const status = getStcStatus(reading?.delta_t ?? null);
+  const pendingDraft = isDraft && !(reading?.confirmed ?? false);
+
+  if (!editable) {
+    return (
+      <div
+        className={cn(
+          "h-8 w-20 flex items-center justify-center text-sm font-mono rounded",
+          reading?.delta_t !== null && reading?.delta_t !== undefined && status.bgClass,
+          reading?.delta_t !== null && reading?.delta_t !== undefined && status.textClass,
+        )}
+      >
+        {fmt(reading?.delta_t)}
+      </div>
+    );
+  }
+
   return (
     <Input
       type="number"
@@ -81,28 +115,44 @@ function DeltaCell({
         const trimmed = val.trim();
         const parsed = trimmed === "" ? null : Number(trimmed);
         const current = reading?.delta_t ?? null;
-        if (parsed === current) return;
         if (parsed !== null && Number.isNaN(parsed)) return;
+        if (parsed === current && !pendingDraft) return;
         onSave(parsed);
       }}
       className={cn(
         "h-8 w-20 text-center text-sm",
         reading?.delta_t !== null && reading?.delta_t !== undefined && status.bgClass,
+        pendingDraft && "border-2 border-amber-400 ring-0",
       )}
     />
   );
 }
 
 export default function StcTemperatura() {
+  const { isEditor } = useProfile();
   const stations = useStcStations().data ?? [];
   const spools = useStcSpools().data ?? [];
   const readings = useStcReadings().data ?? [];
+  const trackingWeeks = useStcTrackingWeeks().data ?? [];
   const updateReading = useUpdateReading();
   const addWeek = useAddWeek();
+  const confirmAll = useConfirmAllPending();
+  const publishWeek = usePublishWeek();
   const [showAll, setShowAll] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [chartsOpen, setChartsOpen] = useState(false);
   const [openStations, setOpenStations] = useState<Record<string, boolean>>({});
+
+  const publishedKey = useMemo(() => {
+    const s = new Set<string>();
+    trackingWeeks.forEach((w) => {
+      if (w.published) s.add(`${w.year}-${w.week_number}`);
+    });
+    return s;
+  }, [trackingWeeks]);
+
+  const isPublished = (year: number, week: number) =>
+    publishedKey.has(`${year}-${week}`);
 
   const allWeeks = useMemo(() => {
     const set = new Map<string, { week: number; year: number }>();
@@ -110,14 +160,25 @@ export default function StcTemperatura() {
       const k = `${r.year}-${r.week_number}`;
       if (!set.has(k)) set.set(k, { week: r.week_number, year: r.year });
     });
+    // Include tracking weeks that have no readings yet (fresh draft)
+    trackingWeeks.forEach((w) => {
+      const k = `${w.year}-${w.week_number}`;
+      if (!set.has(k)) set.set(k, { week: w.week_number, year: w.year });
+    });
     return Array.from(set.values()).sort(
       (a, b) => b.year - a.year || b.week - a.week,
     );
-  }, [readings]);
+  }, [readings, trackingWeeks]);
 
-  const latest = allWeeks[0];
-  const prev = allWeeks[1];
-  const visibleWeeks = showAll ? allWeeks : allWeeks.slice(0, 3);
+  // Visible weeks depend on editor mode: readers only see published weeks.
+  const visibleAllWeeks = useMemo(
+    () => (isEditor ? allWeeks : allWeeks.filter((w) => isPublished(w.year, w.week))),
+    [allWeeks, isEditor, publishedKey],
+  );
+
+  const latest = visibleAllWeeks[0];
+  const prev = visibleAllWeeks[1];
+  const visibleWeeks = showAll ? visibleAllWeeks : visibleAllWeeks.slice(0, 3);
 
   const readingsIndex = useMemo(() => {
     const m = new Map<string, Map<string, StcReading>>();
@@ -138,6 +199,15 @@ export default function StcTemperatura() {
     return m;
   }, [spools]);
 
+  // Draft weeks (editor-only visibility) — unpublished tracking weeks
+  const draftWeeks = useMemo(
+    () =>
+      trackingWeeks
+        .filter((w) => !w.published)
+        .sort((a, b) => b.year - a.year || b.week_number - a.week_number),
+    [trackingWeeks],
+  );
+
   const stationMax = (stationId: string, week?: { week: number; year: number }) => {
     if (!week) return 0;
     const arr = spoolsByStation.get(stationId) ?? [];
@@ -150,7 +220,6 @@ export default function StcTemperatura() {
     return max;
   };
 
-  // Trend: compare spool-by-spool between latest and prev.
   const stationTrend = (stationId: string): "up" | "down" | "flat" => {
     if (!latest || !prev) return "flat";
     const arr = spoolsByStation.get(stationId) ?? [];
@@ -182,10 +251,48 @@ export default function StcTemperatura() {
         year: addYear,
         spool_ids: spools.map((s) => s.id),
       });
-      toast.success(`Semana ${addWeekNum}/${addYear} agregada`);
+      toast.success(`Semana ${addWeekNum}/${addYear} creada en borrador`);
       setAddOpen(false);
     } catch (e: any) {
       toast.error(e.message ?? "Error al agregar semana");
+    }
+  };
+
+  // Draft panel data for a given week
+  const draftStats = (week: number, year: number) => {
+    const totalSpools = spools.length;
+    let confirmed = 0;
+    const pendingTags: string[] = [];
+    spools.forEach((sp) => {
+      const r = readingsIndex.get(sp.id)?.get(`${year}-${week}`);
+      if (r?.confirmed) confirmed++;
+      else pendingTags.push(sp.tag);
+    });
+    return { totalSpools, confirmed, pending: totalSpools - confirmed, pendingTags };
+  };
+
+  const handleConfirmAll = async (week: number, year: number) => {
+    try {
+      // Ensure all spools have a reading row (some might not exist yet if just-created draft)
+      const missing = spools
+        .filter((sp) => !readingsIndex.get(sp.id)?.get(`${year}-${week}`))
+        .map((sp) => sp.id);
+      if (missing.length > 0) {
+        await addWeek.mutateAsync({ week_number: week, year, spool_ids: missing });
+      }
+      await confirmAll.mutateAsync({ week_number: week, year });
+      toast.success("Todos los pendientes confirmados");
+    } catch (e: any) {
+      toast.error(e.message ?? "Error al confirmar");
+    }
+  };
+
+  const handlePublish = async (week: number, year: number) => {
+    try {
+      await publishWeek.mutateAsync({ week_number: week, year });
+      toast.success(`Semana ${week}/${year} cargada y publicada`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Error al publicar semana");
     }
   };
 
@@ -202,48 +309,124 @@ export default function StcTemperatura() {
               Seguimiento termográfico semanal de spools por estación
             </p>
           </div>
-          <Dialog open={addOpen} onOpenChange={setAddOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-1" />
-                Agregar semana de seguimiento
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Nueva semana de seguimiento</DialogTitle>
-              </DialogHeader>
-              <div className="grid grid-cols-2 gap-4 py-2">
-                <div>
-                  <Label>Semana</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={53}
-                    value={addWeekNum}
-                    onChange={(e) => setAddWeekNum(Number(e.target.value))}
-                  />
-                </div>
-                <div>
-                  <Label>Año</Label>
-                  <Input
-                    type="number"
-                    value={addYear}
-                    onChange={(e) => setAddYear(Number(e.target.value))}
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setAddOpen(false)}>
-                  Cancelar
+          {isEditor && (
+            <Dialog open={addOpen} onOpenChange={setAddOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-1" />
+                  Agregar semana de seguimiento
                 </Button>
-                <Button onClick={handleAddWeek} disabled={addWeek.isPending}>
-                  Crear filas vacías para {spools.length} spools
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Nueva semana de seguimiento</DialogTitle>
+                </DialogHeader>
+                <div className="grid grid-cols-2 gap-4 py-2">
+                  <div>
+                    <Label>Semana</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={53}
+                      value={addWeekNum}
+                      onChange={(e) => setAddWeekNum(Number(e.target.value))}
+                    />
+                  </div>
+                  <div>
+                    <Label>Año</Label>
+                    <Input
+                      type="number"
+                      value={addYear}
+                      onChange={(e) => setAddYear(Number(e.target.value))}
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  La semana se crea como borrador y solo aparecerá en la vista pública tras
+                  confirmar todas las temperaturas y hacer "Cargar semana de seguimiento".
+                </p>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setAddOpen(false)}>
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleAddWeek} disabled={addWeek.isPending}>
+                    Crear borrador para {spools.length} spools
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
+
+        {/* Draft panels (editor only) */}
+        {isEditor &&
+          draftWeeks.map((dw) => {
+            const stats = draftStats(dw.week_number, dw.year);
+            const complete = stats.pending === 0 && stats.totalSpools > 0;
+            return (
+              <Card
+                key={dw.id}
+                className="p-4 border-2 border-amber-400 bg-amber-50/60 dark:bg-amber-950/20"
+              >
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="h-5 w-5 text-amber-600" />
+                    <div>
+                      <h3 className="font-semibold">
+                        Semana en borrador — S{dw.week_number}/{dw.year}
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        {stats.confirmed} de {stats.totalSpools} spools confirmados
+                        {stats.pending > 0 && ` · ${stats.pending} pendientes`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {stats.pending > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleConfirmAll(dw.week_number, dw.year)}
+                        disabled={confirmAll.isPending || addWeek.isPending}
+                      >
+                        <CheckCircle2 className="h-4 w-4 mr-1" />
+                        Confirmar todos los pendientes
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      onClick={() => handlePublish(dw.week_number, dw.year)}
+                      disabled={!complete || publishWeek.isPending}
+                    >
+                      <Upload className="h-4 w-4 mr-1" />
+                      Cargar semana de seguimiento
+                    </Button>
+                  </div>
+                </div>
+                {stats.pending > 0 && stats.pendingTags.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs font-medium mb-1">Spools sin confirmar:</p>
+                    <div className="flex flex-wrap gap-1">
+                      {stats.pendingTags.slice(0, 40).map((tag) => (
+                        <Badge key={tag} variant="outline" className="text-[10px] border-amber-400">
+                          {tag}
+                        </Badge>
+                      ))}
+                      {stats.pendingTags.length > 40 && (
+                        <Badge variant="outline" className="text-[10px]">
+                          +{stats.pendingTags.length - 40} más
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  Las temperaturas se guardan automáticamente al salir de cada celda. Un
+                  valor en blanco o 0 es válido, pero cada spool debe ser confirmado.
+                </p>
+              </Card>
+            );
+          })}
 
         {/* Summary table */}
         <Card className="p-4">
@@ -296,7 +479,7 @@ export default function StcTemperatura() {
           </Table>
         </Card>
 
-        {/* Charts per station — collapsible group */}
+        {/* Charts per station */}
         <Card className="p-4">
           <Collapsible open={chartsOpen} onOpenChange={setChartsOpen}>
             <CollapsibleTrigger asChild>
@@ -366,7 +549,7 @@ export default function StcTemperatura() {
           </Collapsible>
         </Card>
 
-        {/* Full editable table */}
+        {/* Full table */}
         <Card className="p-4">
           <div className="flex items-center justify-between mb-3">
             <h2 className="font-semibold">Tabla completa de spools</h2>
@@ -399,16 +582,20 @@ export default function StcTemperatura() {
                       <TableCell className="font-medium text-sm">{sp.tag}</TableCell>
                       {visibleWeeks.map((w) => {
                         const r = readingsIndex.get(sp.id)?.get(`${w.year}-${w.week}`);
+                        const draft = !isPublished(w.year, w.week);
                         return (
                           <TableCell key={`${w.year}-${w.week}`}>
                             <DeltaCell
                               reading={r}
+                              editable={isEditor}
+                              isDraft={draft}
                               onSave={(v) =>
                                 updateReading.mutate({
                                   spool_id: sp.id,
                                   week_number: w.week,
                                   year: w.year,
                                   delta_t: v,
+                                  confirmed: true,
                                 })
                               }
                             />
@@ -453,14 +640,26 @@ export default function StcTemperatura() {
                           <TableRow>
                             <TableHead className="w-16">#</TableHead>
                             <TableHead className="min-w-[180px]">TAG</TableHead>
-                            {visibleWeeks.map((w) => (
-                              <TableHead
-                                key={`${w.year}-${w.week}`}
-                                className="text-center"
-                              >
-                                S{w.week}/{w.year}
-                              </TableHead>
-                            ))}
+                            {visibleWeeks.map((w) => {
+                              const draft = !isPublished(w.year, w.week);
+                              return (
+                                <TableHead
+                                  key={`${w.year}-${w.week}`}
+                                  className="text-center"
+                                >
+                                  <div className="flex flex-col items-center">
+                                    <span>
+                                      S{w.week}/{w.year}
+                                    </span>
+                                    {draft && (
+                                      <Badge className="mt-1 bg-amber-500/20 text-amber-700 border-0 text-[9px] px-1 py-0">
+                                        Borrador
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </TableHead>
+                              );
+                            })}
                             <TableHead>Estado actual</TableHead>
                           </TableRow>
                         </TableHeader>

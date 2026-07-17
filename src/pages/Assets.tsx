@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Plus, Edit2, Trash2, Building2, Layers, Cpu } from "lucide-react";
+import { useProfile } from "@/contexts/ProfileContext";
+import { ReadOnlyLock } from "@/components/profile/ReadOnlyLock";
 
 interface Area {
   id: string;
@@ -40,6 +42,7 @@ interface Equipment {
 }
 
 export default function Assets() {
+  const { isEditor } = useProfile();
   const [areas, setAreas] = useState<Area[]>([]);
   const [systems, setSystems] = useState<System[]>([]);
   const [equipment, setEquipment] = useState<Equipment[]>([]);
@@ -258,6 +261,9 @@ export default function Assets() {
 
   return (
     <MainLayout>
+      {!isEditor ? (
+        <ReadOnlyLock page="Activos" />
+      ) : (
       <div className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -609,6 +615,7 @@ export default function Assets() {
           </TabsContent>
         </Tabs>
       </div>
+      )}
     </MainLayout>
   );
 }

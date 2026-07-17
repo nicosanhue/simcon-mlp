@@ -17,6 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useProfile } from "@/contexts/ProfileContext";
+import { ReadOnlyLock } from "@/components/profile/ReadOnlyLock";
 
 
 interface CSVRow {
@@ -73,6 +75,14 @@ const mapAreaName = (areaName: string): string => {
 };
 
 export default function AdminSettings() {
+  const { isEditor } = useProfile();
+  if (!isEditor) {
+    return (
+      <MainLayout>
+        <ReadOnlyLock page="Configuración Admin" />
+      </MainLayout>
+    );
+  }
   const [isUploading, setIsUploading] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [parsedFileInfo, setParsedFileInfo] = useState<{ week: number; year: number } | null>(null);

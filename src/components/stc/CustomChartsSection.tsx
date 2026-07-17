@@ -53,6 +53,7 @@ import {
 } from "recharts";
 import { Plus, Trash2, LineChart as LineChartIcon } from "lucide-react";
 import { toast } from "sonner";
+import { useProfile } from "@/contexts/ProfileContext";
 
 interface Props {
   stations: StcStation[];
@@ -62,6 +63,7 @@ interface Props {
 }
 
 export function CustomChartsSection({ stations, spools, readingsIndex, latest }: Props) {
+  const { isEditor } = useProfile();
   const charts = useCustomCharts().data ?? [];
   const createChart = useCreateCustomChart();
   const deleteChart = useDeleteCustomChart();
@@ -145,6 +147,7 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
           <LineChartIcon className="h-5 w-5 text-primary" />
           Seguimiento Especial
         </h2>
+        {isEditor && (
         <Dialog
           open={open}
           onOpenChange={(v) => {
@@ -262,6 +265,7 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       {charts.length === 0 ? (
@@ -276,6 +280,7 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
               <Card key={c.id} className="p-4 relative">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-semibold text-sm">{c.name}</h3>
+                  {isEditor && (
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
@@ -301,6 +306,7 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>
+                  )}
                 </div>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">

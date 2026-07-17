@@ -14,14 +14,16 @@ import NotFound from "./pages/NotFound";
 import LubricacionEquipos from "./pages/LubricacionEquipos";
 import Reports from "./pages/Reports";
 import StcTemperatura from "./pages/StcTemperatura";
+import { ProfileProvider } from "./contexts/ProfileContext";
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
+    <ProfileProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/equipment-tree" element={<EquipmentTree />} />
@@ -36,8 +38,9 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ProfileProvider>
   </QueryClientProvider>
 );
 

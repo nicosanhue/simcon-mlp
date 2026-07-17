@@ -9,8 +9,10 @@ import { useReports, useDeleteReport, ReportRow, ReportTipo } from "@/hooks/useR
 import { ReportFormDialog } from "@/components/reports/ReportFormDialog";
 import { generateReportPdf } from "@/lib/pdfReport";
 import { toast } from "sonner";
+import { useProfile } from "@/contexts/ProfileContext";
 
 export default function Reports() {
+  const { isEditor } = useProfile();
   const [tipo, setTipo] = useState<ReportTipo | "all">("all");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
@@ -62,9 +64,11 @@ export default function Reports() {
               Repositorio de informes técnicos (Vibraciones, Termografía, Ultrasonido)
             </p>
           </div>
-          <Button onClick={() => { setEditing(null); setOpen(true); }}>
-            <Plus className="h-4 w-4 mr-1" /> Nuevo informe
-          </Button>
+          {isEditor && (
+            <Button onClick={() => { setEditing(null); setOpen(true); }}>
+              <Plus className="h-4 w-4 mr-1" /> Nuevo informe
+            </Button>
+          )}
         </div>
 
         <div className="industrial-panel p-4 flex flex-wrap gap-3 items-center">
@@ -130,14 +134,18 @@ export default function Reports() {
                         <Button size="sm" variant="ghost" onClick={() => download(r)} disabled={downloadingId === r.id}>
                           {downloadingId === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
                         </Button>
-                        <Button size="sm" variant="ghost" onClick={() => { setEditing(r); setOpen(true); }}>
-                          <Pencil className="h-3 w-3" />
-                        </Button>
-                        <Button size="sm" variant="ghost" onClick={() => {
-                          if (confirm("¿Eliminar informe?")) del.mutate(r.id);
-                        }}>
-                          <Trash2 className="h-3 w-3 text-destructive" />
-                        </Button>
+                        {isEditor && (
+                          <>
+                            <Button size="sm" variant="ghost" onClick={() => { setEditing(r); setOpen(true); }}>
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => {
+                              if (confirm("¿Eliminar informe?")) del.mutate(r.id);
+                            }}>
+                              <Trash2 className="h-3 w-3 text-destructive" />
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </td>
                   </tr>

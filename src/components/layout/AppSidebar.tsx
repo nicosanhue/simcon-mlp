@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { SidebarDebugPanel } from "./SidebarDebugPanel";
+import { ProfileMenu } from "@/components/profile/ProfileMenu";
 import {
   Sidebar,
   SidebarContent,
@@ -85,6 +86,7 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        <ProfileMenu />
       </SidebarContent>
 
       <div className="border-t border-sidebar-border">
