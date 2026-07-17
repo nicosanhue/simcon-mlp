@@ -64,9 +64,11 @@ export default function Reports() {
               Repositorio de informes técnicos (Vibraciones, Termografía, Ultrasonido)
             </p>
           </div>
-          <Button onClick={() => { setEditing(null); setOpen(true); }}>
-            <Plus className="h-4 w-4 mr-1" /> Nuevo informe
-          </Button>
+          {isEditor && (
+            <Button onClick={() => { setEditing(null); setOpen(true); }}>
+              <Plus className="h-4 w-4 mr-1" /> Nuevo informe
+            </Button>
+          )}
         </div>
 
         <div className="industrial-panel p-4 flex flex-wrap gap-3 items-center">
