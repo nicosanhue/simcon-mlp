@@ -31,6 +31,7 @@ const App = () => (
           <Route path="/assets" element={<Assets />} />
           <Route path="/lubricacion-equipos" element={<LubricacionEquipos />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/stc-temperatura" element={<StcTemperatura />} />
           <Route path="/admin" element={<AdminSettings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
