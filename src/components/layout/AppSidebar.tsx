@@ -8,7 +8,8 @@ import {
   GitBranch,
   ClipboardList,
   Droplet,
-  FileText
+  FileText,
+  Thermometer
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { SidebarDebugPanel } from "./SidebarDebugPanel";
