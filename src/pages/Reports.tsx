@@ -9,8 +9,10 @@ import { useReports, useDeleteReport, ReportRow, ReportTipo } from "@/hooks/useR
 import { ReportFormDialog } from "@/components/reports/ReportFormDialog";
 import { generateReportPdf } from "@/lib/pdfReport";
 import { toast } from "sonner";
+import { useProfile } from "@/contexts/ProfileContext";
 
 export default function Reports() {
+  const { isEditor } = useProfile();
   const [tipo, setTipo] = useState<ReportTipo | "all">("all");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
