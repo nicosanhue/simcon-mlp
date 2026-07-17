@@ -33,7 +33,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               <img
                 src={sincomBar.url}
                 alt="SINCOM - Sistema de Monitoreo de Condiciones"
-                className="h-8 w-auto object-contain"
+                className="h-[2.8rem] w-auto object-contain"
               />
             </div>
             <div className="flex items-center gap-2">
