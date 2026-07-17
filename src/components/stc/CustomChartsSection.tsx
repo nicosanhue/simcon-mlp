@@ -63,6 +63,7 @@ interface Props {
 }
 
 export function CustomChartsSection({ stations, spools, readingsIndex, latest }: Props) {
+  const { isEditor } = useProfile();
   const charts = useCustomCharts().data ?? [];
   const createChart = useCreateCustomChart();
   const deleteChart = useDeleteCustomChart();
