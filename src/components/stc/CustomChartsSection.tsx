@@ -284,12 +284,15 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
                 Cancelar
               </Button>
               <Button
-                onClick={handleCreate}
+                onClick={handleSubmit}
                 disabled={
-                  !name.trim() || selected.size === 0 || createChart.isPending
+                  !name.trim() ||
+                  selected.size === 0 ||
+                  createChart.isPending ||
+                  updateChart.isPending
                 }
               >
-                Crear gráfico
+                {editingId ? "Guardar cambios" : "Crear gráfico"}
               </Button>
             </DialogFooter>
           </DialogContent>
