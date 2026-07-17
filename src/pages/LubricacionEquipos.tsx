@@ -117,12 +117,14 @@ function LubricacionTable({
   overrides,
   history,
   onEdit,
+  canEdit,
 }: {
   rows: Row[];
   tab: string;
   overrides: Overrides;
   history: HistoryMap;
   onEdit: (key: string, row: Row) => void;
+  canEdit: boolean;
 }) {
   const hasSections = rows.some((r) => r.seccion);
 
