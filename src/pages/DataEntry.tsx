@@ -13,6 +13,7 @@ import { Search, Save, Calendar, Filter, CheckCircle, AlertTriangle, XCircle, Cl
 import { WeekSelector } from "@/components/dashboard/WeekSelector";
 import { getISOWeek, getYear, startOfWeek, addDays, format } from "date-fns";
 import { es } from "date-fns/locale";
+import { useProfile } from "@/contexts/ProfileContext";
 
 type EquipmentStatus = 'Satisfactorio' | 'Seguimiento' | 'Crítico' | 'Alerta' | 'Sin medición';
 
