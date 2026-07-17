@@ -13,6 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Search, Plus, Edit2, Trash2, Building2, Layers, Cpu } from "lucide-react";
+import { useProfile } from "@/contexts/ProfileContext";
+import { ReadOnlyLock } from "@/components/profile/ReadOnlyLock";
 
 interface Area {
   id: string;
