@@ -4,6 +4,7 @@ import { AppSidebar } from "./AppSidebar";
 import { CriticalReportDownload } from "@/components/reports/CriticalReportDownload";
 import { Separator } from "@/components/ui/separator";
 import bgCorporate from "@/assets/bg-corporate.png";
+import sincomBar from "@/assets/sincom-bar.png.asset.json";
 
 interface MainLayoutProps {
   children: ReactNode;
