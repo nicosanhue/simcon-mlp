@@ -183,14 +183,16 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
           }}
         >
           <DialogTrigger asChild>
-            <Button size="sm">
+            <Button size="sm" onClick={openCreate}>
               <Plus className="h-4 w-4 mr-1" />
               Agregar seguimiento
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Nuevo Seguimiento Especial</DialogTitle>
+              <DialogTitle>
+                {editingId ? "Editar Seguimiento Especial" : "Nuevo Seguimiento Especial"}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
