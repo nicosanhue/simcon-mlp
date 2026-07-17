@@ -8,7 +8,8 @@ import {
   GitBranch,
   ClipboardList,
   Droplet,
-  FileText
+  FileText,
+  Thermometer
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { SidebarDebugPanel } from "./SidebarDebugPanel";
@@ -32,6 +33,7 @@ const navigationItems = [
   { title: "Organigrama", url: "/equipment-tree", icon: GitBranch },
   { title: "Avisos y OT", url: "/work-orders", icon: ClipboardList },
   { title: "Informes", url: "/reports", icon: FileText },
+  { title: "Control Temperatura STC", url: "/stc-temperatura", icon: Thermometer },
   { title: "Historial", url: "/history", icon: History },
   { title: "Lubricación Equipos", url: "/lubricacion-equipos", icon: Droplet },
   { title: "Activos", url: "/assets", icon: Settings2 },

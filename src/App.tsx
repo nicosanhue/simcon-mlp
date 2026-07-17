@@ -13,6 +13,7 @@ import WorkOrders from "./pages/WorkOrders";
 import NotFound from "./pages/NotFound";
 import LubricacionEquipos from "./pages/LubricacionEquipos";
 import Reports from "./pages/Reports";
+import StcTemperatura from "./pages/StcTemperatura";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/assets" element={<Assets />} />
           <Route path="/lubricacion-equipos" element={<LubricacionEquipos />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/stc-temperatura" element={<StcTemperatura />} />
           <Route path="/admin" element={<AdminSettings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
