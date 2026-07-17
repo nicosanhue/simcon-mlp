@@ -177,6 +177,121 @@ export type Database = {
           },
         ]
       }
+      stc_spools: {
+        Row: {
+          branch: Database["public"]["Enums"]["stc_branch"]
+          created_at: string
+          id: string
+          order_index: number
+          spool_number: number | null
+          station_id: string
+          tag: string
+          updated_at: string
+        }
+        Insert: {
+          branch?: Database["public"]["Enums"]["stc_branch"]
+          created_at?: string
+          id?: string
+          order_index?: number
+          spool_number?: number | null
+          station_id: string
+          tag: string
+          updated_at?: string
+        }
+        Update: {
+          branch?: Database["public"]["Enums"]["stc_branch"]
+          created_at?: string
+          id?: string
+          order_index?: number
+          spool_number?: number | null
+          station_id?: string
+          tag?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stc_spools_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "stc_stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stc_stations: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          order_index: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          order_index?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          order_index?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      stc_temperature_readings: {
+        Row: {
+          created_at: string
+          delta_t: number | null
+          id: string
+          measured_at: string | null
+          spool_id: string
+          t_max: number | null
+          t_min: number | null
+          updated_at: string
+          week_number: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          delta_t?: number | null
+          id?: string
+          measured_at?: string | null
+          spool_id: string
+          t_max?: number | null
+          t_min?: number | null
+          updated_at?: string
+          week_number: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          delta_t?: number | null
+          id?: string
+          measured_at?: string | null
+          spool_id?: string
+          t_max?: number | null
+          t_min?: number | null
+          updated_at?: string
+          week_number?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stc_temperature_readings_spool_id_fkey"
+            columns: ["spool_id"]
+            isOneToOne: false
+            referencedRelation: "stc_spools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       systems: {
         Row: {
           area_id: string
@@ -277,6 +392,7 @@ export type Database = {
         | "Crítico"
         | "Alerta"
         | "Sin medición"
+      stc_branch: "principal" | "variable_emergencia"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -412,6 +528,7 @@ export const Constants = {
         "Alerta",
         "Sin medición",
       ],
+      stc_branch: ["principal", "variable_emergencia"],
     },
   },
 } as const
