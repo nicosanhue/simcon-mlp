@@ -67,9 +67,11 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
   const { isEditor } = useProfile();
   const charts = useCustomCharts().data ?? [];
   const createChart = useCreateCustomChart();
+  const updateChart = useUpdateCustomChart();
   const deleteChart = useDeleteCustomChart();
 
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [stationFilter, setStationFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
