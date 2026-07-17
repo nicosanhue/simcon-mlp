@@ -29,6 +29,7 @@ import {
 import { Droplet, Search, Layers, Pencil, History, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "@/hooks/use-toast";
+import { useProfile } from "@/contexts/ProfileContext";
 import data from "@/data/lubricacionEquipos.json";
 
 type Row = {
