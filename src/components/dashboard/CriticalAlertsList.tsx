@@ -237,15 +237,18 @@ export function CriticalAlertsList({ alerts, activeFilter, week, year }: Critica
                       )}
                     </div>
                   )}
-                  {selectedAlert.plannedDate && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Fecha Planificada</p>
-                      <div className="flex items-center gap-2 text-sm text-foreground">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span>{selectedAlert.plannedDate}</span>
-                      </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Fecha de Planificación</p>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      {selectedAlert.plannedDate ? (
+                        <span className="text-foreground">{selectedAlert.plannedDate}</span>
+                      ) : (
+                        <span className="text-muted-foreground italic">Pendiente</span>
+                      )}
                     </div>
-                  )}
+                  </div>
+
                   <div className="pt-4 border-t">
                     <EquipmentReportsSection
                       equipmentId={selectedAlert.id}
