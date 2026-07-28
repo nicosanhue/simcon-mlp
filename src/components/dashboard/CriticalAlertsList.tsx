@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, AlertCircle, Clock, CheckCircle2, XCircle, HelpCircle, FileWarning } from "lucide-react";
+import { AlertTriangle, AlertCircle, Clock, CheckCircle2, XCircle, HelpCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import {
@@ -104,15 +104,13 @@ export function CriticalAlertsList({ alerts, activeFilter, week, year }: Critica
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null);
   const { data: reportsIndex } = useReportsIndex(week, year);
 
-  const pendingCount = alerts.filter(
-    (a) => (a.status === "Crítico" || a.status === "Alerta") && !reportsIndex?.has(a.id)
-  ).length;
+  const defaultTitle = "Condiciones: Alerta, Críticas y Sin Medición";
 
   if (alerts.length === 0) {
     return (
       <div className="industrial-panel p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4">
-          Alertas Críticas
+          {defaultTitle}
           {activeFilter && (
             <span className="text-sm font-normal text-muted-foreground ml-2">
               (filtrando por {activeFilter})
@@ -124,7 +122,7 @@ export function CriticalAlertsList({ alerts, activeFilter, week, year }: Critica
             <AlertCircle className="h-6 w-6 text-status-operativo" />
           </div>
           <p className="text-muted-foreground">
-            {activeFilter ? `Sin equipos en ${activeFilter}` : "Sin alertas críticas"}
+            {activeFilter ? `Sin equipos en ${activeFilter}` : "Sin condiciones registradas"}
           </p>
           <p className="text-sm text-muted-foreground mt-1">
             {activeFilter ? "Haz clic en la tarjeta para quitar el filtro" : "Todos los equipos satisfactorios"}
@@ -134,32 +132,25 @@ export function CriticalAlertsList({ alerts, activeFilter, week, year }: Critica
     );
   }
 
-  const isSafeFilter = activeFilter === "Satisfactorio" || activeFilter === "Seguimiento" || activeFilter === "Sin medición";
+  const isSafeFilter = activeFilter === "Satisfactorio" || activeFilter === "Seguimiento";
 
   return (
     <>
       <div className="industrial-panel p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-foreground">
-            {isSafeFilter ? `Equipos en ${activeFilter}` : "Alertas Críticas"}
+            {isSafeFilter ? `Equipos en ${activeFilter}` : defaultTitle}
             {activeFilter && (
               <span className="text-sm font-normal text-muted-foreground ml-2">
                 (filtrando por {activeFilter})
               </span>
             )}
           </h3>
-          <div className="flex items-center gap-2">
-            {pendingCount > 0 && (
-              <Badge variant="outline" className="border-status-alerta/50 text-status-alerta bg-status-alerta/10 gap-1">
-                <FileWarning className="h-3 w-3" /> {pendingCount} sin informe
-              </Badge>
-            )}
-            <Badge variant={isSafeFilter ? "secondary" : "destructive"} className={!isSafeFilter ? "animate-pulse-glow" : ""}>
-              {alerts.length} {alerts.length === 1 ? "equipo" : "equipos"}
-            </Badge>
-          </div>
+          <Badge variant={isSafeFilter ? "secondary" : "destructive"} className={!isSafeFilter ? "animate-pulse-glow" : ""}>
+            {alerts.length} {alerts.length === 1 ? "equipo" : "equipos"}
+          </Badge>
         </div>
-        <div className="space-y-3 max-h-[400px] overflow-y-auto">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 max-h-[520px] overflow-y-auto pr-1">
           {alerts.map((alert) => {
             const styles = statusStyles[alert.status] || statusStyles.Satisfactorio;
             return (
@@ -167,37 +158,23 @@ export function CriticalAlertsList({ alerts, activeFilter, week, year }: Critica
                 key={alert.id}
                 onClick={() => setSelectedAlert(alert)}
                 className={cn(
-                  "p-4 rounded-lg border transition-all cursor-pointer hover:scale-[1.01] hover:shadow-md",
+                  "p-2.5 rounded-md border transition-all cursor-pointer hover:shadow-md hover:scale-[1.02]",
                   styles.bg, styles.border, styles.hoverBg, styles.pulse
                 )}
               >
-                <div className="flex items-start gap-3">
-                  <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", styles.iconBg)}>
-                    {getStatusIcon(alert.status, cn("h-4 w-4", styles.iconColor))}
+                <div className="flex items-start gap-2">
+                  <div className={cn("flex h-6 w-6 shrink-0 items-center justify-center rounded", styles.iconBg)}>
+                    {getStatusIcon(alert.status, cn("h-3.5 w-3.5", styles.iconColor))}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono text-sm font-semibold text-primary">{alert.tag}</span>
-                      <Badge variant="outline" className={cn("text-xs", styles.badgeBorder, styles.badgeText)}>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="font-mono text-xs font-semibold text-primary truncate">{alert.tag}</span>
+                      <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", styles.badgeBorder, styles.badgeText)}>
                         {alert.status}
                       </Badge>
-                      {(alert.status === "Crítico" || alert.status === "Alerta") && !reportsIndex?.has(alert.id) && (
-                        <Badge variant="outline" className="text-xs border-status-alerta/50 text-status-alerta bg-status-alerta/10 gap-1">
-                          <FileWarning className="h-3 w-3" /> Informe pendiente
-                        </Badge>
-                      )}
                     </div>
-                    <p className="text-sm text-foreground mt-1 truncate">{alert.name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{alert.area} • {alert.system}</p>
-                    {alert.description && (
-                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{alert.description}</p>
-                    )}
-                    {alert.plannedDate && (
-                      <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>Fecha plan: {alert.plannedDate}</span>
-                      </div>
-                    )}
+                    <p className="text-xs text-foreground mt-0.5 truncate">{alert.name}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{alert.area} • {alert.system}</p>
                   </div>
                 </div>
               </div>
@@ -205,6 +182,7 @@ export function CriticalAlertsList({ alerts, activeFilter, week, year }: Critica
           })}
         </div>
       </div>
+
 
       <Dialog open={!!selectedAlert} onOpenChange={() => setSelectedAlert(null)}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -259,15 +237,18 @@ export function CriticalAlertsList({ alerts, activeFilter, week, year }: Critica
                       )}
                     </div>
                   )}
-                  {selectedAlert.plannedDate && (
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Fecha Planificada</p>
-                      <div className="flex items-center gap-2 text-sm text-foreground">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span>{selectedAlert.plannedDate}</span>
-                      </div>
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Fecha de Planificación</p>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      {selectedAlert.plannedDate ? (
+                        <span className="text-foreground">{selectedAlert.plannedDate}</span>
+                      ) : (
+                        <span className="text-muted-foreground italic">Pendiente</span>
+                      )}
                     </div>
-                  )}
+                  </div>
+
                   <div className="pt-4 border-t">
                     <EquipmentReportsSection
                       equipmentId={selectedAlert.id}
