@@ -234,12 +234,12 @@ export function useDashboardData(filters: DashboardFilters) {
 
   // Get critical alerts (Crítico or Alerta)
   const criticalAlerts = equipmentQuery.data
-    ?.filter((eq) => eq.currentStatus === "Crítico" || eq.currentStatus === "Alerta")
+    ?.filter((eq) => eq.currentStatus === "Crítico" || eq.currentStatus === "Alerta" || eq.currentStatus === "Sin medición")
     .map((eq) => ({
       id: eq.id,
       tag: eq.tag,
       name: eq.name,
-      status: eq.currentStatus as "Crítico" | "Alerta",
+      status: eq.currentStatus as "Crítico" | "Alerta" | "Sin medición",
       area: eq.systems.areas.name,
       system: eq.systems.name,
       description: eq.currentReport?.technical_description || undefined,
@@ -247,6 +247,7 @@ export function useDashboardData(filters: DashboardFilters) {
       sapNotification: eq.currentReport?.sap_notification || undefined,
       sapOrder: eq.currentReport?.sap_order || undefined,
     })) || [];
+
 
   return {
     areas: areasQuery.data || [],
