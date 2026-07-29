@@ -1,73 +1,84 @@
-# Welcome to your Lovable project
+# Asset Guardian
 
-## Project info
+I need a web application for "Industrial Equipment Condition Monitoring". I am currently using a PowerPoint to track this manually, but I need a database-driven solution.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+The app must have the following Architecture and Data Structure:
 
-## How can I edit this code?
+Database Schema (Supabase/PostgreSQL concept):
 
-There are several ways of editing your application.
+Areas: (e.g., Puerto Desaladora, TF, Tranque Mauro).
 
-**Use Lovable**
+Systems: Children of Areas (e.g., Espesadores, Bombas de Arenas, ShipLoader).
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+Equipment (Assets): Children of Systems. Fields: Tag (e.g., 370PP089), Name, Criticality.
 
-Changes made via Lovable will be committed automatically to this repo.
+WeeklyReports: This is the transactional table. Fields: Equipment_ID, Week_Number (e.g., 52), Year (e.g., 2025), Status (Operativo, Stand By, Falla, Alerta), SAP_Notification (text), SAP_Order (text), Technical_Description (text), Planned_Date (date).
 
-**Use your preferred IDE**
+Core Features:
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+A. Dashboard (Home):
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Global Status: Pie chart showing the % of equipment in "Operativo" vs "Falla" vs "Alerta" for the current week.
 
-Follow these steps:
+Filter by Area: A dropdown to filter the statistics by "Puerto", "TF", etc.
+
+Critical Alerts: A list of equipment currently in "Falla" or "Alerta" status requiring immediate attention.
+
+B. Data Entry (The most important part):
+
+A view to "Create Weekly Report".
+
+User selects the Week and Year.
+
+User selects an Area.
+
+The app displays a table or grid of all equipment in that Area.
+
+Each row allows the user to input/update: Status, SAP Notification, SAP Order, and Comments.
+
+Feature request: "Clone previous week". A button to copy the status of all equipment from Week 51 to Week 52, so I only have to edit the changes (deltas).
+
+C. Equipment History:
+
+A search bar to find a specific Tag (e.g., TK020).
+
+Clicking a tag shows a timeline or list of its condition over the past weeks to analyze degradation trends.
+
+UI/UX Style:
+
+Professional, clean, industrial dashboard style.
+
+Use a sidebar for navigation (Dashboard, Data Entry, Assets, History).
+
+Use color coding for status: Green (Operativo), Yellow (Alerta/Stand By), Red (Falla).
+
+Specific Context from my data:
+
+I handle distinct technical statuses like "Lubricar portarodamientos", "Fuga sello", "Desbalance motor". The text fields need to support technical details.
+
+Include fields for maintenance dates (Fecha Plan).
+
+Start by building the database structure and the Dashboard view.
+
+This project was built with [Lovable](https://lovable.dev).
+
+**Live app**: https://simcon-mlp.lovable.app
+
+## Build with Lovable
+
+Continue developing this project in the [Lovable editor](https://lovable.dev/projects/02fe1ba4-8bab-4b50-b6ae-6bfc05fd0270).
+
+- **Ship faster**: describe what you want to build and Lovable handles the code.
+- **Stay in sync**: every change made in Lovable is committed straight to this repository.
+- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+
+## Development
+
+Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
+git clone <this-repository-url>
+cd <repository-name>
 npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
