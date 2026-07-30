@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ReportPdfData, worstCondition } from "@/lib/pdfReport";
+import { ReportPdfData, worstCondition, GERENCIA_FIJA } from "@/lib/pdfReport";
 
 export type ReportTipo = "Vibraciones" | "Termografia" | "Ultrasonido";
 
@@ -69,7 +69,7 @@ export function reportToPdfData(r: ReportRow): ReportPdfData {
   return {
     tituloId: r.equipment ? `${r.equipment.tag} — ${r.equipment.name}` : "",
     fechaInforme: r.fecha_informe || r.fecha_inspeccion,
-    gerencia: r.gerencia,
+    gerencia: GERENCIA_FIJA,
     avisoSap: r.aviso_sap,
     procesoArea:
       r.proceso_area ||
@@ -173,8 +173,8 @@ export interface SaveReportInput {
   id?: string;
   equipment_id: string;
   tipo: ReportTipo;
-  week_number: number;
-  year: number;
+  week_number?: number;
+  year?: number;
   fecha_inspeccion: string;
   fecha_informe: string;
   gerencia?: string | null;
@@ -191,19 +191,38 @@ export interface SaveReportInput {
   removePhotoIds?: string[];
 }
 
+/** ISO week number from a yyyy-mm-dd string */
+export function isoWeekYear(dateStr: string): { week: number; year: number } {
+  const d = new Date(`${(dateStr || "").slice(0, 10)}T00:00:00`);
+  if (isNaN(d.getTime())) {
+    const now = new Date();
+    return { week: 1, year: now.getFullYear() };
+  }
+  const target = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const dayNum = (target.getUTCDay() + 6) % 7;
+  target.setUTCDate(target.getUTCDate() - dayNum + 3);
+  const firstThursday = new Date(Date.UTC(target.getUTCFullYear(), 0, 4));
+  const fDayNum = (firstThursday.getUTCDay() + 6) % 7;
+  firstThursday.setUTCDate(firstThursday.getUTCDate() - fDayNum + 3);
+  const week =
+    1 + Math.round((target.getTime() - firstThursday.getTime()) / (7 * 24 * 3600 * 1000));
+  return { week, year: target.getUTCFullYear() };
+}
+
 export function useSaveReport() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: SaveReportInput) => {
       let reportId = input.id;
+      const derived = isoWeekYear(input.fecha_informe || input.fecha_inspeccion);
       const payload = {
         equipment_id: input.equipment_id,
         tipo: input.tipo,
-        week_number: input.week_number,
-        year: input.year,
+        week_number: input.week_number ?? derived.week,
+        year: input.year ?? derived.year,
         fecha_inspeccion: input.fecha_inspeccion,
         fecha_informe: input.fecha_informe,
-        gerencia: input.gerencia ?? null,
+        gerencia: GERENCIA_FIJA,
         proceso_area: input.proceso_area ?? null,
         ot_numero: input.ot_numero ?? null,
         aviso_sap: input.aviso_sap ?? null,
@@ -213,6 +232,7 @@ export function useSaveReport() {
         recomendacion: input.recomendacion ?? null,
         status_resultante: input.status_resultante as any,
       };
+
 
       if (reportId) {
         const { error } = await supabase.from("reports").update(payload).eq("id", reportId);
@@ -254,9 +274,14 @@ export function useSaveReport() {
       }
 
       if (input.newPhotos?.length) {
-        let orden = Date.now();
+        const { count } = await supabase
+          .from("report_photos")
+          .select("id", { count: "exact", head: true })
+          .eq("report_id", reportId!);
+        let orden = count ?? 0;
+        const stamp = Date.now();
         for (const p of input.newPhotos) {
-          const path = `${reportId}/${orden}.jpg`;
+          const path = `${reportId}/${stamp}-${orden}.jpg`;
           const { error: upErr } = await supabase.storage
             .from("report-photos")
             .upload(path, p.blob, { contentType: "image/jpeg", upsert: false });
@@ -270,6 +295,7 @@ export function useSaveReport() {
           if (insErr) throw insErr;
         }
       }
+
 
       return reportId!;
     },

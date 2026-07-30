@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { X, Loader2, Upload, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { compressImage, CONDICIONES, worstCondition, conditionRgb } from "@/lib/pdfReport";
+import { compressImage, CONDICIONES, worstCondition, conditionRgb, GERENCIA_FIJA } from "@/lib/pdfReport";
 import { useSaveReport, ReportRow, ReportTipo, ReportItem, COMPONENTES } from "@/hooks/useReports";
 import { useQuery } from "@tanstack/react-query";
 
@@ -51,10 +51,8 @@ export function ReportFormDialog({
 
   const [equipmentId, setEquipmentId] = useState<string>("");
   const [tipo, setTipo] = useState<ReportTipo>("Vibraciones");
-  const [week, setWeek] = useState<number>(1);
-  const [year, setYear] = useState<number>(new Date().getFullYear());
   const [fechaInforme, setFechaInforme] = useState<string>(new Date().toISOString().slice(0, 10));
-  const [gerencia, setGerencia] = useState("");
+
   const [procesoArea, setProcesoArea] = useState("");
   const [avisoSap, setAvisoSap] = useState("");
   const [otNumero, setOtNumero] = useState("");
@@ -98,10 +96,8 @@ export function ReportFormDialog({
     if (editing) {
       setEquipmentId(editing.equipment_id);
       setTipo(editing.tipo);
-      setWeek(editing.week_number);
-      setYear(editing.year);
       setFechaInforme(editing.fecha_informe || editing.fecha_inspeccion);
-      setGerencia(editing.gerencia || "");
+
       setProcesoArea(editing.proceso_area || "");
       setAvisoSap(editing.aviso_sap || "");
       setOtNumero(editing.ot_numero || "");
@@ -115,10 +111,8 @@ export function ReportFormDialog({
     } else {
       setEquipmentId(defaultEquipmentId || "");
       setTipo("Vibraciones");
-      setWeek(defaultWeek || 1);
-      setYear(defaultYear || new Date().getFullYear());
       setFechaInforme(new Date().toISOString().slice(0, 10));
-      setGerencia("");
+
       setProcesoArea("");
       setAvisoSap("");
       setOtNumero("");
@@ -198,11 +192,10 @@ export function ReportFormDialog({
         id: editing?.id,
         equipment_id: equipmentId,
         tipo,
-        week_number: week,
-        year,
         fecha_inspeccion: fechaInforme,
         fecha_informe: fechaInforme,
-        gerencia,
+        gerencia: GERENCIA_FIJA,
+
         proceso_area: procesoArea,
         ot_numero: otNumero,
         aviso_sap: avisoSap,
@@ -275,10 +268,6 @@ export function ReportFormDialog({
               <Input value={avisoSap} onChange={(e) => setAvisoSap(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label>Gerencia</Label>
-              <Input value={gerencia} onChange={(e) => setGerencia(e.target.value)} />
-            </div>
-            <div className="space-y-1">
               <Label>OT N°</Label>
               <Input value={otNumero} onChange={(e) => setOtNumero(e.target.value)} />
             </div>
@@ -295,14 +284,11 @@ export function ReportFormDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
-              <Label>Semana</Label>
-              <Input type="number" min={1} max={53} value={week} onChange={(e) => setWeek(Number(e.target.value))} />
+            <div className="space-y-1 md:col-span-2">
+              <Label>Gerencia</Label>
+              <Input value={GERENCIA_FIJA} readOnly disabled />
             </div>
-            <div className="space-y-1">
-              <Label>Año</Label>
-              <Input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
-            </div>
+
             <div className="space-y-1">
               <Label>Técnico</Label>
               <Input value={tecnico} onChange={(e) => setTecnico(e.target.value)} />

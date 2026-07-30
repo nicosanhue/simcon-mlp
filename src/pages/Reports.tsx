@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useReports, useDeleteReport, ReportRow, ReportTipo, reportToPdfData } from "@/hooks/useReports";
 import { ReportFormDialog } from "@/components/reports/ReportFormDialog";
-import { generateReportPdf } from "@/lib/pdfReport";
+import { generateReportPdf, reportFileName } from "@/lib/pdfReport";
 import { toast } from "sonner";
 import { useProfile } from "@/contexts/ProfileContext";
 
@@ -30,7 +30,7 @@ export default function Reports() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Informe_${r.tipo}_${r.equipment?.tag}_S${r.week_number}-${r.year}.pdf`;
+      a.download = reportFileName(r.tipo, r.equipment?.tag, r.fecha_informe || r.fecha_inspeccion);
       a.click();
       URL.revokeObjectURL(url);
       toast.success(`PDF descargado (${(blob.size / 1024).toFixed(0)} KB)`);
@@ -94,7 +94,7 @@ export default function Reports() {
                   <th className="text-left p-3">Tipo</th>
                   <th className="text-left p-3">Título / ID</th>
                   <th className="text-left p-3">Proceso / Área</th>
-                  <th className="text-left p-3">Semana</th>
+                  
                   <th className="text-left p-3">Fecha informe</th>
                   <th className="text-left p-3">Condición general</th>
                   <th className="text-left p-3">Componentes</th>
@@ -112,7 +112,7 @@ export default function Reports() {
                     <td className="p-3 text-xs text-muted-foreground">
                       {r.proceso_area || `${r.equipment?.systems?.areas?.name} › ${r.equipment?.systems?.name}`}
                     </td>
-                    <td className="p-3">S{r.week_number}/{r.year}</td>
+                    
                     <td className="p-3">{r.fecha_informe || r.fecha_inspeccion}</td>
                     <td className="p-3">
                       <Badge variant="secondary">{r.condicion_general || r.status_resultante}</Badge>

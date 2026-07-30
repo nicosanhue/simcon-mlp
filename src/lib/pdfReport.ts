@@ -1,7 +1,35 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { LOGO_SIMCON, LOGO_MLP, LOGO_BV } from "./reportLogos";
+
 
 const MAX_BYTES = 1_000_000;
+
+export const GERENCIA_FIJA =
+  "Superintendecia Confiabilidad y Mejoramiento TFT y Puerto";
+
+const TIPO_ABBR: Record<string, string> = {
+  Vibraciones: "VIB",
+  Termografia: "TER",
+  "Termografía": "TER",
+  Ultrasonido: "ULT",
+};
+
+/** MLP_VIB_<TAG>_<AAAAMMDD>.pdf */
+export function reportFileName(
+  tipo: string,
+  tag: string | undefined | null,
+  fecha: string | undefined | null
+): string {
+  const abbr = TIPO_ABBR[tipo] || (tipo || "INF").slice(0, 3).toUpperCase();
+  const cleanTag = (tag || "SINTAG").replace(/[^\w-]+/g, "").toUpperCase();
+  const d = (fecha || new Date().toISOString().slice(0, 10)).slice(0, 10).replace(/-/g, "");
+  return `MLP_${abbr}_${cleanTag}_${d}.pdf`;
+}
+
+
+
+
 
 export async function compressImage(
   file: File | Blob,
@@ -110,22 +138,34 @@ async function buildPdf(data: ReportPdfData, maxW: number, q: number): Promise<B
   const margin = 34;
   const contentW = pageW - margin * 2;
 
+  // ── Logos band
+  const bandH = 46;
+  try {
+    doc.addImage(LOGO_SIMCON, "PNG", margin, 6, 40, 34);
+    doc.addImage(LOGO_MLP, "PNG", pageW / 2 - 34, 11, 69, 24);
+    doc.addImage(LOGO_BV, "PNG", pageW - margin - 35, 7, 35, 32);
+
+  } catch (e) {
+    console.warn("logos", e);
+  }
+
   // ── Header band
   doc.setFillColor(...NAVY);
-  doc.rect(0, 0, pageW, 58, "F");
+  doc.rect(0, bandH, pageW, 58, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(17);
-  doc.text("INFORME EQUIPO / COMPONENTES", margin, 28);
+  doc.text("INFORME EQUIPO / COMPONENTES", margin, bandH + 26);
   doc.setFontSize(9.5);
-  doc.text("SISTEMA DE MONITOREO DE CONDICIONES Y DIAGNÓSTICO OPERACIONAL", margin, 44);
+  doc.text("SISTEMA DE MONITOREO DE CONDICIONES Y DIAGNÓSTICO OPERACIONAL", margin, bandH + 44);
 
-  let y = 74;
+  let y = bandH + 72;
 
   // ── Info block (2 columns, label + value)
   const rows: [string, string, string, string][] = [
     ["TÍTULO / ID:", data.tituloId || "", "FECHA INFORME:", data.fechaInforme || ""],
-    ["GERENCIA:", data.gerencia || "", "N° AVISO SAP:", data.avisoSap || ""],
+    ["GERENCIA:", GERENCIA_FIJA, "N° AVISO SAP:", data.avisoSap || ""],
+
     ["PROCESO / ÁREA:", data.procesoArea || "", "OT N°:", data.otNumero || ""],
   ];
   const labelW = 110;
