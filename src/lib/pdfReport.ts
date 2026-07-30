@@ -3,7 +3,7 @@ import autoTable from "jspdf-autotable";
 import { LOGO_SIMCON, LOGO_MLP, LOGO_BV } from "./reportLogos";
 
 
-const MAX_BYTES = 1_000_000;
+const MAX_BYTES = 1_500_000;
 
 export const GERENCIA_FIJA =
   "Superintendecia Confiabilidad y Mejoramiento TFT y Puerto";
