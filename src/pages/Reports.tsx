@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useReports, useDeleteReport, ReportRow, ReportTipo, reportToPdfData } from "@/hooks/useReports";
+import { useReports, useDeleteReport, ReportRow, ReportTipo, reportToPdfData, isoWeekYear } from "@/hooks/useReports";
 import { ReportFormDialog } from "@/components/reports/ReportFormDialog";
 import { ReportsGroupedList, isoWeekRange } from "@/components/reports/ReportsGroupedList";
 import { ReportPreviewDialog } from "@/components/reports/ReportPreviewDialog";
@@ -37,12 +37,10 @@ export default function Reports() {
   );
   const weeks = useMemo(() => {
     const map = new Map<string, { week: number; year: number }>();
-    (reports || []).forEach((r) =>
-      map.set(`${r.year}-${String(r.week_number).padStart(2, "0")}`, {
-        week: r.week_number,
-        year: r.year,
-      })
-    );
+    (reports || []).forEach((r) => {
+      const { week, year } = isoWeekYear(r.fecha_informe || r.fecha_inspeccion);
+      map.set(`${year}-${String(week).padStart(2, "0")}`, { week, year });
+    });
     return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
   }, [reports]);
 
@@ -51,7 +49,11 @@ export default function Reports() {
       (reports || []).filter(
         (r) =>
           (area === "all" || areaOf(r) === area) &&
-          (weekKey === "all" || `${r.year}-${String(r.week_number).padStart(2, "0")}` === weekKey)
+          (weekKey === "all" ||
+            (() => {
+              const { week, year } = isoWeekYear(r.fecha_informe || r.fecha_inspeccion);
+              return `${year}-${String(week).padStart(2, "0")}` === weekKey;
+            })())
       ),
     [reports, area, weekKey]
   );

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ChevronDown, ChevronRight, Download, Eye, Loader2, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ReportRow } from "@/hooks/useReports";
+import { ReportRow, isoWeekYear } from "@/hooks/useReports";
 
 export function isoWeekRange(week: number, year: number): string {
   const simple = new Date(Date.UTC(year, 0, 4));
@@ -42,8 +42,9 @@ export function ReportsGroupedList({
   const groups = useMemo(() => {
     const byWeek = new Map<string, { week: number; year: number; rows: ReportRow[] }>();
     for (const r of reports) {
-      const key = `${r.year}-${String(r.week_number).padStart(2, "0")}`;
-      if (!byWeek.has(key)) byWeek.set(key, { week: r.week_number, year: r.year, rows: [] });
+      const { week, year } = isoWeekYear(r.fecha_informe || r.fecha_inspeccion);
+      const key = `${year}-${String(week).padStart(2, "0")}`;
+      if (!byWeek.has(key)) byWeek.set(key, { week, year, rows: [] });
       byWeek.get(key)!.rows.push(r);
     }
     return [...byWeek.entries()]
