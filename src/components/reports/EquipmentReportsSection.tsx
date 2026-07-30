@@ -72,7 +72,7 @@ export function EquipmentReportsSection(props: Props) {
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="outline" className="text-xs">{r.tipo}</Badge>
                   <span className="text-xs text-muted-foreground">
-                    S{r.week_number}/{r.year} · {r.fecha_inspeccion}
+                    {r.fecha_informe || r.fecha_inspeccion}
                   </span>
                   <Badge variant="secondary" className="text-xs">{r.status_resultante}</Badge>
                 </div>

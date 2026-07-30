@@ -94,7 +94,7 @@ export default function Reports() {
                   <th className="text-left p-3">Tipo</th>
                   <th className="text-left p-3">Título / ID</th>
                   <th className="text-left p-3">Proceso / Área</th>
-                  <th className="text-left p-3">Semana</th>
+                  
                   <th className="text-left p-3">Fecha informe</th>
                   <th className="text-left p-3">Condición general</th>
                   <th className="text-left p-3">Componentes</th>
@@ -112,7 +112,7 @@ export default function Reports() {
                     <td className="p-3 text-xs text-muted-foreground">
                       {r.proceso_area || `${r.equipment?.systems?.areas?.name} › ${r.equipment?.systems?.name}`}
                     </td>
-                    <td className="p-3">S{r.week_number}/{r.year}</td>
+                    
                     <td className="p-3">{r.fecha_informe || r.fecha_inspeccion}</td>
                     <td className="p-3">
                       <Badge variant="secondary">{r.condicion_general || r.status_resultante}</Badge>
