@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { FileText, Download, Plus, Loader2, Trash2, Pencil } from "lucide-react";
+import { FileText, Download, Plus, Loader2, Trash2, Pencil, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useEquipmentReports, useDeleteReport, ReportRow, reportToPdfData } from "@/hooks/useReports";
 import { ReportFormDialog } from "./ReportFormDialog";
-import { generateReportPdf, reportFileName } from "@/lib/pdfReport";
+import { ReportPreviewDialog } from "./ReportPreviewDialog";
+import { generateReportPdf, reportFileName, ReportPdfData } from "@/lib/pdfReport";
 import { toast } from "sonner";
 
 interface Props {
@@ -24,20 +25,29 @@ export function EquipmentReportsSection(props: Props) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ReportRow | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [preview, setPreview] = useState<{ data: ReportPdfData; fileName: string } | null>(null);
+
+  function pdfData(r: ReportRow): ReportPdfData {
+    return {
+      ...reportToPdfData(r),
+      tituloId: `${props.equipmentTag} — ${props.equipmentName}`,
+      procesoArea: r.proceso_area || `${props.area} / ${props.system}`,
+    };
+  }
+
+  function fileNameOf(r: ReportRow) {
+    return reportFileName(r.tipo, props.equipmentTag, r.fecha_informe || r.fecha_inspeccion);
+  }
 
   async function download(r: ReportRow) {
     try {
       setDownloadingId(r.id);
-      const blob = await generateReportPdf({
-        ...reportToPdfData(r),
-        tituloId: `${props.equipmentTag} — ${props.equipmentName}`,
-        procesoArea: r.proceso_area || `${props.area} / ${props.system}`,
-      });
+      const blob = await generateReportPdf(pdfData(r));
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = reportFileName(r.tipo, props.equipmentTag, r.fecha_informe || r.fecha_inspeccion);
+      a.download = fileNameOf(r);
       a.click();
       URL.revokeObjectURL(url);
       const kb = (blob.size / 1024).toFixed(0);
@@ -79,6 +89,9 @@ export function EquipmentReportsSection(props: Props) {
                 {r.hallazgos && <p className="text-xs text-muted-foreground truncate mt-1">{r.hallazgos}</p>}
               </div>
               <div className="flex gap-1">
+                <Button size="sm" variant="ghost" onClick={() => setPreview({ data: pdfData(r), fileName: fileNameOf(r) })}>
+                  <Eye className="h-3 w-3" />
+                </Button>
                 <Button size="sm" variant="ghost" onClick={() => download(r)} disabled={downloadingId === r.id}>
                   {downloadingId === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
                 </Button>
@@ -106,6 +119,12 @@ export function EquipmentReportsSection(props: Props) {
         defaultWeek={props.defaultWeek}
         defaultYear={props.defaultYear}
         defaultStatus={props.defaultStatus}
+      />
+      <ReportPreviewDialog
+        open={!!preview}
+        onOpenChange={(v) => !v && setPreview(null)}
+        data={preview?.data || null}
+        fileName={preview?.fileName || "informe.pdf"}
       />
     </div>
   );

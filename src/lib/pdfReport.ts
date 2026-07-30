@@ -3,7 +3,7 @@ import autoTable from "jspdf-autotable";
 import { LOGO_SIMCON, LOGO_MLP, LOGO_BV } from "./reportLogos";
 
 
-const MAX_BYTES = 1_000_000;
+const MAX_BYTES = 1_500_000;
 
 export const GERENCIA_FIJA =
   "Superintendecia Confiabilidad y Mejoramiento TFT y Puerto";
@@ -50,11 +50,48 @@ export async function compressImage(
   return { dataUrl, blob };
 }
 
-async function urlToJpegDataUrl(url: string, maxWidth: number, quality: number): Promise<string> {
+/** Cache of original photo blobs so each attempt re-encodes without re-downloading */
+const blobCache = new Map<string, Blob>();
+
+async function fetchPhotoBlob(url: string): Promise<Blob> {
+  const cached = blobCache.get(url);
+  if (cached) return cached;
   const resp = await fetch(url);
   const blob = await resp.blob();
+  blobCache.set(url, blob);
+  if (blobCache.size > 40) blobCache.delete(blobCache.keys().next().value as string);
+  return blob;
+}
+
+async function urlToJpegDataUrl(url: string, maxWidth: number, quality: number): Promise<string> {
+  const blob = await fetchPhotoBlob(url);
   const { dataUrl } = await compressImage(blob, maxWidth, quality);
   return dataUrl;
+}
+
+/** Logos are PNG base64; re-encode once to JPEG (white bg) to cut fixed PDF weight */
+const logoCache = new Map<string, string>();
+
+async function logoJpeg(pngDataUrl: string): Promise<string> {
+  const hit = logoCache.get(pngDataUrl);
+  if (hit) return hit;
+  try {
+    const blob = await (await fetch(pngDataUrl)).blob();
+    const bitmap = await createImageBitmap(blob);
+    const scale = Math.min(1, 180 / bitmap.width);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const out = canvas.toDataURL("image/jpeg", 0.82);
+    logoCache.set(pngDataUrl, out);
+    return out;
+  } catch {
+    return pngDataUrl;
+  }
 }
 
 export const CONDICIONES = [
@@ -121,18 +158,21 @@ export async function generateReportPdf(data: ReportPdfData): Promise<Blob> {
     [700, 0.6],
     [560, 0.5],
     [440, 0.4],
+    [380, 0.35],
   ];
+  let last: Blob | null = null;
   for (const [maxW, q] of attempts) {
-    const blob = await buildPdf(data, maxW, q);
-    if (blob.size <= MAX_BYTES) return blob;
+    last = await buildPdf(data, maxW, q);
+    if (last.size <= MAX_BYTES) return last;
   }
-  return buildPdf({ ...data, photos: [] }, 440, 0.4);
+  // Photos are never dropped: return the smallest attempt.
+  return last!;
 }
 
 const NAVY: [number, number, number] = [26, 58, 95];
 
 async function buildPdf(data: ReportPdfData, maxW: number, q: number): Promise<Blob> {
-  const doc = new jsPDF({ unit: "pt", format: "letter" });
+  const doc = new jsPDF({ unit: "pt", format: "letter", compress: true });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 34;
@@ -141,10 +181,14 @@ async function buildPdf(data: ReportPdfData, maxW: number, q: number): Promise<B
   // ── Logos band
   const bandH = 46;
   try {
-    doc.addImage(LOGO_SIMCON, "PNG", margin, 6, 40, 34);
-    doc.addImage(LOGO_MLP, "PNG", pageW / 2 - 34, 11, 69, 24);
-    doc.addImage(LOGO_BV, "PNG", pageW - margin - 35, 7, 35, 32);
-
+    const [simcon, mlp, bv] = await Promise.all([
+      logoJpeg(LOGO_SIMCON),
+      logoJpeg(LOGO_MLP),
+      logoJpeg(LOGO_BV),
+    ]);
+    doc.addImage(simcon, "JPEG", margin, 6, 40, 34);
+    doc.addImage(mlp, "JPEG", pageW / 2 - 34, 11, 69, 24);
+    doc.addImage(bv, "JPEG", pageW - margin - 35, 7, 35, 32);
   } catch (e) {
     console.warn("logos", e);
   }
@@ -277,42 +321,41 @@ async function buildPdf(data: ReportPdfData, maxW: number, q: number): Promise<B
 
   y = (doc as any).lastAutoTable.finalY + 14;
 
-  // ── Photos (max 4, 2x2 grid), fitted into remaining space above signatures
+  // ── Photos (max 4, 2x2 grid), fitted into remaining space above signatures (single page)
   const signaturesH = 62;
   const availH = pageH - margin - signaturesH - y;
   const photos = data.photos.slice(0, 4);
-  if (photos.length > 0 && availH > 60) {
+  if (photos.length > 0 && availH > 46) {
     const cols = photos.length > 1 ? 2 : 1;
     const rowsN = Math.ceil(photos.length / cols);
     const gap = 8;
+    const capH = photos.some((p) => p.caption) ? 10 : 0;
     const imgW = (contentW - gap * (cols - 1)) / cols;
     const maxRowH = (availH - 12 - gap * (rowsN - 1)) / rowsN;
-    const imgH = Math.min(imgW * 0.68, maxRowH - (photos.some((p) => p.caption) ? 10 : 0));
+    const imgH = Math.max(28, Math.min(imgW * 0.68, maxRowH - capH));
 
-    if (imgH > 40) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8.5);
-      doc.setTextColor(...NAVY);
-      doc.text("FOTOGRAFÍAS", margin, y);
-      y += 8;
-      for (let i = 0; i < photos.length; i++) {
-        const p = photos[i];
-        const col = i % cols;
-        const row = Math.floor(i / cols);
-        const x = margin + col * (imgW + gap);
-        const py = y + row * (imgH + gap + 10);
-        try {
-          const dataUrl = await urlToJpegDataUrl(p.url, maxW, q);
-          doc.addImage(dataUrl, "JPEG", x, py, imgW, imgH);
-        } catch (e) {
-          console.warn("Skipping photo", e);
-        }
-        if (p.caption) {
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(7);
-          doc.setTextColor(90, 90, 90);
-          doc.text(doc.splitTextToSize(p.caption, imgW)[0] || "", x, py + imgH + 8);
-        }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...NAVY);
+    doc.text("FOTOGRAFÍAS", margin, y);
+    y += 8;
+    for (let i = 0; i < photos.length; i++) {
+      const p = photos[i];
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = margin + col * (imgW + gap);
+      const py = y + row * (imgH + gap + capH);
+      try {
+        const dataUrl = await urlToJpegDataUrl(p.url, maxW, q);
+        doc.addImage(dataUrl, "JPEG", x, py, imgW, imgH, undefined, "FAST");
+      } catch (e) {
+        console.warn("Skipping photo", e);
+      }
+      if (p.caption) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(90, 90, 90);
+        doc.text(doc.splitTextToSize(p.caption, imgW)[0] || "", x, py + imgH + 8);
       }
     }
   }
