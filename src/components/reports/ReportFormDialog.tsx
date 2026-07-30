@@ -275,10 +275,6 @@ export function ReportFormDialog({
               <Input value={avisoSap} onChange={(e) => setAvisoSap(e.target.value)} />
             </div>
             <div className="space-y-1">
-              <Label>Gerencia</Label>
-              <Input value={gerencia} onChange={(e) => setGerencia(e.target.value)} />
-            </div>
-            <div className="space-y-1">
               <Label>OT N°</Label>
               <Input value={otNumero} onChange={(e) => setOtNumero(e.target.value)} />
             </div>
@@ -295,14 +291,11 @@ export function ReportFormDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1">
-              <Label>Semana</Label>
-              <Input type="number" min={1} max={53} value={week} onChange={(e) => setWeek(Number(e.target.value))} />
+            <div className="space-y-1 md:col-span-2">
+              <Label>Gerencia</Label>
+              <Input value={GERENCIA_FIJA} readOnly disabled />
             </div>
-            <div className="space-y-1">
-              <Label>Año</Label>
-              <Input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} />
-            </div>
+
             <div className="space-y-1">
               <Label>Técnico</Label>
               <Input value={tecnico} onChange={(e) => setTecnico(e.target.value)} />
