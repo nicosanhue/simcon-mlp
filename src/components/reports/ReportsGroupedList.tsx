@@ -84,12 +84,12 @@ export function ReportsGroupedList({
   return (
     <div className="space-y-3">
       {groups.map((g, gi) => {
-        const open = isOpen(g.key, gi === 0);
+        const open = isOpen(g.key, false);
         return (
           <div key={g.key} className="industrial-panel overflow-hidden">
             <button
               className="w-full flex items-center justify-between gap-3 p-3 hover:bg-muted/30 text-left"
-              onClick={() => toggle(g.key, gi === 0)}
+              onClick={() => toggle(g.key, false)}
             >
               <div className="flex items-center gap-2">
                 {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
@@ -103,12 +103,12 @@ export function ReportsGroupedList({
               <div className="border-t divide-y">
                 {g.areas.map((a) => {
                   const aid = `${g.key}-${a.area}`;
-                  const aOpen = isOpen(aid, true);
+                  const aOpen = isOpen(aid, false);
                   return (
                     <div key={aid}>
                       <button
                         className="w-full flex items-center justify-between gap-2 px-4 py-2 bg-muted/20 hover:bg-muted/40 text-left"
-                        onClick={() => toggle(aid, true)}
+                        onClick={() => toggle(aid, false)}
                       >
                         <div className="flex items-center gap-2 text-sm">
                           {aOpen ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
