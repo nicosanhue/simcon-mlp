@@ -160,22 +160,38 @@ async function buildPdf(data: ReportPdfData, maxW: number, q: number): Promise<B
   const margin = 34;
   const contentW = pageW - margin * 2;
 
+  // ── Logos band
+  const bandH = 46;
+  const [simconUrl, mlpUrl, bvUrl] = await Promise.all([
+    loadLogo(logoSimcon.url),
+    loadLogo(logoMlp.url),
+    loadLogo(logoBv.url),
+  ]);
+  try {
+    if (simconUrl) doc.addImage(simconUrl, "PNG", margin, 6, 40, 34);
+    if (mlpUrl) doc.addImage(mlpUrl, "PNG", pageW / 2 - 34, 11, 69, 24);
+    if (bvUrl) doc.addImage(bvUrl, "PNG", pageW - margin - 35, 7, 35, 32);
+  } catch (e) {
+    console.warn("logos", e);
+  }
+
   // ── Header band
   doc.setFillColor(...NAVY);
-  doc.rect(0, 0, pageW, 58, "F");
+  doc.rect(0, bandH, pageW, 58, "F");
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(17);
-  doc.text("INFORME EQUIPO / COMPONENTES", margin, 28);
+  doc.text("INFORME EQUIPO / COMPONENTES", margin, bandH + 26);
   doc.setFontSize(9.5);
-  doc.text("SISTEMA DE MONITOREO DE CONDICIONES Y DIAGNÓSTICO OPERACIONAL", margin, 44);
+  doc.text("SISTEMA DE MONITOREO DE CONDICIONES Y DIAGNÓSTICO OPERACIONAL", margin, bandH + 44);
 
-  let y = 74;
+  let y = bandH + 72;
 
   // ── Info block (2 columns, label + value)
   const rows: [string, string, string, string][] = [
     ["TÍTULO / ID:", data.tituloId || "", "FECHA INFORME:", data.fechaInforme || ""],
-    ["GERENCIA:", data.gerencia || "", "N° AVISO SAP:", data.avisoSap || ""],
+    ["GERENCIA:", GERENCIA_FIJA, "N° AVISO SAP:", data.avisoSap || ""],
+
     ["PROCESO / ÁREA:", data.procesoArea || "", "OT N°:", data.otNumero || ""],
   ];
   const labelW = 110;
