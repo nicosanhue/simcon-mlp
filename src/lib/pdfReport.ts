@@ -1,8 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import logoSimcon from "@/assets/logo-simcon.png.asset.json";
-import logoMlp from "@/assets/logo-mlp.png.asset.json";
-import logoBv from "@/assets/logo-bv.png.asset.json";
+import { LOGO_SIMCON, LOGO_MLP, LOGO_BV } from "./reportLogos";
+
 
 const MAX_BYTES = 1_000_000;
 
