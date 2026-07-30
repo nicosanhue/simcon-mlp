@@ -161,15 +161,11 @@ async function buildPdf(data: ReportPdfData, maxW: number, q: number): Promise<B
 
   // ── Logos band
   const bandH = 46;
-  const [simconUrl, mlpUrl, bvUrl] = await Promise.all([
-    loadLogo(logoSimcon.url),
-    loadLogo(logoMlp.url),
-    loadLogo(logoBv.url),
-  ]);
   try {
-    if (simconUrl) doc.addImage(simconUrl, "PNG", margin, 6, 40, 34);
-    if (mlpUrl) doc.addImage(mlpUrl, "PNG", pageW / 2 - 34, 11, 69, 24);
-    if (bvUrl) doc.addImage(bvUrl, "PNG", pageW - margin - 35, 7, 35, 32);
+    doc.addImage(LOGO_SIMCON, "PNG", margin, 6, 40, 34);
+    doc.addImage(LOGO_MLP, "PNG", pageW / 2 - 34, 11, 69, 24);
+    doc.addImage(LOGO_BV, "PNG", pageW - margin - 35, 7, 35, 32);
+
   } catch (e) {
     console.warn("logos", e);
   }
