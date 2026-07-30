@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ReportPdfData, worstCondition } from "@/lib/pdfReport";
+import { ReportPdfData, worstCondition, GERENCIA_FIJA } from "@/lib/pdfReport";
 
 export type ReportTipo = "Vibraciones" | "Termografia" | "Ultrasonido";
 
