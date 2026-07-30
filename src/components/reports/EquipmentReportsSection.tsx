@@ -120,6 +120,12 @@ export function EquipmentReportsSection(props: Props) {
         defaultYear={props.defaultYear}
         defaultStatus={props.defaultStatus}
       />
+      <ReportPreviewDialog
+        open={!!preview}
+        onOpenChange={(v) => !v && setPreview(null)}
+        data={preview?.data || null}
+        fileName={preview?.fileName || "informe.pdf"}
+      />
     </div>
   );
 }
