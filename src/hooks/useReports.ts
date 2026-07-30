@@ -254,9 +254,14 @@ export function useSaveReport() {
       }
 
       if (input.newPhotos?.length) {
-        let orden = Date.now();
+        const { count } = await supabase
+          .from("report_photos")
+          .select("id", { count: "exact", head: true })
+          .eq("report_id", reportId!);
+        let orden = count ?? 0;
+        const stamp = Date.now();
         for (const p of input.newPhotos) {
-          const path = `${reportId}/${orden}.jpg`;
+          const path = `${reportId}/${stamp}-${orden}.jpg`;
           const { error: upErr } = await supabase.storage
             .from("report-photos")
             .upload(path, p.blob, { contentType: "image/jpeg", upsert: false });
@@ -270,6 +275,7 @@ export function useSaveReport() {
           if (insErr) throw insErr;
         }
       }
+
 
       return reportId!;
     },
