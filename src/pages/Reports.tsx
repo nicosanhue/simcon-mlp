@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useReports, useDeleteReport, ReportRow, ReportTipo } from "@/hooks/useReports";
+import { useReports, useDeleteReport, ReportRow, ReportTipo, reportToPdfData } from "@/hooks/useReports";
 import { ReportFormDialog } from "@/components/reports/ReportFormDialog";
 import { generateReportPdf } from "@/lib/pdfReport";
 import { toast } from "sonner";
@@ -25,21 +25,8 @@ export default function Reports() {
   async function download(r: ReportRow) {
     try {
       setDownloadingId(r.id);
-      const blob = await generateReportPdf({
-        tag: r.equipment?.tag || "",
-        equipmentName: r.equipment?.name || "",
-        area: r.equipment?.systems?.areas?.name || "",
-        system: r.equipment?.systems?.name || "",
-        tipo: r.tipo,
-        week: r.week_number,
-        year: r.year,
-        fecha: r.fecha_inspeccion,
-        tecnico: r.tecnico,
-        status: r.status_resultante,
-        hallazgos: r.hallazgos,
-        recomendacion: r.recomendacion,
-        photos: (r.photos || []).map((p) => ({ url: p.signedUrl || "", caption: p.caption })),
-      });
+      const blob = await generateReportPdf(reportToPdfData(r));
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

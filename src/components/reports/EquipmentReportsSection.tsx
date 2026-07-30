@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FileText, Download, Plus, Loader2, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useEquipmentReports, useDeleteReport, ReportRow } from "@/hooks/useReports";
+import { useEquipmentReports, useDeleteReport, ReportRow, reportToPdfData } from "@/hooks/useReports";
 import { ReportFormDialog } from "./ReportFormDialog";
 import { generateReportPdf } from "@/lib/pdfReport";
 import { toast } from "sonner";
@@ -29,20 +29,11 @@ export function EquipmentReportsSection(props: Props) {
     try {
       setDownloadingId(r.id);
       const blob = await generateReportPdf({
-        tag: props.equipmentTag,
-        equipmentName: props.equipmentName,
-        area: props.area,
-        system: props.system,
-        tipo: r.tipo,
-        week: r.week_number,
-        year: r.year,
-        fecha: r.fecha_inspeccion,
-        tecnico: r.tecnico,
-        status: r.status_resultante,
-        hallazgos: r.hallazgos,
-        recomendacion: r.recomendacion,
-        photos: (r.photos || []).map((p) => ({ url: p.signedUrl || "", caption: p.caption })),
+        ...reportToPdfData(r),
+        tituloId: `${props.equipmentTag} — ${props.equipmentName}`,
+        procesoArea: r.proceso_area || `${props.area} / ${props.system}`,
       });
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
