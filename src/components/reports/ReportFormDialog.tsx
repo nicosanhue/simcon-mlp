@@ -51,10 +51,8 @@ export function ReportFormDialog({
 
   const [equipmentId, setEquipmentId] = useState<string>("");
   const [tipo, setTipo] = useState<ReportTipo>("Vibraciones");
-  const [week, setWeek] = useState<number>(1);
-  const [year, setYear] = useState<number>(new Date().getFullYear());
   const [fechaInforme, setFechaInforme] = useState<string>(new Date().toISOString().slice(0, 10));
-  const [gerencia, setGerencia] = useState("");
+
   const [procesoArea, setProcesoArea] = useState("");
   const [avisoSap, setAvisoSap] = useState("");
   const [otNumero, setOtNumero] = useState("");
@@ -98,10 +96,8 @@ export function ReportFormDialog({
     if (editing) {
       setEquipmentId(editing.equipment_id);
       setTipo(editing.tipo);
-      setWeek(editing.week_number);
-      setYear(editing.year);
       setFechaInforme(editing.fecha_informe || editing.fecha_inspeccion);
-      setGerencia(editing.gerencia || "");
+
       setProcesoArea(editing.proceso_area || "");
       setAvisoSap(editing.aviso_sap || "");
       setOtNumero(editing.ot_numero || "");
@@ -115,10 +111,8 @@ export function ReportFormDialog({
     } else {
       setEquipmentId(defaultEquipmentId || "");
       setTipo("Vibraciones");
-      setWeek(defaultWeek || 1);
-      setYear(defaultYear || new Date().getFullYear());
       setFechaInforme(new Date().toISOString().slice(0, 10));
-      setGerencia("");
+
       setProcesoArea("");
       setAvisoSap("");
       setOtNumero("");
@@ -198,11 +192,10 @@ export function ReportFormDialog({
         id: editing?.id,
         equipment_id: equipmentId,
         tipo,
-        week_number: week,
-        year,
         fecha_inspeccion: fechaInforme,
         fecha_informe: fechaInforme,
-        gerencia,
+        gerencia: GERENCIA_FIJA,
+
         proceso_area: procesoArea,
         ot_numero: otNumero,
         aviso_sap: avisoSap,
