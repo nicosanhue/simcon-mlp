@@ -158,18 +158,21 @@ export async function generateReportPdf(data: ReportPdfData): Promise<Blob> {
     [700, 0.6],
     [560, 0.5],
     [440, 0.4],
+    [380, 0.35],
   ];
+  let last: Blob | null = null;
   for (const [maxW, q] of attempts) {
-    const blob = await buildPdf(data, maxW, q);
-    if (blob.size <= MAX_BYTES) return blob;
+    last = await buildPdf(data, maxW, q);
+    if (last.size <= MAX_BYTES) return last;
   }
-  return buildPdf({ ...data, photos: [] }, 440, 0.4);
+  // Photos are never dropped: return the smallest attempt.
+  return last!;
 }
 
 const NAVY: [number, number, number] = [26, 58, 95];
 
 async function buildPdf(data: ReportPdfData, maxW: number, q: number): Promise<Blob> {
-  const doc = new jsPDF({ unit: "pt", format: "letter" });
+  const doc = new jsPDF({ unit: "pt", format: "letter", compress: true });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 34;
@@ -178,10 +181,14 @@ async function buildPdf(data: ReportPdfData, maxW: number, q: number): Promise<B
   // ── Logos band
   const bandH = 46;
   try {
-    doc.addImage(LOGO_SIMCON, "PNG", margin, 6, 40, 34);
-    doc.addImage(LOGO_MLP, "PNG", pageW / 2 - 34, 11, 69, 24);
-    doc.addImage(LOGO_BV, "PNG", pageW - margin - 35, 7, 35, 32);
-
+    const [simcon, mlp, bv] = await Promise.all([
+      logoJpeg(LOGO_SIMCON),
+      logoJpeg(LOGO_MLP),
+      logoJpeg(LOGO_BV),
+    ]);
+    doc.addImage(simcon, "JPEG", margin, 6, 40, 34);
+    doc.addImage(mlp, "JPEG", pageW / 2 - 34, 11, 69, 24);
+    doc.addImage(bv, "JPEG", pageW - margin - 35, 7, 35, 32);
   } catch (e) {
     console.warn("logos", e);
   }
