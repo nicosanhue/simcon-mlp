@@ -79,6 +79,59 @@ export type Database = {
           },
         ]
       }
+      report_items: {
+        Row: {
+          analisis_tecnico: string | null
+          aviso_sap: string | null
+          componente: string
+          condicion: string
+          created_at: string
+          diagnostico: string | null
+          equipo_tag: string | null
+          id: string
+          orden: number
+          recomendacion: string | null
+          report_id: string
+          updated_at: string
+        }
+        Insert: {
+          analisis_tecnico?: string | null
+          aviso_sap?: string | null
+          componente: string
+          condicion?: string
+          created_at?: string
+          diagnostico?: string | null
+          equipo_tag?: string | null
+          id?: string
+          orden?: number
+          recomendacion?: string | null
+          report_id: string
+          updated_at?: string
+        }
+        Update: {
+          analisis_tecnico?: string | null
+          aviso_sap?: string | null
+          componente?: string
+          condicion?: string
+          created_at?: string
+          diagnostico?: string | null
+          equipo_tag?: string | null
+          id?: string
+          orden?: number
+          recomendacion?: string | null
+          report_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_items_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_photos: {
         Row: {
           caption: string | null
@@ -116,11 +169,17 @@ export type Database = {
       }
       reports: {
         Row: {
+          aviso_sap: string | null
+          condicion_general: string | null
           created_at: string
           equipment_id: string
+          fecha_informe: string
           fecha_inspeccion: string
+          gerencia: string | null
           hallazgos: string | null
           id: string
+          ot_numero: string | null
+          proceso_area: string | null
           recomendacion: string | null
           status_resultante: Database["public"]["Enums"]["equipment_status"]
           tecnico: string | null
@@ -131,11 +190,17 @@ export type Database = {
           year: number
         }
         Insert: {
+          aviso_sap?: string | null
+          condicion_general?: string | null
           created_at?: string
           equipment_id: string
+          fecha_informe?: string
           fecha_inspeccion?: string
+          gerencia?: string | null
           hallazgos?: string | null
           id?: string
+          ot_numero?: string | null
+          proceso_area?: string | null
           recomendacion?: string | null
           status_resultante?: Database["public"]["Enums"]["equipment_status"]
           tecnico?: string | null
@@ -146,11 +211,17 @@ export type Database = {
           year: number
         }
         Update: {
+          aviso_sap?: string | null
+          condicion_general?: string | null
           created_at?: string
           equipment_id?: string
+          fecha_informe?: string
           fecha_inspeccion?: string
+          gerencia?: string | null
           hallazgos?: string | null
           id?: string
+          ot_numero?: string | null
+          proceso_area?: string | null
           recomendacion?: string | null
           status_resultante?: Database["public"]["Enums"]["equipment_status"]
           tecnico?: string | null

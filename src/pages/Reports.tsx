@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useReports, useDeleteReport, ReportRow, ReportTipo } from "@/hooks/useReports";
+import { useReports, useDeleteReport, ReportRow, ReportTipo, reportToPdfData } from "@/hooks/useReports";
 import { ReportFormDialog } from "@/components/reports/ReportFormDialog";
 import { generateReportPdf } from "@/lib/pdfReport";
 import { toast } from "sonner";
@@ -25,21 +25,8 @@ export default function Reports() {
   async function download(r: ReportRow) {
     try {
       setDownloadingId(r.id);
-      const blob = await generateReportPdf({
-        tag: r.equipment?.tag || "",
-        equipmentName: r.equipment?.name || "",
-        area: r.equipment?.systems?.areas?.name || "",
-        system: r.equipment?.systems?.name || "",
-        tipo: r.tipo,
-        week: r.week_number,
-        year: r.year,
-        fecha: r.fecha_inspeccion,
-        tecnico: r.tecnico,
-        status: r.status_resultante,
-        hallazgos: r.hallazgos,
-        recomendacion: r.recomendacion,
-        photos: (r.photos || []).map((p) => ({ url: p.signedUrl || "", caption: p.caption })),
-      });
+      const blob = await generateReportPdf(reportToPdfData(r));
+
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -105,12 +92,12 @@ export default function Reports() {
               <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="text-left p-3">Tipo</th>
-                  <th className="text-left p-3">Equipo</th>
-                  <th className="text-left p-3">Ubicación</th>
+                  <th className="text-left p-3">Título / ID</th>
+                  <th className="text-left p-3">Proceso / Área</th>
                   <th className="text-left p-3">Semana</th>
-                  <th className="text-left p-3">Fecha</th>
-                  <th className="text-left p-3">Estado</th>
-                  <th className="text-left p-3">Fotos</th>
+                  <th className="text-left p-3">Fecha informe</th>
+                  <th className="text-left p-3">Condición general</th>
+                  <th className="text-left p-3">Componentes</th>
                   <th className="text-right p-3">Acciones</th>
                 </tr>
               </thead>
@@ -123,12 +110,15 @@ export default function Reports() {
                       <div className="text-xs text-muted-foreground">{r.equipment?.name}</div>
                     </td>
                     <td className="p-3 text-xs text-muted-foreground">
-                      {r.equipment?.systems?.areas?.name} › {r.equipment?.systems?.name}
+                      {r.proceso_area || `${r.equipment?.systems?.areas?.name} › ${r.equipment?.systems?.name}`}
                     </td>
                     <td className="p-3">S{r.week_number}/{r.year}</td>
-                    <td className="p-3">{r.fecha_inspeccion}</td>
-                    <td className="p-3"><Badge variant="secondary">{r.status_resultante}</Badge></td>
-                    <td className="p-3">{r.photos?.length || 0}</td>
+                    <td className="p-3">{r.fecha_informe || r.fecha_inspeccion}</td>
+                    <td className="p-3">
+                      <Badge variant="secondary">{r.condicion_general || r.status_resultante}</Badge>
+                    </td>
+                    <td className="p-3">{r.items?.length || 0}</td>
+
                     <td className="p-3 text-right">
                       <div className="inline-flex gap-1">
                         <Button size="sm" variant="ghost" onClick={() => download(r)} disabled={downloadingId === r.id}>
