@@ -1,17 +1,38 @@
-# Corregir error al guardar informe ("out of range for integer")
+# Ajustes al informe: nombre de archivo, logos y campos
 
-## Causa confirmada
+## 1. Corrección del error al guardar (bloqueante)
 
-Al guardar un informe con fotos, el código asigna el orden de cada foto usando la marca de tiempo actual (`Date.now()`, ej. 1785430725778). La columna `orden` de la tabla de fotos es un entero de 4 bytes (máximo 2.147.483.647), por lo que la base de datos rechaza el valor y el guardado falla por completo. Esto ocurre en `src/hooks/useReports.ts`, en el bloque que sube las fotos nuevas.
+Al guardar un informe con fotos, el orden de cada foto se asigna con la marca de tiempo actual (ej. 1785430725778), que excede el máximo de un número entero en la base de datos, por lo que el guardado falla. Se reemplaza por un correlativo simple (0, 1, 2, 3), manteniendo la marca de tiempo solo en el nombre del archivo en almacenamiento.
 
-## Corrección
+## 2. Nombre del archivo PDF
 
-1. Numerar las fotos con un correlativo simple (0, 1, 2, 3) continuando desde la cantidad de fotos ya existentes del informe, en lugar de una marca de tiempo.
-2. Mantener la marca de tiempo solo en el nombre del archivo en almacenamiento (para evitar colisiones de nombre), no en la columna numérica.
-3. Revisar el resto del guardado para que ningún otro campo entero reciba una marca de tiempo (ítems de componentes y semana/año).
+Nomenclatura: `MLP_<TIPO>_<TAG>_<FECHA>.pdf`
+
+- Vibraciones → `MLP_VIB`
+- Termografía → `MLP_TER`
+- Ultrasonido → `MLP_ULT`
+- Fecha: fecha del informe en formato AAAAMMDD (ej. `MLP_VIB_4330PP4000_20260730.pdf`)
+
+Se aplica tanto en la descarga desde el repositorio de Informes como desde la ficha del equipo en el dashboard.
+
+## 3. Logos en la cabecera del informe
+
+Banda blanca superior con tres logos: SIMCON (izquierda), Los Pelambres (centro) y Bureau Veritas (derecha), sobre la barra azul del título, tal como la imagen de referencia.
+
+## 4. Quitar Semana y Año
+
+Se eliminan los campos "Semana" y "Año" del formulario; la fecha del informe pasa a ser el único dato temporal. Internamente se siguen calculando a partir de esa fecha para mantener el orden y los filtros existentes, sin mostrarlos al usuario.
+
+## 5. Gerencia fija
+
+Se elimina el campo editable "Gerencia". El informe muestra siempre:
+**"Superintendencia Confiabilidad y Mejoramiento TFT y Puerto"**
 
 ## Detalles técnicos
 
-- `src/hooks/useReports.ts`: en `useSaveReport`, reemplazar `let orden = Date.now()` por un contador basado en `report_photos` existentes; ruta de storage con `${reportId}/${Date.now()}-${i}.jpg` y `orden: base + i`.
-- Sin cambios de base de datos ni de la interfaz.
-- Verificación: guardar un informe con fotos y confirmar que se crea y que el PDF las incluye en orden.
+- `src/hooks/useReports.ts`: corregir `orden` de fotos; derivar `week_number`/`year` desde `fecha_informe`; fijar `gerencia` constante en el guardado y en `reportToPdfData`.
+- `src/lib/pdfReport.ts`: agregar franja de logos (assets vía `lovable-assets` desde la imagen entregada, recortada en tres piezas), y helper `reportFileName()` con la nomenclatura.
+- `src/components/reports/ReportFormDialog.tsx`: quitar inputs Semana, Año y Gerencia.
+- `src/pages/Reports.tsx` y `src/components/reports/EquipmentReportsSection.tsx`: usar `reportFileName()` en la descarga.
+- Sin cambios de base de datos.
+- Verificación: generar un PDF de prueba y revisar la imagen renderizada (logos, cabecera, una sola hoja) antes de entregar.
