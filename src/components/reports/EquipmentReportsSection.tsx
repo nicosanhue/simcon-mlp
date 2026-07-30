@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useEquipmentReports, useDeleteReport, ReportRow, reportToPdfData } from "@/hooks/useReports";
 import { ReportFormDialog } from "./ReportFormDialog";
-import { generateReportPdf } from "@/lib/pdfReport";
+import { generateReportPdf, reportFileName } from "@/lib/pdfReport";
 import { toast } from "sonner";
 
 interface Props {
@@ -37,7 +37,7 @@ export function EquipmentReportsSection(props: Props) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Informe_${r.tipo}_${props.equipmentTag}_S${r.week_number}-${r.year}.pdf`;
+      a.download = reportFileName(r.tipo, props.equipmentTag, r.fecha_informe || r.fecha_inspeccion);
       a.click();
       URL.revokeObjectURL(url);
       const kb = (blob.size / 1024).toFixed(0);

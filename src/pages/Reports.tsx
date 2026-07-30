@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useReports, useDeleteReport, ReportRow, ReportTipo, reportToPdfData } from "@/hooks/useReports";
 import { ReportFormDialog } from "@/components/reports/ReportFormDialog";
-import { generateReportPdf } from "@/lib/pdfReport";
+import { generateReportPdf, reportFileName } from "@/lib/pdfReport";
 import { toast } from "sonner";
 import { useProfile } from "@/contexts/ProfileContext";
 
@@ -30,7 +30,7 @@ export default function Reports() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Informe_${r.tipo}_${r.equipment?.tag}_S${r.week_number}-${r.year}.pdf`;
+      a.download = reportFileName(r.tipo, r.equipment?.tag, r.fecha_informe || r.fecha_inspeccion);
       a.click();
       URL.revokeObjectURL(url);
       toast.success(`PDF descargado (${(blob.size / 1024).toFixed(0)} KB)`);
