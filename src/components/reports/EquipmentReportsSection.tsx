@@ -89,6 +89,9 @@ export function EquipmentReportsSection(props: Props) {
                 {r.hallazgos && <p className="text-xs text-muted-foreground truncate mt-1">{r.hallazgos}</p>}
               </div>
               <div className="flex gap-1">
+                <Button size="sm" variant="ghost" onClick={() => setPreview({ data: pdfData(r), fileName: fileNameOf(r) })}>
+                  <Eye className="h-3 w-3" />
+                </Button>
                 <Button size="sm" variant="ghost" onClick={() => download(r)} disabled={downloadingId === r.id}>
                   {downloadingId === r.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
                 </Button>
