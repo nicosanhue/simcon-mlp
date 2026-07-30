@@ -321,42 +321,41 @@ async function buildPdf(data: ReportPdfData, maxW: number, q: number): Promise<B
 
   y = (doc as any).lastAutoTable.finalY + 14;
 
-  // ── Photos (max 4, 2x2 grid), fitted into remaining space above signatures
+  // ── Photos (max 4, 2x2 grid), fitted into remaining space above signatures (single page)
   const signaturesH = 62;
   const availH = pageH - margin - signaturesH - y;
   const photos = data.photos.slice(0, 4);
-  if (photos.length > 0 && availH > 60) {
+  if (photos.length > 0 && availH > 46) {
     const cols = photos.length > 1 ? 2 : 1;
     const rowsN = Math.ceil(photos.length / cols);
     const gap = 8;
+    const capH = photos.some((p) => p.caption) ? 10 : 0;
     const imgW = (contentW - gap * (cols - 1)) / cols;
     const maxRowH = (availH - 12 - gap * (rowsN - 1)) / rowsN;
-    const imgH = Math.min(imgW * 0.68, maxRowH - (photos.some((p) => p.caption) ? 10 : 0));
+    const imgH = Math.max(28, Math.min(imgW * 0.68, maxRowH - capH));
 
-    if (imgH > 40) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8.5);
-      doc.setTextColor(...NAVY);
-      doc.text("FOTOGRAFÍAS", margin, y);
-      y += 8;
-      for (let i = 0; i < photos.length; i++) {
-        const p = photos[i];
-        const col = i % cols;
-        const row = Math.floor(i / cols);
-        const x = margin + col * (imgW + gap);
-        const py = y + row * (imgH + gap + 10);
-        try {
-          const dataUrl = await urlToJpegDataUrl(p.url, maxW, q);
-          doc.addImage(dataUrl, "JPEG", x, py, imgW, imgH);
-        } catch (e) {
-          console.warn("Skipping photo", e);
-        }
-        if (p.caption) {
-          doc.setFont("helvetica", "normal");
-          doc.setFontSize(7);
-          doc.setTextColor(90, 90, 90);
-          doc.text(doc.splitTextToSize(p.caption, imgW)[0] || "", x, py + imgH + 8);
-        }
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8.5);
+    doc.setTextColor(...NAVY);
+    doc.text("FOTOGRAFÍAS", margin, y);
+    y += 8;
+    for (let i = 0; i < photos.length; i++) {
+      const p = photos[i];
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = margin + col * (imgW + gap);
+      const py = y + row * (imgH + gap + capH);
+      try {
+        const dataUrl = await urlToJpegDataUrl(p.url, maxW, q);
+        doc.addImage(dataUrl, "JPEG", x, py, imgW, imgH, undefined, "FAST");
+      } catch (e) {
+        console.warn("Skipping photo", e);
+      }
+      if (p.caption) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7);
+        doc.setTextColor(90, 90, 90);
+        doc.text(doc.splitTextToSize(p.caption, imgW)[0] || "", x, py + imgH + 8);
       }
     }
   }
