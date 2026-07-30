@@ -1,7 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { ReportPdfData, worstCondition } from "@/lib/pdfReport";
 
 export type ReportTipo = "Vibraciones" | "Termografia" | "Ultrasonido";
+
+export const COMPONENTES = ["Motor", "Reductor", "Portarodamiento", "Descanso"] as const;
 
 export interface ReportPhoto {
   id: string;
@@ -12,6 +15,19 @@ export interface ReportPhoto {
   signedUrl?: string;
 }
 
+export interface ReportItem {
+  id?: string;
+  report_id?: string;
+  equipo_tag: string | null;
+  componente: string;
+  analisis_tecnico: string | null;
+  diagnostico: string | null;
+  recomendacion: string | null;
+  condicion: string;
+  aviso_sap: string | null;
+  orden: number;
+}
+
 export interface ReportRow {
   id: string;
   equipment_id: string;
@@ -20,6 +36,12 @@ export interface ReportRow {
   week_number: number;
   year: number;
   fecha_inspeccion: string;
+  fecha_informe: string;
+  gerencia: string | null;
+  proceso_area: string | null;
+  ot_numero: string | null;
+  aviso_sap: string | null;
+  condicion_general: string | null;
   tecnico: string | null;
   hallazgos: string | null;
   recomendacion: string | null;
@@ -33,6 +55,41 @@ export interface ReportRow {
     systems: { name: string; areas: { name: string } };
   };
   photos?: ReportPhoto[];
+  items?: ReportItem[];
+}
+
+const SELECT_COLS = `id, equipment_id, weekly_report_id, tipo, week_number, year, fecha_inspeccion,
+  fecha_informe, gerencia, proceso_area, ot_numero, aviso_sap, condicion_general,
+  tecnico, hallazgos, recomendacion, status_resultante, created_at, updated_at,
+  photos:report_photos ( id, report_id, storage_path, caption, orden ),
+  items:report_items ( id, report_id, equipo_tag, componente, analisis_tecnico, diagnostico, recomendacion, condicion, aviso_sap, orden )`;
+
+export function reportToPdfData(r: ReportRow): ReportPdfData {
+  const items = (r.items || []).slice().sort((a, b) => a.orden - b.orden);
+  return {
+    tituloId: r.equipment ? `${r.equipment.tag} — ${r.equipment.name}` : "",
+    fechaInforme: r.fecha_informe || r.fecha_inspeccion,
+    gerencia: r.gerencia,
+    avisoSap: r.aviso_sap,
+    procesoArea:
+      r.proceso_area ||
+      (r.equipment
+        ? `${r.equipment.systems?.areas?.name || ""} / ${r.equipment.systems?.name || ""}`
+        : ""),
+    otNumero: r.ot_numero,
+    condicionGeneral:
+      r.condicion_general || worstCondition(items.map((i) => i.condicion)),
+    items: items.map((i) => ({
+      equipoTag: i.equipo_tag || r.equipment?.tag || "",
+      componente: i.componente,
+      analisis: i.analisis_tecnico || "",
+      diagnostico: i.diagnostico || "",
+      recomendacion: i.recomendacion || "",
+      condicion: i.condicion,
+      avisoSap: i.aviso_sap || "",
+    })),
+    photos: (r.photos || []).map((p) => ({ url: p.signedUrl || "", caption: p.caption })),
+  };
 }
 
 async function signPhotos(photos: ReportPhoto[]): Promise<ReportPhoto[]> {
@@ -57,9 +114,7 @@ export function useReports(filters?: {
       let q = supabase
         .from("reports")
         .select(
-          `id, equipment_id, weekly_report_id, tipo, week_number, year, fecha_inspeccion, tecnico, hallazgos, recomendacion, status_resultante, created_at, updated_at,
-           equipment:equipment_id ( id, tag, name, systems ( name, areas ( name ) ) ),
-           photos:report_photos ( id, report_id, storage_path, caption, orden )`
+          `${SELECT_COLS}, equipment:equipment_id ( id, tag, name, systems ( name, areas ( name ) ) )`
         )
         .order("year", { ascending: false })
         .order("week_number", { ascending: false })
@@ -83,7 +138,6 @@ export function useReports(filters?: {
         );
       }
 
-      // sign photos
       for (const r of rows) {
         r.photos = await signPhotos((r.photos || []).sort((a, b) => a.orden - b.orden));
       }
@@ -100,8 +154,7 @@ export function useEquipmentReports(equipmentId?: string) {
       const { data, error } = await supabase
         .from("reports")
         .select(
-          `id, equipment_id, weekly_report_id, tipo, week_number, year, fecha_inspeccion, tecnico, hallazgos, recomendacion, status_resultante, created_at, updated_at,
-           photos:report_photos ( id, report_id, storage_path, caption, orden )`
+          `${SELECT_COLS}, equipment:equipment_id ( id, tag, name, systems ( name, areas ( name ) ) )`
         )
         .eq("equipment_id", equipmentId!)
         .order("year", { ascending: false })
@@ -123,10 +176,17 @@ export interface SaveReportInput {
   week_number: number;
   year: number;
   fecha_inspeccion: string;
+  fecha_informe: string;
+  gerencia?: string | null;
+  proceso_area?: string | null;
+  ot_numero?: string | null;
+  aviso_sap?: string | null;
+  condicion_general: string;
   tecnico?: string | null;
   hallazgos?: string | null;
   recomendacion?: string | null;
   status_resultante: string;
+  items: ReportItem[];
   newPhotos?: { blob: Blob; caption?: string | null }[];
   removePhotoIds?: string[];
 }
@@ -142,6 +202,12 @@ export function useSaveReport() {
         week_number: input.week_number,
         year: input.year,
         fecha_inspeccion: input.fecha_inspeccion,
+        fecha_informe: input.fecha_informe,
+        gerencia: input.gerencia ?? null,
+        proceso_area: input.proceso_area ?? null,
+        ot_numero: input.ot_numero ?? null,
+        aviso_sap: input.aviso_sap ?? null,
+        condicion_general: input.condicion_general,
         tecnico: input.tecnico ?? null,
         hallazgos: input.hallazgos ?? null,
         recomendacion: input.recomendacion ?? null,
@@ -155,6 +221,25 @@ export function useSaveReport() {
         const { data, error } = await supabase.from("reports").insert(payload).select("id").single();
         if (error) throw error;
         reportId = data.id;
+      }
+
+      // Replace items
+      await supabase.from("report_items").delete().eq("report_id", reportId!);
+      if (input.items.length) {
+        const { error: itErr } = await supabase.from("report_items").insert(
+          input.items.map((it, idx) => ({
+            report_id: reportId!,
+            equipo_tag: it.equipo_tag,
+            componente: it.componente,
+            analisis_tecnico: it.analisis_tecnico,
+            diagnostico: it.diagnostico,
+            recomendacion: it.recomendacion,
+            condicion: it.condicion,
+            aviso_sap: it.aviso_sap,
+            orden: idx,
+          }))
+        );
+        if (itErr) throw itErr;
       }
 
       if (input.removePhotoIds?.length) {
