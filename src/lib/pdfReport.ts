@@ -150,9 +150,13 @@ async function buildPdf(data: ReportPdfData, maxW: number, q: number): Promise<B
       doc.text(label, x + 6, ry + 13);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(30, 30, 30);
-      doc.text(doc.splitTextToSize(value, halfW - labelW - 12)[0] || "", x + labelW + 6, ry + 13);
-    }
-  });
+      const valW = halfW - labelW - 12;
+      let fs = 9;
+      while (fs > 5.5 && doc.getTextWidth(value) * (fs / doc.getFontSize()) > valW) fs -= 0.5;
+      doc.setFontSize(fs);
+      doc.text(value, x + labelW + 6, ry + 13, { maxWidth: valW });
+      doc.setFontSize(9);
+
   y += rows.length * rowH + 16;
 
   // ── Section 1
