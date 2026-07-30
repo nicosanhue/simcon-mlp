@@ -156,6 +156,10 @@ async function buildPdf(data: ReportPdfData, maxW: number, q: number): Promise<B
       doc.setFontSize(fs);
       doc.text(value, x + labelW + 6, ry + 13, { maxWidth: valW });
       doc.setFontSize(9);
+    }
+  });
+
+
 
   y += rows.length * rowH + 16;
 
