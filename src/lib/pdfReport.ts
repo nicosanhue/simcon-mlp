@@ -50,11 +50,48 @@ export async function compressImage(
   return { dataUrl, blob };
 }
 
-async function urlToJpegDataUrl(url: string, maxWidth: number, quality: number): Promise<string> {
+/** Cache of original photo blobs so each attempt re-encodes without re-downloading */
+const blobCache = new Map<string, Blob>();
+
+async function fetchPhotoBlob(url: string): Promise<Blob> {
+  const cached = blobCache.get(url);
+  if (cached) return cached;
   const resp = await fetch(url);
   const blob = await resp.blob();
+  blobCache.set(url, blob);
+  if (blobCache.size > 40) blobCache.delete(blobCache.keys().next().value as string);
+  return blob;
+}
+
+async function urlToJpegDataUrl(url: string, maxWidth: number, quality: number): Promise<string> {
+  const blob = await fetchPhotoBlob(url);
   const { dataUrl } = await compressImage(blob, maxWidth, quality);
   return dataUrl;
+}
+
+/** Logos are PNG base64; re-encode once to JPEG (white bg) to cut fixed PDF weight */
+const logoCache = new Map<string, string>();
+
+async function logoJpeg(pngDataUrl: string): Promise<string> {
+  const hit = logoCache.get(pngDataUrl);
+  if (hit) return hit;
+  try {
+    const blob = await (await fetch(pngDataUrl)).blob();
+    const bitmap = await createImageBitmap(blob);
+    const scale = Math.min(1, 180 / bitmap.width);
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext("2d")!;
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    const out = canvas.toDataURL("image/jpeg", 0.82);
+    logoCache.set(pngDataUrl, out);
+    return out;
+  } catch {
+    return pngDataUrl;
+  }
 }
 
 export const CONDICIONES = [
