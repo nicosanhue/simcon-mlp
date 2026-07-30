@@ -27,29 +27,8 @@ export function reportFileName(
   return `MLP_${abbr}_${cleanTag}_${d}.pdf`;
 }
 
-const logoCache: Record<string, string> = {};
 
-async function loadLogo(url: string): Promise<string | null> {
-  if (logoCache[url]) return logoCache[url];
-  try {
-    const resp = await fetch(url);
-    const blob = await resp.blob();
-    const bitmap = await createImageBitmap(blob);
-    const canvas = document.createElement("canvas");
-    canvas.width = bitmap.width;
-    canvas.height = bitmap.height;
-    const ctx = canvas.getContext("2d")!;
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(bitmap, 0, 0);
-    const dataUrl = canvas.toDataURL("image/png");
-    logoCache[url] = dataUrl;
-    return dataUrl;
-  } catch (e) {
-    console.warn("logo", e);
-    return null;
-  }
-}
+
 
 
 export async function compressImage(
