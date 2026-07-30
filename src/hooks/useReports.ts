@@ -69,7 +69,7 @@ export function reportToPdfData(r: ReportRow): ReportPdfData {
   return {
     tituloId: r.equipment ? `${r.equipment.tag} — ${r.equipment.name}` : "",
     fechaInforme: r.fecha_informe || r.fecha_inspeccion,
-    gerencia: r.gerencia,
+    gerencia: GERENCIA_FIJA,
     avisoSap: r.aviso_sap,
     procesoArea:
       r.proceso_area ||
