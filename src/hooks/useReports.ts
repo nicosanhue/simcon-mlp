@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportPdfData, worstCondition, GERENCIA_FIJA } from "@/lib/pdfReport";
 
-export type ReportTipo = "Vibraciones" | "Termografia" | "Ultrasonido";
+export type ReportTipo = "Vibraciones" | "Termografia" | "Ultrasonido" | "Lubricacion";
 
 export const COMPONENTES = ["Motor", "Reductor", "Portarodamiento", "Descanso"] as const;
 
