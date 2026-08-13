@@ -22,7 +22,7 @@ interface Props {
   defaultStatus?: string;
 }
 
-const TIPOS: ReportTipo[] = ["Vibraciones", "Termografia", "Ultrasonido"];
+const TIPOS: ReportTipo[] = ["Vibraciones", "Termografia", "Ultrasonido", "Lubricacion"];
 const MAX_PHOTOS = 4;
 
 function emptyItem(tag: string, orden: number): ReportItem {

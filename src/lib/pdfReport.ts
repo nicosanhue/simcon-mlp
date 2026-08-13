@@ -13,6 +13,8 @@ const TIPO_ABBR: Record<string, string> = {
   Termografia: "TER",
   "Termografía": "TER",
   Ultrasonido: "ULT",
+  Lubricacion: "LUB",
+  "Lubricación": "LUB",
 };
 
 /** MLP_VIB_<TAG>_<AAAAMMDD>.pdf */
