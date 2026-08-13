@@ -96,7 +96,7 @@ export default function Reports() {
           <div>
             <h1 className="text-2xl font-bold">Informes</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Repositorio de informes técnicos (Vibraciones, Termografía, Ultrasonido)
+              Repositorio de informes técnicos (Vibraciones, Termografía, Ultrasonido, Lubricación)
             </p>
           </div>
           {isEditor && (
