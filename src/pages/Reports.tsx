@@ -123,6 +123,7 @@ export default function Reports() {
               <SelectItem value="Vibraciones">Vibraciones</SelectItem>
               <SelectItem value="Termografia">Termografía</SelectItem>
               <SelectItem value="Ultrasonido">Ultrasonido</SelectItem>
+              <SelectItem value="Lubricacion">Lubricación</SelectItem>
             </SelectContent>
           </Select>
           <Select value={area} onValueChange={setArea}>
