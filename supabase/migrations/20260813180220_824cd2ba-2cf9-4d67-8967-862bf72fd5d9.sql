@@ -1,0 +1,2 @@
+ALTER TABLE public.reports DROP CONSTRAINT reports_tipo_check;
+ALTER TABLE public.reports ADD CONSTRAINT reports_tipo_check CHECK (tipo = ANY (ARRAY['Vibraciones'::text,'Termografia'::text,'Ultrasonido'::text,'Lubricacion'::text]));
