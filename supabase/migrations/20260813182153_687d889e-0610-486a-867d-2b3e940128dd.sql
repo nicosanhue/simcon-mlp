@@ -1,0 +1,1 @@
+UPDATE public.equipment SET tag = '583TK7212' WHERE tag = '0853AG7212';
