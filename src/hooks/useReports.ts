@@ -296,6 +296,50 @@ export function useSaveReport() {
         }
       }
 
+      // Sincronizar el estado semanal (Dashboard) con la condición del informe
+      const wk = payload.week_number;
+      const yr = payload.year;
+      const statusEnum = payload.status_resultante as any;
+      const descripcion = input.recomendacion || input.hallazgos || null;
+
+      const { data: existingWeekly } = await supabase
+        .from("weekly_reports")
+        .select("id, technical_description")
+        .eq("equipment_id", input.equipment_id)
+        .eq("week_number", wk)
+        .eq("year", yr)
+        .maybeSingle();
+
+      let weeklyId: string | null = existingWeekly?.id ?? null;
+
+      if (existingWeekly) {
+        const upd: any = { status: statusEnum };
+        if (input.aviso_sap) upd.sap_notification = input.aviso_sap;
+        if (input.ot_numero) upd.sap_order = input.ot_numero;
+        if (!existingWeekly.technical_description && descripcion) {
+          upd.technical_description = descripcion;
+        }
+        await supabase.from("weekly_reports").update(upd).eq("id", existingWeekly.id);
+      } else {
+        const { data: inserted } = await supabase
+          .from("weekly_reports")
+          .insert({
+            equipment_id: input.equipment_id,
+            week_number: wk,
+            year: yr,
+            status: statusEnum,
+            sap_notification: input.aviso_sap ?? null,
+            sap_order: input.ot_numero ?? null,
+            technical_description: descripcion,
+          })
+          .select("id")
+          .single();
+        weeklyId = inserted?.id ?? null;
+      }
+
+      if (weeklyId) {
+        await supabase.from("reports").update({ weekly_report_id: weeklyId }).eq("id", reportId!);
+      }
 
       return reportId!;
     },
@@ -303,7 +347,12 @@ export function useSaveReport() {
       qc.invalidateQueries({ queryKey: ["reports"] });
       qc.invalidateQueries({ queryKey: ["equipment-reports"] });
       qc.invalidateQueries({ queryKey: ["reports-index"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-equipment"] });
+      qc.invalidateQueries({ queryKey: ["debug-counts"] });
+      qc.invalidateQueries({ queryKey: ["latest-week"] });
+      qc.invalidateQueries({ queryKey: ["equipment-history"] });
     },
+
   });
 }
 
