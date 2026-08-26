@@ -100,6 +100,7 @@ export default function AdminSettings() {
       tagsInDb: number;
       sampleTagsFirst: string[];
       sampleTagsLast: string[];
+      reportOverrides: number;
     };
   } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
