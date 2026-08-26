@@ -120,18 +120,20 @@ export function LubEquipmentDialog({ row, options, open, onOpenChange }: Props) 
         </DialogHeader>
 
         <div className="space-y-4">
-          <Section title="Identificación">
-            <Txt label="N° Equipo SAP" k="sap_number" />
-            <Sel label="Tipo" k="tipo" cat="tipo_equipo" />
-            <div className="col-span-2 space-y-1">
-              <Label className="text-xs">Descripción</Label>
-              <Input
-                value={form.descripcion ?? ""}
-                onChange={(e) => set("descripcion", e.target.value || null)}
-                className="h-8"
-              />
-            </div>
-          </Section>
+          {section("Identificación", (
+            <>
+              {txt("N° Equipo SAP", "sap_number")}
+              {sel("Tipo", "tipo", "tipo_equipo")}
+              <div className="col-span-2 space-y-1">
+                <Label className="text-xs">Descripción</Label>
+                <Input
+                  value={form.descripcion ?? ""}
+                  onChange={(e) => set("descripcion", e.target.value || null)}
+                  className="h-8"
+                />
+              </div>
+            </>
+          ))}
 
           <div className="space-y-2">
             <p className="text-sm font-semibold text-primary">Componentes presentes</p>
@@ -154,62 +156,75 @@ export function LubEquipmentDialog({ row, options, open, onOpenChange }: Props) 
             <Separator />
           </div>
 
-          <Section title="Acoplamiento Alta">
-            <Sel label="Tipo" k="acop_alta_tipo" cat="acoplamiento" />
-            <Sel label="Grasa" k="acop_alta_grasa" cat="grasa" />
-            <Num label="Cantidad (g)" k="acop_alta_cantidad" />
-            <Sel label="Frecuencia" k="acop_alta_frecuencia" cat="frecuencia" />
-          </Section>
+          {section("Acoplamiento Alta", (
+            <>
+              {sel("Tipo", "acop_alta_tipo", "acoplamiento")}
+              {sel("Grasa", "acop_alta_grasa", "grasa")}
+              {num("Cantidad (g)", "acop_alta_cantidad")}
+              {sel("Frecuencia", "acop_alta_frecuencia", "frecuencia")}
+            </>
+          ))}
 
-          <Section title="Acoplamiento Baja">
-            <Sel label="Tipo" k="acop_baja_tipo" cat="acoplamiento" />
-            <Sel label="Grasa" k="acop_baja_grasa" cat="grasa" />
-            <Num label="Cantidad (g)" k="acop_baja_cantidad" />
-            <Sel label="Frecuencia" k="acop_baja_frecuencia" cat="frecuencia" />
-          </Section>
+          {section("Acoplamiento Baja", (
+            <>
+              {sel("Tipo", "acop_baja_tipo", "acoplamiento")}
+              {sel("Grasa", "acop_baja_grasa", "grasa")}
+              {num("Cantidad (g)", "acop_baja_cantidad")}
+              {sel("Frecuencia", "acop_baja_frecuencia", "frecuencia")}
+            </>
+          ))}
 
-          <Section title="Motor">
-            <Sel label="Tipo lubricante" k="motor_tipo_lub" cat="grasa" />
-            <Sel label="Descanso LL" k="motor_desc_ll" cat="grasa" />
-            <Num label="Cant. Desc LL (g)" k="motor_desc_ll_cant" />
-            <Sel label="Descanso LA" k="motor_desc_la" cat="grasa" />
-            <Num label="Cant. Desc LA (g)" k="motor_desc_la_cant" />
-            <Sel label="Sello LL" k="motor_sello_ll" cat="grasa" />
-            <Num label="Cant. Sello LL (g)" k="motor_sello_ll_cant" />
-            <Sel label="Sello LA" k="motor_sello_la" cat="grasa" />
-            <Num label="Cant. Sello LA (g)" k="motor_sello_la_cant" />
-            <Sel label="Frecuencia" k="motor_frecuencia" cat="frecuencia" />
-          </Section>
+          {section("Motor", (
+            <>
+              {sel("Tipo lubricante", "motor_tipo_lub", "grasa")}
+              {sel("Descanso LL", "motor_desc_ll", "grasa")}
+              {num("Cant. Desc LL (g)", "motor_desc_ll_cant")}
+              {sel("Descanso LA", "motor_desc_la", "grasa")}
+              {num("Cant. Desc LA (g)", "motor_desc_la_cant")}
+              {sel("Sello LL", "motor_sello_ll", "grasa")}
+              {num("Cant. Sello LL (g)", "motor_sello_ll_cant")}
+              {sel("Sello LA", "motor_sello_la", "grasa")}
+              {num("Cant. Sello LA (g)", "motor_sello_la_cant")}
+              {sel("Frecuencia", "motor_frecuencia", "frecuencia")}
+            </>
+          ))}
 
-          <Section title="Reductor">
-            <Sel label="Aceite" k="reductor_aceite" cat="aceite" />
-            <Num label="Capacidad (L)" k="reductor_capacidad" />
-            <Sel label="Sello LL" k="reductor_sello_ll" cat="grasa" />
-            <Num label="Cant. Sello LL (g)" k="reductor_sello_ll_cant" />
-            <Sel label="Sello LA" k="reductor_sello_la" cat="grasa" />
-            <Num label="Cant. Sello LA (g)" k="reductor_sello_la_cant" />
-            <Sel label="Frecuencia" k="reductor_frecuencia" cat="frecuencia" />
-          </Section>
+          {section("Reductor", (
+            <>
+              {sel("Aceite", "reductor_aceite", "aceite")}
+              {num("Capacidad (L)", "reductor_capacidad")}
+              {sel("Sello LL", "reductor_sello_ll", "grasa")}
+              {num("Cant. Sello LL (g)", "reductor_sello_ll_cant")}
+              {sel("Sello LA", "reductor_sello_la", "grasa")}
+              {num("Cant. Sello LA (g)", "reductor_sello_la_cant")}
+              {sel("Frecuencia", "reductor_frecuencia", "frecuencia")}
+            </>
+          ))}
 
-          <Section title="Portarodamiento">
-            <Sel label="Tipo lubricante" k="porta_tipo_lub" cat="grasa" />
-            <Sel label="Descanso LL" k="porta_desc_ll" cat="grasa" />
-            <Num label="Cant. Desc LL (g)" k="porta_desc_ll_cant" />
-            <Sel label="Descanso LA" k="porta_desc_la" cat="grasa" />
-            <Num label="Cant. Desc LA (g)" k="porta_desc_la_cant" />
-            <Sel label="Sello LL" k="porta_sello_ll" cat="grasa" />
-            <Num label="Cant. Sello LL (g)" k="porta_sello_ll_cant" />
-            <Sel label="Sello LA" k="porta_sello_la" cat="grasa" />
-            <Num label="Cant. Sello LA (g)" k="porta_sello_la_cant" />
-            <Sel label="Frecuencia" k="porta_frecuencia" cat="frecuencia" />
-          </Section>
+          {section("Portarodamiento", (
+            <>
+              {sel("Tipo lubricante", "porta_tipo_lub", "grasa")}
+              {sel("Descanso LL", "porta_desc_ll", "grasa")}
+              {num("Cant. Desc LL (g)", "porta_desc_ll_cant")}
+              {sel("Descanso LA", "porta_desc_la", "grasa")}
+              {num("Cant. Desc LA (g)", "porta_desc_la_cant")}
+              {sel("Sello LL", "porta_sello_ll", "grasa")}
+              {num("Cant. Sello LL (g)", "porta_sello_ll_cant")}
+              {sel("Sello LA", "porta_sello_la", "grasa")}
+              {num("Cant. Sello LA (g)", "porta_sello_la_cant")}
+              {sel("Frecuencia", "porta_frecuencia", "frecuencia")}
+            </>
+          ))}
 
-          <Section title="Descanso">
-            <Txt label="Condición" k="descanso_condicion" />
-            <Sel label="Grasa" k="descanso_grasa" cat="grasa" />
-            <Num label="Cantidad (g)" k="descanso_cantidad" />
-            <Sel label="Frecuencia" k="descanso_frecuencia" cat="frecuencia" />
-          </Section>
+          {section("Descanso", (
+            <>
+              {txt("Condición", "descanso_condicion")}
+              {sel("Grasa", "descanso_grasa", "grasa")}
+              {num("Cantidad (g)", "descanso_cantidad")}
+              {sel("Frecuencia", "descanso_frecuencia", "frecuencia")}
+            </>
+          ))}
+
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
