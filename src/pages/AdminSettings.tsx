@@ -296,6 +296,20 @@ export default function AdminSettings() {
       const orphanTags = Array.from(dbTags).filter(t => !csvTagSet.has(t)).sort();
       const newTags = uniqueTagsArr.filter(t => !dbTags.has(t));
 
+      // Fetch existing reports for this week/year to detect status overrides
+      const { data: existingReports } = await supabase
+        .from('reports')
+        .select('equipment_id, status_resultante, equipment!inner(tag)')
+        .eq('week_number', weekNumber)
+        .eq('year', year);
+
+      const reportOverrideTags = new Set(
+        (existingReports ?? [])
+          .map((r: any) => r.equipment?.tag)
+          .filter((t: string | undefined) => t && csvTagSet.has(t))
+      );
+      const reportOverrides = reportOverrideTags.size;
+
       setPendingImport({
         rows,
         weekNumber,
@@ -310,6 +324,7 @@ export default function AdminSettings() {
           tagsInDb: dbTags.size,
           sampleTagsFirst: uniqueTagsArr.slice(0, 5),
           sampleTagsLast: uniqueTagsArr.slice(-5),
+          reportOverrides,
         },
       });
       setConfirmOpen(true);
