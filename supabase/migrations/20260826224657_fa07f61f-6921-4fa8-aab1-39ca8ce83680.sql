@@ -1,0 +1,2 @@
+CREATE POLICY "lub photos public access" ON storage.objects FOR ALL USING (bucket_id = 'lubricacion-photos') WITH CHECK (bucket_id = 'lubricacion-photos');
+CREATE POLICY "lub manuals public access" ON storage.objects FOR ALL USING (bucket_id = 'lubricacion-manuals') WITH CHECK (bucket_id = 'lubricacion-manuals');

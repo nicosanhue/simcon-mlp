@@ -79,6 +79,267 @@ export type Database = {
           },
         ]
       }
+      lub_equipment_data: {
+        Row: {
+          acop_alta_cantidad: number | null
+          acop_alta_frecuencia: string | null
+          acop_alta_grasa: string | null
+          acop_alta_tipo: string | null
+          acop_baja_cantidad: number | null
+          acop_baja_frecuencia: string | null
+          acop_baja_grasa: string | null
+          acop_baja_tipo: string | null
+          created_at: string
+          descanso_cantidad: number | null
+          descanso_condicion: string | null
+          descanso_frecuencia: string | null
+          descanso_grasa: string | null
+          descripcion: string | null
+          equipment_id: string
+          has_descanso: boolean
+          has_motor: boolean
+          has_portarodamiento: boolean
+          has_reductor: boolean
+          id: string
+          motor_desc_la: string | null
+          motor_desc_la_cant: number | null
+          motor_desc_ll: string | null
+          motor_desc_ll_cant: number | null
+          motor_frecuencia: string | null
+          motor_sello_la: string | null
+          motor_sello_la_cant: number | null
+          motor_sello_ll: string | null
+          motor_sello_ll_cant: number | null
+          motor_tipo_lub: string | null
+          porta_desc_la: string | null
+          porta_desc_la_cant: number | null
+          porta_desc_ll: string | null
+          porta_desc_ll_cant: number | null
+          porta_frecuencia: string | null
+          porta_sello_la: string | null
+          porta_sello_la_cant: number | null
+          porta_sello_ll: string | null
+          porta_sello_ll_cant: number | null
+          porta_tipo_lub: string | null
+          reductor_aceite: string | null
+          reductor_capacidad: number | null
+          reductor_frecuencia: string | null
+          reductor_sello_la: string | null
+          reductor_sello_la_cant: number | null
+          reductor_sello_ll: string | null
+          reductor_sello_ll_cant: number | null
+          sap_number: string | null
+          tipo: string | null
+          updated_at: string
+        }
+        Insert: {
+          acop_alta_cantidad?: number | null
+          acop_alta_frecuencia?: string | null
+          acop_alta_grasa?: string | null
+          acop_alta_tipo?: string | null
+          acop_baja_cantidad?: number | null
+          acop_baja_frecuencia?: string | null
+          acop_baja_grasa?: string | null
+          acop_baja_tipo?: string | null
+          created_at?: string
+          descanso_cantidad?: number | null
+          descanso_condicion?: string | null
+          descanso_frecuencia?: string | null
+          descanso_grasa?: string | null
+          descripcion?: string | null
+          equipment_id: string
+          has_descanso?: boolean
+          has_motor?: boolean
+          has_portarodamiento?: boolean
+          has_reductor?: boolean
+          id?: string
+          motor_desc_la?: string | null
+          motor_desc_la_cant?: number | null
+          motor_desc_ll?: string | null
+          motor_desc_ll_cant?: number | null
+          motor_frecuencia?: string | null
+          motor_sello_la?: string | null
+          motor_sello_la_cant?: number | null
+          motor_sello_ll?: string | null
+          motor_sello_ll_cant?: number | null
+          motor_tipo_lub?: string | null
+          porta_desc_la?: string | null
+          porta_desc_la_cant?: number | null
+          porta_desc_ll?: string | null
+          porta_desc_ll_cant?: number | null
+          porta_frecuencia?: string | null
+          porta_sello_la?: string | null
+          porta_sello_la_cant?: number | null
+          porta_sello_ll?: string | null
+          porta_sello_ll_cant?: number | null
+          porta_tipo_lub?: string | null
+          reductor_aceite?: string | null
+          reductor_capacidad?: number | null
+          reductor_frecuencia?: string | null
+          reductor_sello_la?: string | null
+          reductor_sello_la_cant?: number | null
+          reductor_sello_ll?: string | null
+          reductor_sello_ll_cant?: number | null
+          sap_number?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acop_alta_cantidad?: number | null
+          acop_alta_frecuencia?: string | null
+          acop_alta_grasa?: string | null
+          acop_alta_tipo?: string | null
+          acop_baja_cantidad?: number | null
+          acop_baja_frecuencia?: string | null
+          acop_baja_grasa?: string | null
+          acop_baja_tipo?: string | null
+          created_at?: string
+          descanso_cantidad?: number | null
+          descanso_condicion?: string | null
+          descanso_frecuencia?: string | null
+          descanso_grasa?: string | null
+          descripcion?: string | null
+          equipment_id?: string
+          has_descanso?: boolean
+          has_motor?: boolean
+          has_portarodamiento?: boolean
+          has_reductor?: boolean
+          id?: string
+          motor_desc_la?: string | null
+          motor_desc_la_cant?: number | null
+          motor_desc_ll?: string | null
+          motor_desc_ll_cant?: number | null
+          motor_frecuencia?: string | null
+          motor_sello_la?: string | null
+          motor_sello_la_cant?: number | null
+          motor_sello_ll?: string | null
+          motor_sello_ll_cant?: number | null
+          motor_tipo_lub?: string | null
+          porta_desc_la?: string | null
+          porta_desc_la_cant?: number | null
+          porta_desc_ll?: string | null
+          porta_desc_ll_cant?: number | null
+          porta_frecuencia?: string | null
+          porta_sello_la?: string | null
+          porta_sello_la_cant?: number | null
+          porta_sello_ll?: string | null
+          porta_sello_ll_cant?: number | null
+          porta_tipo_lub?: string | null
+          reductor_aceite?: string | null
+          reductor_capacidad?: number | null
+          reductor_frecuencia?: string | null
+          reductor_sello_la?: string | null
+          reductor_sello_la_cant?: number | null
+          reductor_sello_ll?: string | null
+          reductor_sello_ll_cant?: number | null
+          sap_number?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lub_equipment_data_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: true
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lub_manuals: {
+        Row: {
+          created_at: string
+          id: string
+          nombre: string
+          size_bytes: number | null
+          storage_path: string
+          system_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nombre: string
+          size_bytes?: number | null
+          storage_path: string
+          system_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nombre?: string
+          size_bytes?: number | null
+          storage_path?: string
+          system_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lub_manuals_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lub_options: {
+        Row: {
+          categoria: string
+          created_at: string
+          id: string
+          orden: number
+          valor: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          id?: string
+          orden?: number
+          valor: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          id?: string
+          orden?: number
+          valor?: string
+        }
+        Relationships: []
+      }
+      lub_photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          equipment_id: string
+          id: string
+          orden: number
+          storage_path: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          equipment_id: string
+          id?: string
+          orden?: number
+          storage_path: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          equipment_id?: string
+          id?: string
+          orden?: number
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lub_photos_equipment_id_fkey"
+            columns: ["equipment_id"]
+            isOneToOne: false
+            referencedRelation: "equipment"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_items: {
         Row: {
           analisis_tecnico: string | null
