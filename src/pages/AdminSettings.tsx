@@ -37,6 +37,7 @@ interface CSVRow {
 
 interface UploadResult {
   success: number;
+  reportOverrides: number;
   errors: string[];
 }
 
