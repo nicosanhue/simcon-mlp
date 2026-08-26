@@ -28,7 +28,9 @@ function sortAreas(a: string, b: string) {
   return areaRank(a) - areaRank(b) || a.localeCompare(b);
 }
 
+export default function LubricacionEquipos() {
   const { isEditor } = useProfile();
+
   const { data: rows, isLoading } = useLubEquipment();
   const { data: options } = useLubOptions();
 
