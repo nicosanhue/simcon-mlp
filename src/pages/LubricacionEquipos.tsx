@@ -79,7 +79,7 @@ export default function LubricacionEquipos() {
       sys.get(r.systemName)!.push(r);
     }
     return Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
+      .sort((a, b) => sortAreas(a[0], b[0]))
       .map(([areaName, sysMap]) => ({
         areaName,
         systems: Array.from(sysMap.entries())
