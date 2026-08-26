@@ -43,7 +43,7 @@ export default function LubricacionEquipos() {
   const all = rows || [];
 
   const areas = useMemo(
-    () => Array.from(new Set(all.map((r) => r.areaName))).sort(),
+    () => Array.from(new Set(all.map((r) => r.areaName))).sort(sortAreas),
     [all]
   );
   const systems = useMemo(
