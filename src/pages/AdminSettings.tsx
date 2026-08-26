@@ -3,7 +3,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, Database, AlertTriangle } from "lucide-react";
+import { Upload, FileSpreadsheet, CheckCircle, AlertCircle, Database, AlertTriangle, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +37,7 @@ interface CSVRow {
 
 interface UploadResult {
   success: number;
+  reportOverrides: number;
   errors: string[];
 }
 
@@ -100,6 +101,7 @@ export default function AdminSettings() {
       tagsInDb: number;
       sampleTagsFirst: string[];
       sampleTagsLast: string[];
+      reportOverrides: number;
     };
   } | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -295,6 +297,20 @@ export default function AdminSettings() {
       const orphanTags = Array.from(dbTags).filter(t => !csvTagSet.has(t)).sort();
       const newTags = uniqueTagsArr.filter(t => !dbTags.has(t));
 
+      // Fetch existing reports for this week/year to detect status overrides
+      const { data: existingReports } = await supabase
+        .from('reports')
+        .select('equipment_id, status_resultante, equipment:equipment_id ( tag )')
+        .eq('week_number', weekNumber)
+        .eq('year', year);
+
+      const reportOverrideTags = new Set(
+        (existingReports ?? [])
+          .map((r: any) => r.equipment?.tag)
+          .filter((t: string | undefined) => t && csvTagSet.has(t))
+      );
+      const reportOverrides = reportOverrideTags.size;
+
       setPendingImport({
         rows,
         weekNumber,
@@ -309,6 +325,7 @@ export default function AdminSettings() {
           tagsInDb: dbTags.size,
           sampleTagsFirst: uniqueTagsArr.slice(0, 5),
           sampleTagsLast: uniqueTagsArr.slice(-5),
+          reportOverrides,
         },
       });
       setConfirmOpen(true);
@@ -346,6 +363,29 @@ export default function AdminSettings() {
         throw deleteError;
       }
       console.log(`Deleted ${deletedCount ?? 'unknown number of'} existing records`);
+
+      // Fetch reports for this week/year to preserve their status over the CSV
+      const { data: reportRows, error: reportsError } = await supabase
+        .from('reports')
+        .select('equipment_id, status_resultante, fecha_informe, created_at')
+        .eq('week_number', weekNumber)
+        .eq('year', year);
+      if (reportsError) throw reportsError;
+
+      const reportStatusMap = new Map<string, string>();
+      if (reportRows) {
+        const sorted = [...reportRows].sort((a, b) => {
+          const da = new Date(a.fecha_informe).getTime();
+          const db2 = new Date(b.fecha_informe).getTime();
+          if (da !== db2) return db2 - da;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        for (const r of sorted) {
+          if (!reportStatusMap.has(r.equipment_id)) {
+            reportStatusMap.set(r.equipment_id, r.status_resultante);
+          }
+        }
+      }
 
       // Fetch all areas, systems, and equipment for lookup
       const [areasRes, systemsRes, equipmentRes] = await Promise.all([
@@ -515,7 +555,17 @@ export default function AdminSettings() {
       }
       const uniqueReports = Array.from(reportsMap.values());
 
-      console.log(`Inserting ${uniqueReports.length} unique reports for Week ${weekNumber}, Year ${year} (${reportsToInsert.length - uniqueReports.length} duplicates removed)`);
+      // Override status from reports when they exist for this week/year
+      let reportOverridesCount = 0;
+      for (const r of uniqueReports) {
+        const reportStatus = reportStatusMap.get(r.equipment_id);
+        if (reportStatus) {
+          r.status = reportStatus as any;
+          reportOverridesCount++;
+        }
+      }
+
+      console.log(`Inserting ${uniqueReports.length} unique reports for Week ${weekNumber}, Year ${year} (${reportsToInsert.length - uniqueReports.length} duplicates removed, ${reportOverridesCount} estados protegidos por informe)`);
 
       // Batch upsert reports (update if exists, insert if not)
       for (let i = 0; i < uniqueReports.length; i += BATCH_SIZE) {
@@ -531,6 +581,28 @@ export default function AdminSettings() {
           errors.push(`Error procesando lote de reportes: ${upsertError.message}`);
         } else {
           successCount += batch.length;
+        }
+      }
+
+      // Re-link reports to the recreated weekly_reports for traceability
+      const { data: weeklyRows, error: weeklyRowsError } = await supabase
+        .from('weekly_reports')
+        .select('id, equipment_id')
+        .eq('week_number', weekNumber)
+        .eq('year', year);
+      if (weeklyRowsError) throw weeklyRowsError;
+
+      if (weeklyRows && weeklyRows.length > 0) {
+        for (const wr of weeklyRows) {
+          const { error: linkError } = await supabase
+            .from('reports')
+            .update({ weekly_report_id: wr.id })
+            .eq('equipment_id', wr.equipment_id)
+            .eq('week_number', weekNumber)
+            .eq('year', year);
+          if (linkError) {
+            errors.push(`Error vinculando informe a registro semanal: ${linkError.message}`);
+          }
         }
       }
 
@@ -580,6 +652,7 @@ export default function AdminSettings() {
 
       setResult({
         success: successCount,
+        reportOverrides: reportOverridesCount,
         errors: deletedEquipmentCount > 0
           ? [`ℹ️ Sincronización: ${deletedEquipmentCount} equipos eliminados del maestro porque no estaban en la planilla (${orphanTags.slice(0, 10).join(', ')}${orphanTags.length > 10 ? '...' : ''})`, ...errors]
           : errors,
@@ -633,7 +706,7 @@ export default function AdminSettings() {
               <strong>Formato de nombre de archivo:</strong> Estado Equipos Semana [Semana] [Año].csv<br />
               <span className="text-xs">Ejemplo: "Estado Equipos Semana 52 2025.csv"</span><br /><br />
               <strong>Columnas requeridas:</strong> Area, Sistema, Tag, Descripcion_Equipo, Estado, Condicion_Tecnica, Aviso_SAP, Orden_SAP, Fecha_Plan<br />
-              <span className="text-xs text-muted-foreground">La semana y año se extraen automáticamente del nombre del archivo. Los registros existentes para esa semana se reemplazan automáticamente.</span>
+              <span className="text-xs text-muted-foreground">La semana y año se extraen automáticamente del nombre del archivo. Los registros existentes para esa semana se reemplazan automáticamente, pero se conserva el estado definido por un informe técnico de la misma semana.</span>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -666,6 +739,13 @@ export default function AdminSettings() {
                   <div className="flex items-center gap-2 text-primary">
                     <CheckCircle className="h-4 w-4" />
                     <span>{result.success} registros procesados correctamente</span>
+                  </div>
+                )}
+
+                {result.reportOverrides > 0 && (
+                  <div className="flex items-center gap-2 text-amber-600">
+                    <ShieldCheck className="h-4 w-4" />
+                    <span>{result.reportOverrides} equipos mantuvieron el estado de su informe técnico</span>
                   </div>
                 )}
                 
@@ -779,7 +859,7 @@ export default function AdminSettings() {
                 {pendingImport && (
                   <>
                     {/* Counts */}
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-4 gap-2">
                       <div className="bg-muted p-3 rounded-md text-center">
                         <div className="text-2xl font-bold text-foreground">{pendingImport.stats.totalRows}</div>
                         <div className="text-xs text-muted-foreground">Filas en planilla</div>
@@ -791,6 +871,10 @@ export default function AdminSettings() {
                       <div className="bg-muted p-3 rounded-md text-center">
                         <div className="text-2xl font-bold text-foreground">{pendingImport.stats.tagsInDb}</div>
                         <div className="text-xs text-muted-foreground">Tags actuales en BD</div>
+                      </div>
+                      <div className="bg-muted p-3 rounded-md text-center">
+                        <div className="text-2xl font-bold text-foreground">{pendingImport.stats.reportOverrides}</div>
+                        <div className="text-xs text-muted-foreground">Protegidos por informe</div>
                       </div>
                     </div>
 

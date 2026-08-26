@@ -167,9 +167,9 @@ export function CriticalAlertsList({ alerts, activeFilter, week, year }: Critica
                     {getStatusIcon(alert.status, cn("h-3.5 w-3.5", styles.iconColor))}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <span className="font-mono text-xs font-semibold text-primary truncate">{alert.tag}</span>
-                      <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", styles.badgeBorder, styles.badgeText)}>
+                    <div className="flex items-start gap-1.5 flex-wrap">
+                      <span className="font-mono text-[11px] leading-tight font-semibold text-primary break-all">{alert.tag}</span>
+                      <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0 shrink-0", styles.badgeBorder, styles.badgeText)}>
                         {alert.status}
                       </Badge>
                     </div>
