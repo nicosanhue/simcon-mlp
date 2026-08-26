@@ -14,6 +14,16 @@ import {
   useUploadManual,
 } from "@/hooks/useLubricacion";
 
+const AREA_ORDER = ["Transporte de Fluidos", "Tranque Mauro", "Puerto", "Desaladora"];
+
+function sortAreas(a: string, b: string) {
+  const idxA = AREA_ORDER.indexOf(a);
+  const idxB = AREA_ORDER.indexOf(b);
+  const rankA = idxA === -1 ? AREA_ORDER.length : idxA;
+  const rankB = idxB === -1 ? AREA_ORDER.length : idxB;
+  return rankA - rankB || a.localeCompare(b);
+}
+
 interface Props {
   rows: LubEquipmentRow[];
   canEdit: boolean;
@@ -26,6 +36,7 @@ export function LubManualsSection({ rows, canEdit }: Props) {
   const [target, setTarget] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
+
   const tree = useMemo(() => {
     const areas = new Map<string, Map<string, { id: string; name: string }>>();
     for (const r of rows) {
@@ -33,7 +44,7 @@ export function LubManualsSection({ rows, canEdit }: Props) {
       areas.get(r.areaName)!.set(r.system_id, { id: r.system_id, name: r.systemName });
     }
     return Array.from(areas.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
+      .sort((a, b) => sortAreas(a[0], b[0]))
       .map(([area, sys]) => ({
         area,
         systems: Array.from(sys.values()).sort((a, b) => a.name.localeCompare(b.name)),

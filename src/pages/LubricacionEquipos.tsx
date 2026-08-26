@@ -17,8 +17,20 @@ import { toast } from "sonner";
 
 const ALL = "all";
 
+const AREA_ORDER = ["Transporte de Fluidos", "Tranque Mauro", "Puerto", "Desaladora"];
+
+function areaRank(name: string) {
+  const idx = AREA_ORDER.indexOf(name);
+  return idx === -1 ? AREA_ORDER.length : idx;
+}
+
+function sortAreas(a: string, b: string) {
+  return areaRank(a) - areaRank(b) || a.localeCompare(b);
+}
+
 export default function LubricacionEquipos() {
   const { isEditor } = useProfile();
+
   const { data: rows, isLoading } = useLubEquipment();
   const { data: options } = useLubOptions();
 
@@ -31,7 +43,7 @@ export default function LubricacionEquipos() {
   const all = rows || [];
 
   const areas = useMemo(
-    () => Array.from(new Set(all.map((r) => r.areaName))).sort(),
+    () => Array.from(new Set(all.map((r) => r.areaName))).sort(sortAreas),
     [all]
   );
   const systems = useMemo(
@@ -67,7 +79,7 @@ export default function LubricacionEquipos() {
       sys.get(r.systemName)!.push(r);
     }
     return Array.from(map.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
+      .sort((a, b) => sortAreas(a[0], b[0]))
       .map(([areaName, sysMap]) => ({
         areaName,
         systems: Array.from(sysMap.entries())
