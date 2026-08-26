@@ -363,6 +363,29 @@ export default function AdminSettings() {
       }
       console.log(`Deleted ${deletedCount ?? 'unknown number of'} existing records`);
 
+      // Fetch reports for this week/year to preserve their status over the CSV
+      const { data: reportRows, error: reportsError } = await supabase
+        .from('reports')
+        .select('equipment_id, status_resultante, fecha_informe, created_at')
+        .eq('week_number', weekNumber)
+        .eq('year', year);
+      if (reportsError) throw reportsError;
+
+      const reportStatusMap = new Map<string, string>();
+      if (reportRows) {
+        const sorted = [...reportRows].sort((a, b) => {
+          const da = new Date(a.fecha_informe).getTime();
+          const db2 = new Date(b.fecha_informe).getTime();
+          if (da !== db2) return db2 - da;
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        });
+        for (const r of sorted) {
+          if (!reportStatusMap.has(r.equipment_id)) {
+            reportStatusMap.set(r.equipment_id, r.status_resultante);
+          }
+        }
+      }
+
       // Fetch all areas, systems, and equipment for lookup
       const [areasRes, systemsRes, equipmentRes] = await Promise.all([
         supabase.from('areas').select('id, name'),
