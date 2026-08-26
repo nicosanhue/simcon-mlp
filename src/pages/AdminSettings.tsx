@@ -852,7 +852,7 @@ export default function AdminSettings() {
                 {pendingImport && (
                   <>
                     {/* Counts */}
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-4 gap-2">
                       <div className="bg-muted p-3 rounded-md text-center">
                         <div className="text-2xl font-bold text-foreground">{pendingImport.stats.totalRows}</div>
                         <div className="text-xs text-muted-foreground">Filas en planilla</div>
@@ -864,6 +864,10 @@ export default function AdminSettings() {
                       <div className="bg-muted p-3 rounded-md text-center">
                         <div className="text-2xl font-bold text-foreground">{pendingImport.stats.tagsInDb}</div>
                         <div className="text-xs text-muted-foreground">Tags actuales en BD</div>
+                      </div>
+                      <div className="bg-muted p-3 rounded-md text-center">
+                        <div className="text-2xl font-bold text-foreground">{pendingImport.stats.reportOverrides}</div>
+                        <div className="text-xs text-muted-foreground">Protegidos por informe</div>
                       </div>
                     </div>
 
