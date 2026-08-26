@@ -43,67 +43,59 @@ export function LubEquipmentDialog({ row, options, open, onOpenChange }: Props) 
 
   const set = (k: keyof LubData, v: any) => setForm((f) => ({ ...(f as LubData), [k]: v }));
 
-  function Txt({ label, k }: { label: string; k: keyof LubData }) {
-    return (
-      <div className="space-y-1">
-        <Label className="text-xs">{label}</Label>
-        <Input
-          value={(form![k] as string) ?? ""}
-          onChange={(e) => set(k, e.target.value || null)}
-          className="h-8"
-        />
-      </div>
-    );
-  }
+  const txt = (label: string, k: keyof LubData) => (
+    <div className="space-y-1" key={String(k)}>
+      <Label className="text-xs">{label}</Label>
+      <Input
+        value={(form![k] as string) ?? ""}
+        onChange={(e) => set(k, e.target.value || null)}
+        className="h-8"
+      />
+    </div>
+  );
 
-  function Num({ label, k }: { label: string; k: keyof LubData }) {
-    return (
-      <div className="space-y-1">
-        <Label className="text-xs">{label}</Label>
-        <Input
-          type="number"
-          value={(form![k] as number) ?? ""}
-          onChange={(e) => set(k, e.target.value === "" ? null : Number(e.target.value))}
-          className="h-8"
-        />
-      </div>
-    );
-  }
+  const num = (label: string, k: keyof LubData) => (
+    <div className="space-y-1" key={String(k)}>
+      <Label className="text-xs">{label}</Label>
+      <Input
+        type="number"
+        value={(form![k] as number) ?? ""}
+        onChange={(e) => set(k, e.target.value === "" ? null : Number(e.target.value))}
+        className="h-8"
+      />
+    </div>
+  );
 
-  function Sel({ label, k, cat }: { label: string; k: keyof LubData; cat: string }) {
-    const list = options[cat] || [];
-    return (
-      <div className="space-y-1">
-        <Label className="text-xs">{label}</Label>
-        <Select
-          value={(form![k] as string) ?? NONE}
-          onValueChange={(v) => set(k, v === NONE ? null : v)}
-        >
-          <SelectTrigger className="h-8">
-            <SelectValue placeholder="—" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={NONE}>—</SelectItem>
-            {list.map((v) => (
-              <SelectItem key={v} value={v}>
-                {v}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    );
-  }
+  const sel = (label: string, k: keyof LubData, cat: string) => (
+    <div className="space-y-1" key={String(k)}>
+      <Label className="text-xs">{label}</Label>
+      <Select
+        value={(form![k] as string) ?? NONE}
+        onValueChange={(v) => set(k, v === NONE ? null : v)}
+      >
+        <SelectTrigger className="h-8">
+          <SelectValue placeholder="—" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={NONE}>—</SelectItem>
+          {(options[cat] || []).map((v) => (
+            <SelectItem key={v} value={v}>
+              {v}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
 
-  function Section({ title, children }: { title: string; children: React.ReactNode }) {
-    return (
-      <div className="space-y-2">
-        <p className="text-sm font-semibold text-primary">{title}</p>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{children}</div>
-        <Separator />
-      </div>
-    );
-  }
+  const section = (title: string, children: React.ReactNode) => (
+    <div className="space-y-2" key={title}>
+      <p className="text-sm font-semibold text-primary">{title}</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">{children}</div>
+      <Separator />
+    </div>
+  );
+
 
   async function handleSave() {
     try {
