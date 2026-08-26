@@ -17,7 +17,11 @@ Caso 4320PP4957: el informe del 18-08-2026 (semana 34) quedó Satisfactorio, per
 3. **Vínculo de trazabilidad**
    Los registros semanales creados o corregidos desde un informe quedan referenciados en el informe (`weekly_report_id`), igual que ya ocurre con los informes nuevos.
 
+4. **Mejorar legibilidad del tag en las viñetas del Dashboard**
+   En la grilla de condiciones del Dashboard se debe mostrar el TAG completo del equipo. Se ajusta el texto para evitar que se corte o trunque, reduciendo ligeramente el tamaño de letra y permitiendo quebrar línea si el tag es largo, sin alterar el layout general de las tarjetas.
+
 ## Detalles técnicos
 
 - Backfill: sentencia de datos sobre `weekly_reports` usando el informe más reciente por `(equipment_id, week_number, year)` con `week_number >= 31 AND year = 2026`; `INSERT ... ON CONFLICT (equipment_id, week_number, year) DO UPDATE SET status`. Luego `UPDATE reports SET weekly_report_id` para esas filas.
 - CSV: en `src/pages/AdminSettings.tsx`, tras armar `uniqueReports`, consultar `reports` de esa semana/año y, para los `equipment_id` con informe, reemplazar el `status` del CSV por `status_resultante` del informe más reciente antes del upsert. La eliminación previa de la semana pasa a no borrar el estado (se recalcula en el upsert).
+- Dashboard cards: en `src/components/dashboard/CriticalAlertsList.tsx`, en el render de la grilla, se cambia `truncate` por `break-all`, se alinea el badge al inicio y se reduce el tamaño de fuente del tag a `text-[11px]` para mantenerlo legible sin truncar.
