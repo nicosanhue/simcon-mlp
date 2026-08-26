@@ -741,6 +741,13 @@ export default function AdminSettings() {
                     <span>{result.success} registros procesados correctamente</span>
                   </div>
                 )}
+
+                {result.reportOverrides > 0 && (
+                  <div className="flex items-center gap-2 text-amber-600">
+                    <ShieldCheck className="h-4 w-4" />
+                    <span>{result.reportOverrides} equipos mantuvieron el estado de su informe técnico</span>
+                  </div>
+                )}
                 
                 {result.errors.length > 0 && (
                   <div className="space-y-2">
