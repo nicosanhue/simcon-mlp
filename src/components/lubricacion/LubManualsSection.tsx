@@ -44,7 +44,7 @@ export function LubManualsSection({ rows, canEdit }: Props) {
       areas.get(r.areaName)!.set(r.system_id, { id: r.system_id, name: r.systemName });
     }
     return Array.from(areas.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
+      .sort((a, b) => sortAreas(a[0], b[0]))
       .map(([area, sys]) => ({
         area,
         systems: Array.from(sys.values()).sort((a, b) => a.name.localeCompare(b.name)),
