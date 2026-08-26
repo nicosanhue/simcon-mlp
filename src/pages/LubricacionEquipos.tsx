@@ -17,7 +17,17 @@ import { toast } from "sonner";
 
 const ALL = "all";
 
-export default function LubricacionEquipos() {
+const AREA_ORDER = ["Transporte de Fluidos", "Tranque Mauro", "Puerto", "Desaladora"];
+
+function areaRank(name: string) {
+  const idx = AREA_ORDER.indexOf(name);
+  return idx === -1 ? AREA_ORDER.length : idx;
+}
+
+function sortAreas(a: string, b: string) {
+  return areaRank(a) - areaRank(b) || a.localeCompare(b);
+}
+
   const { isEditor } = useProfile();
   const { data: rows, isLoading } = useLubEquipment();
   const { data: options } = useLubOptions();
