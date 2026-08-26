@@ -554,7 +554,17 @@ export default function AdminSettings() {
       }
       const uniqueReports = Array.from(reportsMap.values());
 
-      console.log(`Inserting ${uniqueReports.length} unique reports for Week ${weekNumber}, Year ${year} (${reportsToInsert.length - uniqueReports.length} duplicates removed)`);
+      // Override status from reports when they exist for this week/year
+      let reportOverridesCount = 0;
+      for (const r of uniqueReports) {
+        const reportStatus = reportStatusMap.get(r.equipment_id);
+        if (reportStatus) {
+          r.status = reportStatus as any;
+          reportOverridesCount++;
+        }
+      }
+
+      console.log(`Inserting ${uniqueReports.length} unique reports for Week ${weekNumber}, Year ${year} (${reportsToInsert.length - uniqueReports.length} duplicates removed, ${reportOverridesCount} estados protegidos por informe)`);
 
       // Batch upsert reports (update if exists, insert if not)
       for (let i = 0; i < uniqueReports.length; i += BATCH_SIZE) {
