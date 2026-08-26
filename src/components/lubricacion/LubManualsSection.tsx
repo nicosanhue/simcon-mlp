@@ -14,6 +14,16 @@ import {
   useUploadManual,
 } from "@/hooks/useLubricacion";
 
+const AREA_ORDER = ["Transporte de Fluidos", "Tranque Mauro", "Puerto", "Desaladora"];
+
+function sortAreas(a: string, b: string) {
+  const idxA = AREA_ORDER.indexOf(a);
+  const idxB = AREA_ORDER.indexOf(b);
+  const rankA = idxA === -1 ? AREA_ORDER.length : idxA;
+  const rankB = idxB === -1 ? AREA_ORDER.length : idxB;
+  return rankA - rankB || a.localeCompare(b);
+}
+
 interface Props {
   rows: LubEquipmentRow[];
   canEdit: boolean;
@@ -25,6 +35,7 @@ export function LubManualsSection({ rows, canEdit }: Props) {
   const del = useDeleteManual();
   const [target, setTarget] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
 
   const tree = useMemo(() => {
     const areas = new Map<string, Map<string, { id: string; name: string }>>();
