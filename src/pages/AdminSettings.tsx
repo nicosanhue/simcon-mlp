@@ -652,6 +652,7 @@ export default function AdminSettings() {
 
       setResult({
         success: successCount,
+        reportOverrides: reportOverridesCount,
         errors: deletedEquipmentCount > 0
           ? [`ℹ️ Sincronización: ${deletedEquipmentCount} equipos eliminados del maestro porque no estaban en la planilla (${orphanTags.slice(0, 10).join(', ')}${orphanTags.length > 10 ? '...' : ''})`, ...errors]
           : errors,
