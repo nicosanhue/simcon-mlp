@@ -300,7 +300,7 @@ export default function AdminSettings() {
       // Fetch existing reports for this week/year to detect status overrides
       const { data: existingReports } = await supabase
         .from('reports')
-        .select('equipment_id, status_resultante, equipment!inner(tag)')
+        .select('equipment_id, status_resultante, equipment:equipment_id ( tag )')
         .eq('week_number', weekNumber)
         .eq('year', year);
 
