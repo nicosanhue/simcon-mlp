@@ -583,6 +583,28 @@ export default function AdminSettings() {
         }
       }
 
+      // Re-link reports to the recreated weekly_reports for traceability
+      const { data: weeklyRows, error: weeklyRowsError } = await supabase
+        .from('weekly_reports')
+        .select('id, equipment_id')
+        .eq('week_number', weekNumber)
+        .eq('year', year);
+      if (weeklyRowsError) throw weeklyRowsError;
+
+      if (weeklyRows && weeklyRows.length > 0) {
+        for (const wr of weeklyRows) {
+          const { error: linkError } = await supabase
+            .from('reports')
+            .update({ weekly_report_id: wr.id })
+            .eq('equipment_id', wr.equipment_id)
+            .eq('week_number', weekNumber)
+            .eq('year', year);
+          if (linkError) {
+            errors.push(`Error vinculando informe a registro semanal: ${linkError.message}`);
+          }
+        }
+      }
+
       // ============================================================
       // SYNC: eliminar equipos del maestro que NO están en la planilla
       // (junto con todos sus weekly_reports históricos)
