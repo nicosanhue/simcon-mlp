@@ -8,11 +8,18 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronDown, Droplet, FileSpreadsheet, Pencil, Search } from "lucide-react";
+import { ChevronDown, Droplet, FileSpreadsheet, FileText, ImageIcon, Pencil, Search } from "lucide-react";
 import { useProfile } from "@/contexts/ProfileContext";
 import { LubEquipmentDialog } from "@/components/lubricacion/LubEquipmentDialog";
-import { LubManualsSection } from "@/components/lubricacion/LubManualsSection";
-import { LubEquipmentRow, useLubEquipment, useLubOptions } from "@/hooks/useLubricacion";
+import { LubPhotoViewer } from "@/components/lubricacion/LubPhotoViewer";
+import { LubDocsDialog } from "@/components/lubricacion/LubDocsDialog";
+import {
+  LubEquipmentRow,
+  useLubEquipment,
+  useLubManuals,
+  useLubOptions,
+  useLubPhotoCounts,
+} from "@/hooks/useLubricacion";
 import { toast } from "sonner";
 
 const ALL = "all";
@@ -33,12 +40,22 @@ export default function LubricacionEquipos() {
 
   const { data: rows, isLoading } = useLubEquipment();
   const { data: options } = useLubOptions();
+  const { data: photoCounts } = useLubPhotoCounts();
+  const { data: manuals } = useLubManuals();
 
   const [search, setSearch] = useState("");
   const [area, setArea] = useState(ALL);
   const [system, setSystem] = useState(ALL);
   const [tipo, setTipo] = useState(ALL);
   const [editing, setEditing] = useState<LubEquipmentRow | null>(null);
+  const [viewingPhotos, setViewingPhotos] = useState<LubEquipmentRow | null>(null);
+  const [viewingDocs, setViewingDocs] = useState<LubEquipmentRow | null>(null);
+
+  const docCounts = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const m of manuals || []) map[m.system_id] = (map[m.system_id] || 0) + 1;
+    return map;
+  }, [manuals]);
 
   const all = rows || [];
 
@@ -105,10 +122,12 @@ export default function LubricacionEquipos() {
       "Acoplam Alta. Tipo": r.data?.acop_alta_tipo || "",
       "Acoplam. Grasa": r.data?.acop_alta_grasa || "",
       "Acoplam. Cantidad (g)": r.data?.acop_alta_cantidad ?? "",
+      "Acoplam. Aceite": r.data?.acop_alta_aceite || "",
       "Acoplam. Frecuencia": r.data?.acop_alta_frecuencia || "",
       "Acoplam Baja. Tipo": r.data?.acop_baja_tipo || "",
       "Acoplam. Grasa Baja": r.data?.acop_baja_grasa || "",
       "Acoplam. Cantidad Baja (g)": r.data?.acop_baja_cantidad ?? "",
+      "Acoplam. Aceite Baja": r.data?.acop_baja_aceite || "",
       "Acoplam. Frecuencia Baja": r.data?.acop_baja_frecuencia || "",
       "Motor - Tipo Lub": r.data?.motor_tipo_lub || "",
       "Motor - Descanso LL": r.data?.motor_desc_ll || "",
@@ -119,9 +138,11 @@ export default function LubricacionEquipos() {
       "Mot - Cant. Sello LL (g)": r.data?.motor_sello_ll_cant ?? "",
       "Motor - Sello LA": r.data?.motor_sello_la || "",
       "Mot - Cant. Sello LA (g)": r.data?.motor_sello_la_cant ?? "",
-      "Motor - Frecuencia": r.data?.motor_frecuencia || "",
+      "Motor - Frec. Descansos": r.data?.motor_desc_frecuencia || "",
+      "Motor - Frec. Sellos": r.data?.motor_sello_frecuencia || "",
       "Reductor - Aceite": r.data?.reductor_aceite || "",
       "Reductor - Capacidad (L)": r.data?.reductor_capacidad ?? "",
+      "Reductor - Frec. Aceite": r.data?.reductor_aceite_frecuencia || "",
       "Reductor - Sello LL": r.data?.reductor_sello_ll || "",
       "Red - Cant. Sello LL (g)": r.data?.reductor_sello_ll_cant ?? "",
       "Reductor - Sello LA": r.data?.reductor_sello_la || "",
@@ -136,11 +157,15 @@ export default function LubricacionEquipos() {
       "Por - Cant. Sello LL (g)": r.data?.porta_sello_ll_cant ?? "",
       "Porta - Sello LA": r.data?.porta_sello_la || "",
       "Por - Cant. Sello LA (g)": r.data?.porta_sello_la_cant ?? "",
-      "Porta - Frecuencia": r.data?.porta_frecuencia || "",
+      "Porta - Frec. Descansos": r.data?.porta_desc_frecuencia || "",
+      "Porta - Frec. Sellos": r.data?.porta_sello_frecuencia || "",
       "Descanso - Condición": r.data?.descanso_condicion || "",
       "Descanso - Grasa": r.data?.descanso_grasa || "",
       "Descanso - Cantidad (g)": r.data?.descanso_cantidad ?? "",
       "Descanso - Frecuencia": r.data?.descanso_frecuencia || "",
+      "Descanso - Sello LL": r.data?.descanso_sello_ll || "",
+      "Desc - Cant. Sello LL (g)": r.data?.descanso_sello_ll_cant ?? "",
+      "Descanso - Frec. Sello": r.data?.descanso_sello_frecuencia || "",
     }));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), "Plan Lubricación");
@@ -158,7 +183,7 @@ export default function LubricacionEquipos() {
               Lubricación Equipos
             </h1>
             <p className="text-sm text-muted-foreground">
-              Repositorio maestro de lubricación por equipo, con fotografías y manuales.
+              Repositorio maestro de lubricación por equipo, con fotografías y documentos por sistema.
             </p>
           </div>
           <Button variant="outline" onClick={exportExcel}>
@@ -270,14 +295,53 @@ export default function LubricacionEquipos() {
                                   <TableCell className="text-xs">{r.data?.reductor_aceite || "—"}</TableCell>
                                   <TableCell className="text-xs">{r.data?.motor_tipo_lub || "—"}</TableCell>
                                   <TableCell className="text-right">
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      disabled={!isEditor}
-                                      onClick={() => setEditing(r)}
-                                    >
-                                      <Pencil className="h-3 w-3" />
-                                    </Button>
+                                    <div className="flex items-center justify-end gap-1">
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-7 w-7 relative"
+                                        title="Ver fotografías"
+                                        aria-label="Ver fotografías"
+                                        onClick={() => setViewingPhotos(r)}
+                                      >
+                                        <ImageIcon
+                                          className={`h-3.5 w-3.5 ${photoCounts?.[r.id] ? "text-primary" : "text-muted-foreground"}`}
+                                        />
+                                        {!!photoCounts?.[r.id] && (
+                                          <span className="absolute -top-0.5 -right-0.5 text-[9px] font-semibold text-primary">
+                                            {photoCounts[r.id]}
+                                          </span>
+                                        )}
+                                      </Button>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-7 w-7 relative"
+                                        title="Documentos del sistema"
+                                        aria-label="Documentos del sistema"
+                                        onClick={() => setViewingDocs(r)}
+                                      >
+                                        <FileText
+                                          className={`h-3.5 w-3.5 ${docCounts[r.system_id] ? "text-primary" : "text-muted-foreground"}`}
+                                        />
+                                        {!!docCounts[r.system_id] && (
+                                          <span className="absolute -top-0.5 -right-0.5 text-[9px] font-semibold text-primary">
+                                            {docCounts[r.system_id]}
+                                          </span>
+                                        )}
+                                      </Button>
+                                      <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-7 w-7"
+                                        disabled={!isEditor}
+                                        title="Editar"
+                                        aria-label="Editar"
+                                        onClick={() => setEditing(r)}
+                                      >
+                                        <Pencil className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
                                   </TableCell>
                                 </TableRow>
                               ))}
@@ -293,7 +357,20 @@ export default function LubricacionEquipos() {
           </CardContent>
         </Card>
 
-        <LubManualsSection rows={all} canEdit={isEditor} />
+        <LubPhotoViewer
+          equipmentId={viewingPhotos?.id}
+          title={viewingPhotos ? `${viewingPhotos.tag} — ${viewingPhotos.name}` : undefined}
+          open={!!viewingPhotos}
+          onOpenChange={(v) => !v && setViewingPhotos(null)}
+        />
+
+        <LubDocsDialog
+          systemId={viewingDocs?.system_id}
+          systemName={viewingDocs?.systemName}
+          canEdit={isEditor}
+          open={!!viewingDocs}
+          onOpenChange={(v) => !v && setViewingDocs(null)}
+        />
 
         <LubEquipmentDialog
           row={editing}
