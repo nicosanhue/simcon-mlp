@@ -327,6 +327,7 @@ export interface LubManual {
   storage_path: string;
   nombre: string;
   size_bytes: number | null;
+  created_at?: string;
 }
 
 export function useLubManuals() {
