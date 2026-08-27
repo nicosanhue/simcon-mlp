@@ -20,10 +20,12 @@ export interface LubData {
   has_descanso: boolean;
   acop_alta_tipo: string | null;
   acop_alta_grasa: string | null;
+  acop_alta_aceite: string | null;
   acop_alta_cantidad: number | null;
   acop_alta_frecuencia: string | null;
   acop_baja_tipo: string | null;
   acop_baja_grasa: string | null;
+  acop_baja_aceite: string | null;
   acop_baja_cantidad: number | null;
   acop_baja_frecuencia: string | null;
   motor_tipo_lub: string | null;
@@ -31,13 +33,16 @@ export interface LubData {
   motor_desc_ll_cant: number | null;
   motor_desc_la: string | null;
   motor_desc_la_cant: number | null;
+  motor_desc_frecuencia: string | null;
   motor_sello_ll: string | null;
   motor_sello_ll_cant: number | null;
   motor_sello_la: string | null;
   motor_sello_la_cant: number | null;
+  motor_sello_frecuencia: string | null;
   motor_frecuencia: string | null;
   reductor_aceite: string | null;
   reductor_capacidad: number | null;
+  reductor_aceite_frecuencia: string | null;
   reductor_sello_ll: string | null;
   reductor_sello_ll_cant: number | null;
   reductor_sello_la: string | null;
@@ -48,15 +53,21 @@ export interface LubData {
   porta_desc_ll_cant: number | null;
   porta_desc_la: string | null;
   porta_desc_la_cant: number | null;
+  porta_desc_frecuencia: string | null;
   porta_sello_ll: string | null;
   porta_sello_ll_cant: number | null;
   porta_sello_la: string | null;
   porta_sello_la_cant: number | null;
+  porta_sello_frecuencia: string | null;
   porta_frecuencia: string | null;
   descanso_condicion: string | null;
   descanso_grasa: string | null;
   descanso_cantidad: number | null;
   descanso_frecuencia: string | null;
+  descanso_sello_ll: string | null;
+  descanso_sello_ll_cant: number | null;
+  descanso_sello_frecuencia: string | null;
+
 }
 
 export interface LubEquipmentRow {
@@ -81,10 +92,12 @@ export function emptyLubData(equipment_id: string): LubData {
     has_descanso: false,
     acop_alta_tipo: null,
     acop_alta_grasa: null,
+    acop_alta_aceite: null,
     acop_alta_cantidad: null,
     acop_alta_frecuencia: null,
     acop_baja_tipo: null,
     acop_baja_grasa: null,
+    acop_baja_aceite: null,
     acop_baja_cantidad: null,
     acop_baja_frecuencia: null,
     motor_tipo_lub: null,
@@ -92,13 +105,16 @@ export function emptyLubData(equipment_id: string): LubData {
     motor_desc_ll_cant: null,
     motor_desc_la: null,
     motor_desc_la_cant: null,
+    motor_desc_frecuencia: null,
     motor_sello_ll: null,
     motor_sello_ll_cant: null,
     motor_sello_la: null,
     motor_sello_la_cant: null,
+    motor_sello_frecuencia: null,
     motor_frecuencia: null,
     reductor_aceite: null,
     reductor_capacidad: null,
+    reductor_aceite_frecuencia: null,
     reductor_sello_ll: null,
     reductor_sello_ll_cant: null,
     reductor_sello_la: null,
@@ -109,15 +125,21 @@ export function emptyLubData(equipment_id: string): LubData {
     porta_desc_ll_cant: null,
     porta_desc_la: null,
     porta_desc_la_cant: null,
+    porta_desc_frecuencia: null,
     porta_sello_ll: null,
     porta_sello_ll_cant: null,
     porta_sello_la: null,
     porta_sello_la_cant: null,
+    porta_sello_frecuencia: null,
     porta_frecuencia: null,
     descanso_condicion: null,
     descanso_grasa: null,
     descanso_cantidad: null,
     descanso_frecuencia: null,
+    descanso_sello_ll: null,
+    descanso_sello_ll_cant: null,
+    descanso_sello_frecuencia: null,
+
   };
 }
 
@@ -281,7 +303,10 @@ export function useUploadLubPhotos() {
         if (error) throw error;
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["lub-photos"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["lub-photos"] });
+      qc.invalidateQueries({ queryKey: ["lub-photo-counts"] });
+    },
   });
 }
 
@@ -293,7 +318,10 @@ export function useDeleteLubPhoto() {
       const { error } = await supabase.from("lub_photos").delete().eq("id", photo.id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["lub-photos"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["lub-photos"] });
+      qc.invalidateQueries({ queryKey: ["lub-photo-counts"] });
+    },
   });
 }
 
@@ -305,6 +333,7 @@ export interface LubManual {
   storage_path: string;
   nombre: string;
   size_bytes: number | null;
+  created_at?: string;
 }
 
 export function useLubManuals() {
@@ -359,5 +388,41 @@ export function useDeleteManual() {
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["lub-manuals"] }),
+  });
+}
+
+/** Descarga directa de un documento del sistema */
+export async function downloadManual(m: LubManual) {
+  const { data, error } = await supabase.storage
+    .from("lubricacion-manuals")
+    .createSignedUrl(m.storage_path, 3600, { download: m.nombre });
+  if (error) throw error;
+  const a = document.createElement("a");
+  a.href = data.signedUrl;
+  a.download = m.nombre;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+/** Conteo de fotografías por equipo (para los iconos de la tabla) */
+export function useLubPhotoCounts() {
+  return useQuery({
+    queryKey: ["lub-photo-counts"],
+    queryFn: async (): Promise<Record<string, number>> => {
+      const rows: { equipment_id: string }[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from("lub_photos")
+          .select("equipment_id")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        rows.push(...((data || []) as { equipment_id: string }[]));
+        if (!data || data.length < PAGE) break;
+      }
+      const map: Record<string, number> = {};
+      for (const r of rows) map[r.equipment_id] = (map[r.equipment_id] || 0) + 1;
+      return map;
+    },
   });
 }
