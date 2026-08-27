@@ -384,3 +384,39 @@ export function useDeleteManual() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["lub-manuals"] }),
   });
 }
+
+/** Descarga directa de un documento del sistema */
+export async function downloadManual(m: LubManual) {
+  const { data, error } = await supabase.storage
+    .from("lubricacion-manuals")
+    .createSignedUrl(m.storage_path, 3600, { download: m.nombre });
+  if (error) throw error;
+  const a = document.createElement("a");
+  a.href = data.signedUrl;
+  a.download = m.nombre;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+/** Conteo de fotografías por equipo (para los iconos de la tabla) */
+export function useLubPhotoCounts() {
+  return useQuery({
+    queryKey: ["lub-photo-counts"],
+    queryFn: async (): Promise<Record<string, number>> => {
+      const rows: { equipment_id: string }[] = [];
+      for (let from = 0; ; from += PAGE) {
+        const { data, error } = await supabase
+          .from("lub_photos")
+          .select("equipment_id")
+          .range(from, from + PAGE - 1);
+        if (error) throw error;
+        rows.push(...((data || []) as { equipment_id: string }[]));
+        if (!data || data.length < PAGE) break;
+      }
+      const map: Record<string, number> = {};
+      for (const r of rows) map[r.equipment_id] = (map[r.equipment_id] || 0) + 1;
+      return map;
+    },
+  });
+}
