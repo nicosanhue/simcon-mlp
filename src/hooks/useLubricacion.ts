@@ -303,7 +303,10 @@ export function useUploadLubPhotos() {
         if (error) throw error;
       }
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["lub-photos"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["lub-photos"] });
+      qc.invalidateQueries({ queryKey: ["lub-photo-counts"] });
+    },
   });
 }
 
@@ -315,7 +318,10 @@ export function useDeleteLubPhoto() {
       const { error } = await supabase.from("lub_photos").delete().eq("id", photo.id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["lub-photos"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["lub-photos"] });
+      qc.invalidateQueries({ queryKey: ["lub-photo-counts"] });
+    },
   });
 }
 
