@@ -20,10 +20,12 @@ export interface LubData {
   has_descanso: boolean;
   acop_alta_tipo: string | null;
   acop_alta_grasa: string | null;
+  acop_alta_aceite: string | null;
   acop_alta_cantidad: number | null;
   acop_alta_frecuencia: string | null;
   acop_baja_tipo: string | null;
   acop_baja_grasa: string | null;
+  acop_baja_aceite: string | null;
   acop_baja_cantidad: number | null;
   acop_baja_frecuencia: string | null;
   motor_tipo_lub: string | null;
@@ -31,13 +33,16 @@ export interface LubData {
   motor_desc_ll_cant: number | null;
   motor_desc_la: string | null;
   motor_desc_la_cant: number | null;
+  motor_desc_frecuencia: string | null;
   motor_sello_ll: string | null;
   motor_sello_ll_cant: number | null;
   motor_sello_la: string | null;
   motor_sello_la_cant: number | null;
+  motor_sello_frecuencia: string | null;
   motor_frecuencia: string | null;
   reductor_aceite: string | null;
   reductor_capacidad: number | null;
+  reductor_aceite_frecuencia: string | null;
   reductor_sello_ll: string | null;
   reductor_sello_ll_cant: number | null;
   reductor_sello_la: string | null;
@@ -48,15 +53,21 @@ export interface LubData {
   porta_desc_ll_cant: number | null;
   porta_desc_la: string | null;
   porta_desc_la_cant: number | null;
+  porta_desc_frecuencia: string | null;
   porta_sello_ll: string | null;
   porta_sello_ll_cant: number | null;
   porta_sello_la: string | null;
   porta_sello_la_cant: number | null;
+  porta_sello_frecuencia: string | null;
   porta_frecuencia: string | null;
   descanso_condicion: string | null;
   descanso_grasa: string | null;
   descanso_cantidad: number | null;
   descanso_frecuencia: string | null;
+  descanso_sello_ll: string | null;
+  descanso_sello_ll_cant: number | null;
+  descanso_sello_frecuencia: string | null;
+
 }
 
 export interface LubEquipmentRow {
