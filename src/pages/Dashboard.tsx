@@ -12,9 +12,6 @@ import { useDashboardData, GroupedStats, DebugCounts } from "@/hooks/useDashboar
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
-import { CriticalReportDownload } from "@/components/reports/CriticalReportDownload";
-import { DashboardScreenshotDownload } from "@/components/reports/DashboardScreenshotDownload";
-import { ConditionsExcelDownload } from "@/components/reports/ConditionsExcelDownload";
 
 function getWeekNumber(date: Date): number {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -132,22 +129,6 @@ export default function Dashboard() {
   return (
     <MainLayout>
       <div className="space-y-6" ref={dashboardRef}>
-        {/* Report Actions */}
-        <div className="flex justify-end gap-2">
-          <CriticalReportDownload />
-          <ConditionsExcelDownload
-            week={week ?? getWeekNumber(currentDate)}
-            year={year ?? currentDate.getFullYear()}
-          />
-          <DashboardScreenshotDownload
-            areas={areas}
-            currentWeek={week ?? getWeekNumber(currentDate)}
-            currentYear={year ?? currentDate.getFullYear()}
-            onAreaChange={setSelectedArea}
-            dashboardRef={dashboardRef}
-          />
-        </div>
-
         {/* Search Bar */}
         <div className="w-full">
           <EquipmentSearch

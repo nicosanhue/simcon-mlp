@@ -86,7 +86,7 @@ export function EquipmentReportsSection(props: Props) {
                   </span>
                   <Badge variant="secondary" className="text-xs">{r.status_resultante}</Badge>
                 </div>
-                {r.hallazgos && <p className="text-xs text-muted-foreground truncate mt-1">{r.hallazgos}</p>}
+                {r.hallazgos && <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line break-words">{r.hallazgos}</p>}
               </div>
               <div className="flex gap-1">
                 <Button size="sm" variant="ghost" onClick={() => setPreview({ data: pdfData(r), fileName: fileNameOf(r) })}>
