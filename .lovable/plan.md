@@ -1,6 +1,6 @@
-# Dashboard: retirar botones, ordenar condiciones y selector de áreas
+# Dashboard: retirar botones, ordenar condiciones, selector de áreas y lectura de informes
 
-Tres ajustes en el Dashboard.
+Cuatro ajustes en el Dashboard.
 
 ## 1. Quitar los botones de descarga
 
