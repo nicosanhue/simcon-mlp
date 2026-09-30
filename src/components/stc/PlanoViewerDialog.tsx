@@ -5,6 +5,7 @@ import { Download, ExternalLink, Loader2 } from "lucide-react";
 import * as pdfjs from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import { planoPathOf, planoSignedUrl } from "@/lib/stcPlanos";
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -23,6 +24,7 @@ export function PlanoViewerDialog({ open, onOpenChange, stationCode }: Props) {
   const [loading, setLoading] = useState(false);
   const [renderError, setRenderError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,8 +51,9 @@ export function PlanoViewerDialog({ open, onOpenChange, stationCode }: Props) {
         doc = await pdfjs.getDocument({ data: new Uint8Array(buf) }).promise;
 
         const container = containerRef.current;
-        if (!container) return;
-        container.innerHTML = "";
+        const host = hostRef.current;
+        if (!container || !host) return;
+        host.replaceChildren();
 
         for (let i = 1; i <= doc.numPages; i++) {
           if (cancelled) return;
@@ -66,7 +69,7 @@ export function PlanoViewerDialog({ open, onOpenChange, stationCode }: Props) {
           canvas.style.width = `${viewport.width / dpr}px`;
           canvas.style.height = `${viewport.height / dpr}px`;
           canvas.className = "mx-auto rounded shadow-sm bg-background";
-          container.appendChild(canvas);
+          container.appendChild(hostLine(canvas));
           canvases.push(canvas);
 
           const ctx = canvas.getContext("2d")!;
@@ -74,7 +77,7 @@ export function PlanoViewerDialog({ open, onOpenChange, stationCode }: Props) {
           if (i < doc.numPages) {
             const gap = document.createElement("div");
             gap.className = "h-3";
-            container.appendChild(gap);
+            host.appendChild(gap);
           }
         }
       } catch (e: any) {
@@ -128,10 +131,10 @@ export function PlanoViewerDialog({ open, onOpenChange, stationCode }: Props) {
 
         <div
           ref={containerRef}
-          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden rounded-md border bg-muted/30 p-3"
+          className="relative flex-1 min-h-0 overflow-y-auto overflow-x-hidden rounded-md border bg-muted/30 p-3"
         >
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground gap-2 text-sm">
+          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground gap-2 text-sm bg-muted/30">
             <Loader2 className="h-4 w-4 animate-spin" /> Cargando plano...
           </div>
         )}
