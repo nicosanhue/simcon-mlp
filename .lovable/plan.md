@@ -36,3 +36,12 @@ El selector de áreas (hoy un menú desplegable) pasa a ser una fila de botones 
 - Orden fijo de siempre: Transporte de Fluidos, Tranque Mauro, Puerto, Desaladora. Si aparece un área nueva, se agrega al final en orden alfabético.
 - Si hay muchas áreas o la pantalla es chica, los botones se acomodan en varias líneas sin cortarse.
 - El cambio es solo visual: la forma de filtrar y los datos que se muestran siguen siendo los mismos.
+
+## 4. Texto de los informes técnicos legible hacia abajo
+
+En el pop-up de un equipo, el resumen de cada informe técnico hoy se muestra recortado en una sola línea.
+
+- Se quita el recorte y el texto se acomoda en varias líneas dentro del propio recuadro.
+- Las palabras largas o continuas se parten para que nunca se salgan del ancho disponible.
+- La lectura queda hacia abajo: la ventana del pop-up sigue desplazándose en vertical y desaparece la barra horizontal.
+- Los botones de ver, descargar, editar y eliminar del informe quedan a la derecha, sin que el texto los empuje.
