@@ -106,6 +106,21 @@ export function CriticalAlertsList({ alerts, activeFilter, week, year }: Critica
 
   const defaultTitle = "Condiciones: Alerta, Críticas y Sin Medición";
 
+  // Orden fijo: Crítico -> Alerta -> Sin medición (luego Seguimiento/Satisfactorio si aparecen),
+  // con sub-orden por Tag A-Z para que la lista sea estable.
+  const statusOrder: Record<string, number> = {
+    "Crítico": 0,
+    "Alerta": 1,
+    "Sin medición": 2,
+    "Seguimiento": 3,
+    "Satisfactorio": 4,
+  };
+  const sortedAlerts = [...alerts].sort(
+    (a, b) =>
+      (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9) ||
+      a.tag.localeCompare(b.tag, "es", { numeric: true })
+  );
+
   if (alerts.length === 0) {
     return (
       <div className="industrial-panel p-6">
@@ -151,7 +166,7 @@ export function CriticalAlertsList({ alerts, activeFilter, week, year }: Critica
           </Badge>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 max-h-[520px] overflow-y-auto pr-1">
-          {alerts.map((alert) => {
+          {sortedAlerts.map((alert) => {
             const styles = statusStyles[alert.status] || statusStyles.Satisfactorio;
             return (
               <div
