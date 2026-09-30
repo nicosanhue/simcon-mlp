@@ -1,6 +1,6 @@
-# Dashboard: retirar botones, ordenar condiciones, selector de áreas y lectura de informes
+# Dashboard y STC: cinco ajustes
 
-Cuatro ajustes en el Dashboard.
+Cinco ajustes en el Dashboard y en Control Temperatura STC.
 
 ## 1. Quitar los botones de descarga
 
