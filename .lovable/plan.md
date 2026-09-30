@@ -1,14 +1,24 @@
-# Retirar botones de descarga del Dashboard
+# Dashboard: retirar botones y ordenar condiciones
 
-Quita temporalmente los tres botones que aparecen sobre el Dashboard:
-"Descargar Críticos", "Descargar Excel Condiciones" y "Captura por Área".
+Dos ajustes en el Dashboard.
 
-## Qué se hace
+## 1. Quitar los botones de descarga
 
-- En `src/pages/Dashboard.tsx` se eliminan los tres componentes de la fila de acciones superior (líneas ~135-149) y sus imports.
-- El contenedor con la referencia para captura (`dashboardRef`) se mantiene, porque otras funciones pueden usarlo; solo se retira la fila de botones.
+- Se retira la fila superior con "Descargar Críticos", "Descargar Excel Condiciones" y "Captura por Área".
+- Se eliminan sus imports en `src/pages/Dashboard.tsx`.
+- Los componentes se conservan en el proyecto (sin borrar archivos) para poder reactivarlos cuando quieras.
+- El botón "Descargar Críticos" que vive en la barra del título general (`MainLayout.tsx`) queda igual; solo desaparece la fila del Dashboard.
 
-## Qué NO se toca
+## 2. Orden fijo en las condiciones
 
-- Los archivos de los componentes (`CriticalReportDownload`, `ConditionsExcelDownload`, `DashboardScreenshotDownload`) se conservan intactos para poder reactivarlos después.
-- El botón "Descargar Críticos" que vive en el layout general (`MainLayout.tsx`) no se modifica; solo desaparece la fila del Dashboard.
+En la sección "Condiciones: Alerta, Críticas y Sin Medición" las tarjetas se mostrarán siempre en este orden:
+
+```text
+1. Crítico
+2. Alerta
+3. Sin medición
+```
+
+- Dentro de cada grupo, los equipos se ordenan por Tag (A-Z) para que la lista sea estable.
+- Aplica tanto a la vista general como cuando filtrás haciendo clic en una tarjeta de estado (Satisfactorio y Seguimiento quedan al final si alguna vez aparecen en esa lista).
+- El orden se aplica en `src/components/dashboard/CriticalAlertsList.tsx`, así que sirve para todas las formas en que se arma la lista.
