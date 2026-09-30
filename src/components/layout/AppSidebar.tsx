@@ -32,14 +32,15 @@ import { Button } from "@/components/ui/button";
 
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "STC Control Temperatura", url: "/stc-temperatura", icon: Thermometer },
+  { title: "STR Control Temperatura", url: "/str-temperatura", icon: Thermometer },
+  { title: "Informes", url: "/reports", icon: FileText },
   { title: "Avisos y OT", url: "/work-orders", icon: ClipboardList },
-  { title: "Control Temperatura STC", url: "/stc-temperatura", icon: Thermometer },
-  { title: "Lubricación Equipos", url: "/lubricacion-equipos", icon: Droplet },
   { title: "Historial", url: "/history", icon: History },
   { title: "Organigrama", url: "/equipment-tree", icon: GitBranch },
-  { title: "Informes", url: "/reports", icon: FileText },
   { title: "Activos", url: "/assets", icon: Settings2 },
   { title: "Admin", url: "/admin", icon: Settings2 },
+  { title: "Lubricación Equipos", url: "/lubricacion-equipos", icon: Droplet },
 ];
 
 

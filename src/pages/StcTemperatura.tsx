@@ -11,6 +11,7 @@ import {
   usePublishWeek,
   type StcSpool,
   type StcReading,
+  type TemperatureSystem,
 } from "@/hooks/useStcData";
 import { useProfile } from "@/contexts/ProfileContext";
 import { getStcStatus } from "@/lib/stcStatus";
@@ -132,17 +133,17 @@ function DeltaCell({
   );
 }
 
-export default function StcTemperatura() {
+export default function StcTemperatura({ system = "stc" }: { system?: TemperatureSystem }) {
   const { isEditor } = useProfile();
-  const stations = useStcStations().data ?? [];
+  const stations = useStcStations(system).data ?? [];
   const [planoStation, setPlanoStation] = useState<string | null>(null);
-  const spools = useStcSpools().data ?? [];
-  const readings = useStcReadings().data ?? [];
-  const trackingWeeks = useStcTrackingWeeks().data ?? [];
-  const updateReading = useUpdateReading();
-  const addWeek = useAddWeek();
-  const confirmAll = useConfirmAllPending();
-  const publishWeek = usePublishWeek();
+  const spools = useStcSpools(system).data ?? [];
+  const readings = useStcReadings(system).data ?? [];
+  const trackingWeeks = useStcTrackingWeeks(system).data ?? [];
+  const updateReading = useUpdateReading(system);
+  const addWeek = useAddWeek(system);
+  const confirmAll = useConfirmAllPending(system);
+  const publishWeek = usePublishWeek(system);
   const [showAll, setShowAll] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [chartsOpen, setChartsOpen] = useState(false);
@@ -304,17 +305,17 @@ export default function StcTemperatura() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Thermometer className="h-6 w-6 text-primary" />
-              Control Temperatura STC
+              {system === "stc" ? "STC Control Temperatura" : "STR Control Temperatura"}
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground break-words">
               Seguimiento termográfico semanal de spools por estación
             </p>
           </div>
-          {isEditor && (
+          {isEditor && spools.length > 0 && (
             <Dialog open={addOpen} onOpenChange={setAddOpen}>
               <DialogTrigger asChild>
                 <Button>
@@ -433,11 +434,16 @@ export default function StcTemperatura() {
             );
           })}
 
+        {system === "str" && stations.length === 0 && (
+          <p className="text-sm text-muted-foreground">Aún no hay estaciones ni mediciones STR registradas.</p>
+        )}
+
         {/* Summary table */}
         <Card className="p-4">
           <h2 className="font-semibold mb-3">
             Resumen por Estación {latest && `— Semana ${latest.week}/${latest.year}`}
           </h2>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -479,14 +485,14 @@ export default function StcTemperatura() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {planoPathOf(st.code) && (
+                      {planoPathOf(st.code, system) && (
                         <Button
                           size="icon"
                           variant="ghost"
                           aria-label={`Descargar plano ${st.code}`}
                           onClick={async () => {
                             try {
-                              await downloadPlanoPdf(st.code);
+                              await downloadPlanoPdf(st.code, system);
                               toast.success(`Plano ${st.code} descargado`);
                             } catch (e: any) {
                               toast.error("Error al descargar: " + (e?.message ?? e));
@@ -502,6 +508,7 @@ export default function StcTemperatura() {
               })}
             </TableBody>
           </Table>
+          </div>
         </Card>
 
         {/* Charts per station */}
@@ -537,7 +544,7 @@ export default function StcTemperatura() {
                         <h3 className="font-semibold text-sm">
                           {st.code} — Línea Principal (ΔT por Spool)
                         </h3>
-                        {planoPathOf(st.code) && (
+                        {planoPathOf(st.code, system) && (
                           <Button
                             size="icon"
                             variant="ghost"
@@ -588,7 +595,7 @@ export default function StcTemperatura() {
 
         {/* Full table */}
         <Card className="p-4">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
             <h2 className="font-semibold">Tabla completa de spools</h2>
             <div className="flex items-center gap-2">
               <Label htmlFor="show-all" className="text-sm">
@@ -739,6 +746,7 @@ export default function StcTemperatura() {
           spools={spools}
           readingsIndex={readingsIndex}
           latest={latest}
+          system={system}
         />
 
         {/* Plano viewer pop-up */}
@@ -746,6 +754,7 @@ export default function StcTemperatura() {
           open={!!planoStation}
           onOpenChange={(v) => !v && setPlanoStation(null)}
           stationCode={planoStation}
+          system={system}
         />
       </div>
     </MainLayout>

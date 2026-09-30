@@ -7,6 +7,7 @@ import {
   type StcSpool,
   type StcStation,
   type StcReading,
+  type TemperatureSystem,
 } from "@/hooks/useStcData";
 import { getStcStatus } from "@/lib/stcStatus";
 import { Card } from "@/components/ui/card";
@@ -61,14 +62,15 @@ interface Props {
   spools: StcSpool[];
   readingsIndex: Map<string, Map<string, StcReading>>;
   latest?: { week: number; year: number };
+  system?: TemperatureSystem;
 }
 
-export function CustomChartsSection({ stations, spools, readingsIndex, latest }: Props) {
+export function CustomChartsSection({ stations, spools, readingsIndex, latest, system = "stc" }: Props) {
   const { isEditor } = useProfile();
-  const charts = useCustomCharts().data ?? [];
-  const createChart = useCreateCustomChart();
-  const updateChart = useUpdateCustomChart();
-  const deleteChart = useDeleteCustomChart();
+  const charts = useCustomCharts(system).data ?? [];
+  const createChart = useCreateCustomChart(system);
+  const updateChart = useUpdateCustomChart(system);
+  const deleteChart = useDeleteCustomChart(system);
 
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -174,7 +176,7 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
           <LineChartIcon className="h-5 w-5 text-primary" />
           Seguimiento Especial
         </h2>
-        {isEditor && (
+        {isEditor && spools.length > 0 && (
         <Dialog
           open={open}
           onOpenChange={(v) => {
@@ -302,7 +304,9 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest }:
 
       {charts.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-8">
-          Aún no hay seguimientos especiales. Haz click en "Agregar seguimiento" para crear el primero.
+          {spools.length === 0
+            ? "Aún no hay spools para seguimientos especiales."
+            : 'Aún no hay seguimientos especiales. Haz click en "Agregar seguimiento" para crear el primero.'}
         </p>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">

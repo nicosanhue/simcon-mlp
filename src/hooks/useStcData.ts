@@ -1,6 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+export type TemperatureSystem = "stc" | "str";
+
+const tableFor = (system: TemperatureSystem) => ({
+  stations: system === "stc" ? "stc_stations" : "str_stations",
+  spools: system === "stc" ? "stc_spools" : "str_spools",
+  readings: system === "stc" ? "stc_temperature_readings" : "str_temperature_readings",
+  weeks: system === "stc" ? "stc_tracking_weeks" : "str_tracking_weeks",
+  charts: system === "stc" ? "stc_custom_charts" : "str_custom_charts",
+}) as const;
+
 export interface StcStation {
   id: string;
   code: string;
@@ -37,12 +47,12 @@ export interface StcTrackingWeek {
   published_at: string | null;
 }
 
-export function useStcStations() {
+export function useStcStations(system: TemperatureSystem = "stc") {
   return useQuery({
-    queryKey: ["stc_stations"],
+    queryKey: [system, "stations"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("stc_stations")
+      const { data, error } = await (supabase as any)
+        .from(tableFor(system).stations)
         .select("*")
         .order("order_index");
       if (error) throw error;
@@ -51,12 +61,12 @@ export function useStcStations() {
   });
 }
 
-export function useStcSpools() {
+export function useStcSpools(system: TemperatureSystem = "stc") {
   return useQuery({
-    queryKey: ["stc_spools"],
+    queryKey: [system, "spools"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("stc_spools")
+      const { data, error } = await (supabase as any)
+        .from(tableFor(system).spools)
         .select("*")
         .order("order_index");
       if (error) throw error;
@@ -65,12 +75,12 @@ export function useStcSpools() {
   });
 }
 
-export function useStcReadings() {
+export function useStcReadings(system: TemperatureSystem = "stc") {
   return useQuery({
-    queryKey: ["stc_readings"],
+    queryKey: [system, "readings"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("stc_temperature_readings")
+      const { data, error } = await (supabase as any)
+        .from(tableFor(system).readings)
         .select("*")
         .order("year", { ascending: false })
         .order("week_number", { ascending: false });
@@ -80,12 +90,12 @@ export function useStcReadings() {
   });
 }
 
-export function useStcTrackingWeeks() {
+export function useStcTrackingWeeks(system: TemperatureSystem = "stc") {
   return useQuery({
-    queryKey: ["stc_tracking_weeks"],
+    queryKey: [system, "weeks"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("stc_tracking_weeks")
+      const { data, error } = await (supabase as any)
+        .from(tableFor(system).weeks)
         .select("*")
         .order("year", { ascending: false })
         .order("week_number", { ascending: false });
@@ -95,7 +105,7 @@ export function useStcTrackingWeeks() {
   });
 }
 
-export function useUpdateReading() {
+export function useUpdateReading(system: TemperatureSystem = "stc") {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: {
@@ -112,37 +122,37 @@ export function useUpdateReading() {
         delta_t: input.delta_t,
       };
       if (input.confirmed !== undefined) row.confirmed = input.confirmed;
-      const { error } = await supabase
-        .from("stc_temperature_readings")
+      const { error } = await (supabase as any)
+        .from(tableFor(system).readings)
         .upsert(row, { onConflict: "spool_id,week_number,year" });
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["stc_readings"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [system, "readings"] }),
   });
 }
 
-export function useConfirmAllPending() {
+export function useConfirmAllPending(system: TemperatureSystem = "stc") {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { week_number: number; year: number }) => {
-      const { error } = await supabase
-        .from("stc_temperature_readings")
+      const { error } = await (supabase as any)
+        .from(tableFor(system).readings)
         .update({ confirmed: true })
         .eq("week_number", input.week_number)
         .eq("year", input.year)
         .eq("confirmed", false);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["stc_readings"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [system, "readings"] }),
   });
 }
 
-export function usePublishWeek() {
+export function usePublishWeek(system: TemperatureSystem = "stc") {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { week_number: number; year: number }) => {
-      const { error } = await supabase
-        .from("stc_tracking_weeks")
+      const { error } = await (supabase as any)
+        .from(tableFor(system).weeks)
         .upsert(
           {
             week_number: input.week_number,
@@ -154,7 +164,7 @@ export function usePublishWeek() {
         );
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["stc_tracking_weeks"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [system, "weeks"] }),
   });
 }
 
@@ -166,12 +176,12 @@ export interface StcCustomChart {
   updated_at: string;
 }
 
-export function useCustomCharts() {
+export function useCustomCharts(system: TemperatureSystem = "stc") {
   return useQuery({
-    queryKey: ["stc_custom_charts"],
+    queryKey: [system, "charts"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("stc_custom_charts")
+      const { data, error } = await (supabase as any)
+        .from(tableFor(system).charts)
         .select("*")
         .order("created_at", { ascending: true });
       if (error) throw error;
@@ -180,47 +190,47 @@ export function useCustomCharts() {
   });
 }
 
-export function useCreateCustomChart() {
+export function useCreateCustomChart(system: TemperatureSystem = "stc") {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { name: string; spool_ids: string[] }) => {
-      const { error } = await supabase.from("stc_custom_charts").insert({
+      const { error } = await (supabase as any).from(tableFor(system).charts).insert({
         name: input.name,
         spool_ids: input.spool_ids,
       });
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["stc_custom_charts"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [system, "charts"] }),
   });
 }
 
-export function useUpdateCustomChart() {
+export function useUpdateCustomChart(system: TemperatureSystem = "stc") {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: { id: string; name: string; spool_ids: string[] }) => {
-      const { error } = await supabase
-        .from("stc_custom_charts")
+      const { error } = await (supabase as any)
+        .from(tableFor(system).charts)
         .update({ name: input.name, spool_ids: input.spool_ids })
         .eq("id", input.id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["stc_custom_charts"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [system, "charts"] }),
   });
 }
 
-export function useDeleteCustomChart() {
+export function useDeleteCustomChart(system: TemperatureSystem = "stc") {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("stc_custom_charts").delete().eq("id", id);
+      const { error } = await (supabase as any).from(tableFor(system).charts).delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["stc_custom_charts"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [system, "charts"] }),
   });
 }
 
 
-export function useAddWeek() {
+export function useAddWeek(system: TemperatureSystem = "stc") {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: {
@@ -229,8 +239,8 @@ export function useAddWeek() {
       spool_ids: string[];
     }) => {
       // Ensure a tracking-week row exists as unpublished draft.
-      const { error: twErr } = await supabase
-        .from("stc_tracking_weeks")
+      const { error: twErr } = await (supabase as any)
+        .from(tableFor(system).weeks)
         .upsert(
           {
             week_number: input.week_number,
@@ -248,14 +258,14 @@ export function useAddWeek() {
         delta_t: null,
         confirmed: false,
       }));
-      const { error } = await supabase
-        .from("stc_temperature_readings")
+      const { error } = await (supabase as any)
+        .from(tableFor(system).readings)
         .upsert(rows, { onConflict: "spool_id,week_number,year", ignoreDuplicates: true });
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["stc_readings"] });
-      qc.invalidateQueries({ queryKey: ["stc_tracking_weeks"] });
+      qc.invalidateQueries({ queryKey: [system, "readings"] });
+      qc.invalidateQueries({ queryKey: [system, "weeks"] });
     },
   });
 }

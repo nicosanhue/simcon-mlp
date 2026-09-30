@@ -34,6 +34,7 @@ const App = () => (
           <Route path="/lubricacion-equipos" element={<LubricacionEquipos />} />
           <Route path="/reports" element={<Reports />} />
           <Route path="/stc-temperatura" element={<StcTemperatura />} />
+          <Route path="/str-temperatura" element={<StcTemperatura system="str" />} />
           <Route path="/admin" element={<AdminSettings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

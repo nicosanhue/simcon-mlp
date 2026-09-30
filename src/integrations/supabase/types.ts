@@ -711,6 +711,178 @@ export type Database = {
         }
         Relationships: []
       }
+      str_custom_charts: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          spool_ids: string[]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          spool_ids?: string[]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          spool_ids?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      str_spools: {
+        Row: {
+          branch: Database["public"]["Enums"]["stc_branch"]
+          created_at: string
+          id: string
+          order_index: number
+          spool_number: number | null
+          station_id: string
+          tag: string
+          updated_at: string
+        }
+        Insert: {
+          branch?: Database["public"]["Enums"]["stc_branch"]
+          created_at?: string
+          id?: string
+          order_index?: number
+          spool_number?: number | null
+          station_id: string
+          tag: string
+          updated_at?: string
+        }
+        Update: {
+          branch?: Database["public"]["Enums"]["stc_branch"]
+          created_at?: string
+          id?: string
+          order_index?: number
+          spool_number?: number | null
+          station_id?: string
+          tag?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "str_spools_station_id_fkey"
+            columns: ["station_id"]
+            isOneToOne: false
+            referencedRelation: "str_stations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      str_stations: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          order_index: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          order_index?: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          order_index?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      str_temperature_readings: {
+        Row: {
+          confirmed: boolean
+          created_at: string
+          delta_t: number | null
+          id: string
+          measured_at: string | null
+          spool_id: string
+          t_max: number | null
+          t_min: number | null
+          updated_at: string
+          week_number: number
+          year: number
+        }
+        Insert: {
+          confirmed?: boolean
+          created_at?: string
+          delta_t?: number | null
+          id?: string
+          measured_at?: string | null
+          spool_id: string
+          t_max?: number | null
+          t_min?: number | null
+          updated_at?: string
+          week_number: number
+          year: number
+        }
+        Update: {
+          confirmed?: boolean
+          created_at?: string
+          delta_t?: number | null
+          id?: string
+          measured_at?: string | null
+          spool_id?: string
+          t_max?: number | null
+          t_min?: number | null
+          updated_at?: string
+          week_number?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "str_temperature_readings_spool_id_fkey"
+            columns: ["spool_id"]
+            isOneToOne: false
+            referencedRelation: "str_spools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      str_tracking_weeks: {
+        Row: {
+          created_at: string
+          id: string
+          published: boolean
+          published_at: string | null
+          updated_at: string
+          week_number: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          published?: boolean
+          published_at?: string | null
+          updated_at?: string
+          week_number: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          published?: boolean
+          published_at?: string | null
+          updated_at?: string
+          week_number?: number
+          year?: number
+        }
+        Relationships: []
+      }
       systems: {
         Row: {
           area_id: string
