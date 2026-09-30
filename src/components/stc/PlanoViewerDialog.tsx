@@ -69,7 +69,7 @@ export function PlanoViewerDialog({ open, onOpenChange, stationCode }: Props) {
           canvas.style.width = `${viewport.width / dpr}px`;
           canvas.style.height = `${viewport.height / dpr}px`;
           canvas.className = "mx-auto rounded shadow-sm bg-background";
-          container.appendChild(hostLine(canvas));
+          host.appendChild(canvas);
           canvases.push(canvas);
 
           const ctx = canvas.getContext("2d")!;
