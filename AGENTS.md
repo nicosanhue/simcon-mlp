@@ -1,0 +1,2 @@
+- Reutilizar la pantalla y las consultas de temperatura mediante un identificador de sistema (`stc` o `str`) con tablas independientes: evita mezclar mediciones y mantener dos vistas divergentes.
+- Reservar los planos por sistema y mostrar controles de PDF solo para mapas existentes: evita asociar archivos STC a estaciones STR.

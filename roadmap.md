@@ -1,0 +1,3 @@
+- [ ] Reordenar navegación y conservar Lubricación al final.
+- [ ] Preparar STR con pantalla STC compartida y datos separados vacíos.
+- [ ] Verificar navegación, estados vacíos STR y continuidad STC.
