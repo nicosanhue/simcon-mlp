@@ -130,25 +130,26 @@ export function PlanoViewerDialog({ open, onOpenChange, stationCode }: Props) {
           ref={containerRef}
           className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden rounded-md border bg-muted/30 p-3"
         >
-          {loading && (
-            <div className="h-full flex items-center justify-center text-muted-foreground gap-2 text-sm">
-              <Loader2 className="h-4 w-4 animate-spin" /> Cargando plano...
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground gap-2 text-sm">
+            <Loader2 className="h-4 w-4 animate-spin" /> Cargando plano...
+          </div>
+        )}
+        {!loading && renderError && (
+          <div className="h-full flex flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
+            <p>No se pudo mostrar el plano aquí: {renderError}</p>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" onClick={() => url && window.open(url, "_blank")}>
+                <ExternalLink className="h-4 w-4 mr-1" /> Abrir en pestaña
+              </Button>
+              <Button size="sm" onClick={download}>
+                <Download className="h-4 w-4 mr-1" /> Descargar
+              </Button>
             </div>
-          )}
-          {!loading && renderError && (
-            <div className="h-full flex flex-col items-center justify-center gap-3 text-sm text-muted-foreground">
-              <p>No se pudo mostrar el plano aquí: {renderError}</p>
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={() => url && window.open(url, "_blank")}>
-                  <ExternalLink className="h-4 w-4 mr-1" /> Abrir en pestaña
-                </Button>
-                <Button size="sm" onClick={download}>
-                  <Download className="h-4 w-4 mr-1" /> Descargar
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
+        <div ref={hostRef} className={cn("min-h-full", loading || renderError ? "hidden" : "")} />
+      </div>
       </DialogContent>
     </Dialog>
   );
