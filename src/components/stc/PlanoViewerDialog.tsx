@@ -6,6 +6,7 @@ import * as pdfjs from "pdfjs-dist";
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import type { TemperatureSystem } from "@/hooks/useStcData";
 import { planoPathOf, planoSignedUrl } from "@/lib/stcPlanos";
 
 pdfjs.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
@@ -14,12 +15,13 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   stationCode: string | null;
+  system?: TemperatureSystem;
 }
 
 // Visor pop-up de planos PDF: renderiza todas las páginas con pdf.js,
 // ajustadas al ancho y con scroll vertical.
-export function PlanoViewerDialog({ open, onOpenChange, stationCode }: Props) {
-  const path = stationCode ? planoPathOf(stationCode) : null;
+export function PlanoViewerDialog({ open, onOpenChange, stationCode, system = "stc" }: Props) {
+  const path = stationCode ? planoPathOf(stationCode, system) : null;
   const [url, setUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [renderError, setRenderError] = useState<string | null>(null);
@@ -37,7 +39,7 @@ export function PlanoViewerDialog({ open, onOpenChange, stationCode }: Props) {
       setLoading(true);
       setRenderError(null);
       try {
-        const signed = await planoSignedUrl(path);
+        const signed = await planoSignedUrl(path, undefined, system);
         if (cancelled || !signed) throw new Error("No se pudo obtener el plano");
         const res = await fetch(signed);
         if (!res.ok) throw new Error("No se pudo descargar el plano");
@@ -106,7 +108,7 @@ export function PlanoViewerDialog({ open, onOpenChange, stationCode }: Props) {
     if (!path || !stationCode) return;
     try {
       const { downloadPlanoPdf } = await import("@/lib/stcPlanos");
-      await downloadPlanoPdf(stationCode);
+      await downloadPlanoPdf(stationCode, system);
     } catch (e: any) {
       toast.error("Error al descargar: " + (e?.message ?? e));
     }

@@ -4,12 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 export type TemperatureSystem = "stc" | "str";
 
 const tableFor = (system: TemperatureSystem) => ({
-  stations: `${system}_stations` as "stc_stations" | "str_stations",
-  spools: `${system}_spools` as "stc_spools" | "str_spools",
-  readings: `${system}_temperature_readings` as "stc_temperature_readings" | "str_temperature_readings",
-  weeks: `${system}_tracking_weeks` as "stc_tracking_weeks" | "str_tracking_weeks",
-  charts: `${system}_custom_charts` as "stc_custom_charts" | "str_custom_charts",
-});
+  stations: system === "stc" ? "stc_stations" : "str_stations",
+  spools: system === "stc" ? "stc_spools" : "str_spools",
+  readings: system === "stc" ? "stc_temperature_readings" : "str_temperature_readings",
+  weeks: system === "stc" ? "stc_tracking_weeks" : "str_tracking_weeks",
+  charts: system === "stc" ? "stc_custom_charts" : "str_custom_charts",
+}) as const;
 
 export interface StcStation {
   id: string;
@@ -77,7 +77,7 @@ export function useStcSpools(system: TemperatureSystem = "stc") {
 
 export function useStcReadings(system: TemperatureSystem = "stc") {
   return useQuery({
-    queryKey: ["stc_readings"],
+    queryKey: [system, "readings"],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
         .from(tableFor(system).readings)
@@ -127,7 +127,7 @@ export function useUpdateReading(system: TemperatureSystem = "stc") {
         .upsert(row, { onConflict: "spool_id,week_number,year" });
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["stc_readings"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [system, "readings"] }),
   });
 }
 
@@ -143,7 +143,7 @@ export function useConfirmAllPending(system: TemperatureSystem = "stc") {
         .eq("confirmed", false);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["stc_readings"] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [system, "readings"] }),
   });
 }
 
@@ -264,7 +264,7 @@ export function useAddWeek(system: TemperatureSystem = "stc") {
       if (error) throw error;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["stc_readings"] });
+      qc.invalidateQueries({ queryKey: [system, "readings"] });
       qc.invalidateQueries({ queryKey: [system, "weeks"] });
     },
   });
