@@ -304,7 +304,9 @@ export function CustomChartsSection({ stations, spools, readingsIndex, latest, s
 
       {charts.length === 0 ? (
         <p className="text-sm text-muted-foreground text-center py-8">
-          Aún no hay seguimientos especiales. Haz click en "Agregar seguimiento" para crear el primero.
+          {spools.length === 0
+            ? "Aún no hay spools para seguimientos especiales."
+            : 'Aún no hay seguimientos especiales. Haz click en "Agregar seguimiento" para crear el primero.'}
         </p>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">

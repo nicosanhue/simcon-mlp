@@ -305,13 +305,13 @@ export default function StcTemperatura({ system = "stc" }: { system?: Temperatur
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <Thermometer className="h-6 w-6 text-primary" />
               {system === "stc" ? "STC Control Temperatura" : "STR Control Temperatura"}
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground break-words">
               Seguimiento termográfico semanal de spools por estación
             </p>
           </div>
@@ -443,6 +443,7 @@ export default function StcTemperatura({ system = "stc" }: { system?: Temperatur
           <h2 className="font-semibold mb-3">
             Resumen por Estación {latest && `— Semana ${latest.week}/${latest.year}`}
           </h2>
+          <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -507,6 +508,7 @@ export default function StcTemperatura({ system = "stc" }: { system?: Temperatur
               })}
             </TableBody>
           </Table>
+          </div>
         </Card>
 
         {/* Charts per station */}
@@ -593,7 +595,7 @@ export default function StcTemperatura({ system = "stc" }: { system?: Temperatur
 
         {/* Full table */}
         <Card className="p-4">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
             <h2 className="font-semibold">Tabla completa de spools</h2>
             <div className="flex items-center gap-2">
               <Label htmlFor="show-all" className="text-sm">
