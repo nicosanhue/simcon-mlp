@@ -58,6 +58,8 @@ import {
   ArrowUp,
   CheckCircle2,
   ChevronDown,
+  Download,
+  Eye,
   Minus,
   Plus,
   Thermometer,
@@ -66,6 +68,8 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CustomChartsSection } from "@/components/stc/CustomChartsSection";
+import { PlanoViewerDialog } from "@/components/stc/PlanoViewerDialog";
+import { downloadPlanoPdf, planoPathOf } from "@/lib/stcPlanos";
 
 function fmt(n: number | null | undefined) {
   if (n === null || n === undefined || Number.isNaN(n)) return "—";
@@ -131,6 +135,7 @@ function DeltaCell({
 export default function StcTemperatura() {
   const { isEditor } = useProfile();
   const stations = useStcStations().data ?? [];
+  const [planoStation, setPlanoStation] = useState<string | null>(null);
   const spools = useStcSpools().data ?? [];
   const readings = useStcReadings().data ?? [];
   const trackingWeeks = useStcTrackingWeeks().data ?? [];
@@ -440,6 +445,7 @@ export default function StcTemperatura() {
                 <TableHead className="text-right">ΔT máx (°C)</TableHead>
                 <TableHead className="text-center">Tendencia</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Plano</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -471,6 +477,25 @@ export default function StcTemperatura() {
                       >
                         {status.label}
                       </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {planoPathOf(st.code) && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          aria-label={`Descargar plano ${st.code}`}
+                          onClick={async () => {
+                            try {
+                              await downloadPlanoPdf(st.code);
+                              toast.success(`Plano ${st.code} descargado`);
+                            } catch (e: any) {
+                              toast.error("Error al descargar: " + (e?.message ?? e));
+                            }
+                          }}
+                        >
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 );
@@ -508,9 +533,21 @@ export default function StcTemperatura() {
                   });
                   return (
                     <Card key={st.id} className="p-4">
-                      <h3 className="font-semibold mb-2 text-sm">
-                        {st.code} — Línea Principal (ΔT por Spool)
-                      </h3>
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <h3 className="font-semibold text-sm">
+                          {st.code} — Línea Principal (ΔT por Spool)
+                        </h3>
+                        {planoPathOf(st.code) && (
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            aria-label={`Ver plano ${st.code}`}
+                            onClick={() => setPlanoStation(st.code)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
                       <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
                           <BarChart
@@ -702,6 +739,13 @@ export default function StcTemperatura() {
           spools={spools}
           readingsIndex={readingsIndex}
           latest={latest}
+        />
+
+        {/* Plano viewer pop-up */}
+        <PlanoViewerDialog
+          open={!!planoStation}
+          onOpenChange={(v) => !v && setPlanoStation(null)}
+          stationCode={planoStation}
         />
       </div>
     </MainLayout>
