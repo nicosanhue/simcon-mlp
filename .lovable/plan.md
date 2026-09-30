@@ -1,6 +1,6 @@
-# Dashboard: retirar botones, ordenar condiciones, selector de áreas y lectura de informes
+# Dashboard y STC: cinco ajustes
 
-Cuatro ajustes en el Dashboard.
+Cinco ajustes en el Dashboard y en Control Temperatura STC.
 
 ## 1. Quitar los botones de descarga
 
@@ -45,3 +45,23 @@ En el pop-up de un equipo, el resumen de cada informe técnico hoy se muestra re
 - Las palabras largas o continuas se parten para que nunca se salgan del ancho disponible.
 - La lectura queda hacia abajo: la ventana del pop-up sigue desplazándose en vertical y desaparece la barra horizontal.
 - Los botones de ver, descargar, editar y eliminar del informe quedan a la derecha, sin que el texto los empuje.
+
+## 5. Planos PDF en Control Temperatura STC
+
+Los 5 planos (ISO-01 a ISO-05) se guardan en la nube del proyecto y quedan disponibles dentro de la sección STC.
+
+Correspondencia entre planos y estaciones:
+
+```text
+370-ISO-01  Km 0            -> KM00
+370-ISO-02  Km 22           -> KM22
+370-ISO-03  Est. Monit. STC -> KM39, KM60 y KM93
+370-ISO-04  Km 80           -> KM80
+370-ISO-05  Km 120          -> KM120
+```
+
+- En la tabla "Resumen por Estación" se agrega una columna "Plano" a la derecha, con un ícono de descarga que baja el PDF del plano correspondiente a esa estación (las estaciones Km39, Km60 y Km93 comparten el mismo plano).
+- En cada gráfico "Estación — Línea Principal" se agrega un ícono (ojo) junto al título, que abre el plano en un pop-up dentro de la misma página: se ve el PDF completo con scroll vertical, sin salir de la vista.
+- El mismo visor pop-up que se usa en Informes se reutiliza aquí, así que el comportamiento es conocido: "Abrir en pestaña nueva" y "Descargar" dentro del visor.
+- El usuario sin perfil (solo lectura) también puede ver y descargar los planos: solo la administración de los archivos queda para perfiles de modificación.
+- Los archivos suben a la nube del proyecto; si mañana se actualiza un plano, se reemplaza el archivo y todos ven la versión nueva.
