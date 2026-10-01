@@ -6,4 +6,6 @@
 - [x] Ocultar el botón "Descargar Críticos" de la barra superior (conservar el componente).
 - [x] Crear sección "Graficar Spool" con buscador y gráfico del historial por semana.
 - [x] Verificar en la vista previa (STC y STR) y confirmar build sin errores.
+- [x] Publicar la versión actual y confirmar que el sitio publicado ya no muestra "Descargar Críticos" ni "Debug BD".
+- [ ] Revisar los hallazgos del panel de Seguridad (acceso sin límites a tablas y archivos) si se decide cerrar la edición por perfil.
 - [ ] Cargar información de STR (estaciones, spools, lecturas y planos) cuando el usuario la suba.
