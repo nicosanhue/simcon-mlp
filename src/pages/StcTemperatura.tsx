@@ -70,7 +70,9 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { CustomChartsSection } from "@/components/stc/CustomChartsSection";
 import { PlanoViewerDialog } from "@/components/stc/PlanoViewerDialog";
+import { SpoolHistoryChart } from "@/components/stc/SpoolHistoryChart";
 import { downloadPlanoPdf, planoPathOf } from "@/lib/stcPlanos";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 function fmt(n: number | null | undefined) {
   if (n === null || n === undefined || Number.isNaN(n)) return "—";
@@ -214,16 +216,23 @@ export default function StcTemperatura({ system = "stc" }: { system?: Temperatur
     [trackingWeeks],
   );
 
-  const stationMax = (stationId: string, week?: { week: number; year: number }) => {
-    if (!week) return 0;
+  const stationMax = (
+    stationId: string,
+    week?: { week: number; year: number },
+  ): { value: number; spool: StcSpool | null } => {
+    if (!week) return { value: 0, spool: null };
     const arr = spoolsByStation.get(stationId) ?? [];
     let max = 0;
-    arr.forEach((sp) => {
+    let top: StcSpool | null = null;
+    for (const sp of arr) {
       const r = readingsIndex.get(sp.id)?.get(`${week.year}-${week.week}`);
       const v = r?.delta_t ?? 0;
-      if (v > max) max = v;
-    });
-    return max;
+      if (v > max) {
+        max = v;
+        top = sp;
+      }
+    }
+    return { value: max, spool: top };
   };
 
   const stationTrend = (stationId: string): "up" | "down" | "flat" => {
@@ -456,7 +465,8 @@ export default function StcTemperatura({ system = "stc" }: { system?: Temperatur
             </TableHeader>
             <TableBody>
               {stations.map((st) => {
-                const currMax = stationMax(st.id, latest);
+                const maxInfo = stationMax(st.id, latest);
+                const currMax = maxInfo.value;
                 const status = getStcStatus(currMax);
                 const trend = stationTrend(st.id);
                 const TrendIcon =
@@ -470,7 +480,20 @@ export default function StcTemperatura({ system = "stc" }: { system?: Temperatur
                 return (
                   <TableRow key={st.id}>
                     <TableCell className="font-medium">{st.code}</TableCell>
-                    <TableCell className="text-right font-mono">{fmt(currMax)}</TableCell>
+                    <TableCell className="text-right font-mono">
+                      {maxInfo.spool ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-help">{fmt(currMax)}</span>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            Spool: {maxInfo.spool.tag}
+                          </TooltipContent>
+                        </Tooltip>
+                      ) : (
+                        fmt(currMax)
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className={cn("flex items-center justify-center", trendColor)}>
                         <TrendIcon className="h-4 w-4" />
@@ -739,6 +762,14 @@ export default function StcTemperatura({ system = "stc" }: { system?: Temperatur
             })}
           </div>
         </Card>
+
+        {/* Spool history chart */}
+        <SpoolHistoryChart
+          stations={stations}
+          spools={spools}
+          readingsIndex={readingsIndex}
+          system={system}
+        />
 
         {/* Custom charts section */}
         <CustomChartsSection
