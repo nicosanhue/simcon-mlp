@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
-import { CriticalReportDownload } from "@/components/reports/CriticalReportDownload";
+// CriticalReportDownload se conserva en el proyecto pero ya no se muestra en la barra superior.
 import { Separator } from "@/components/ui/separator";
 import bgCorporate from "@/assets/bg-corporate.png";
 
@@ -30,9 +30,6 @@ export function MainLayout({ children }: MainLayoutProps) {
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="h-4" />
               <span className="text-sm font-medium text-muted-foreground" title="Sistema Monitoreo de Condiciones">SIMCON</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <CriticalReportDownload />
             </div>
           </header>
           <main className="flex-1 min-w-0 p-6 overflow-auto">

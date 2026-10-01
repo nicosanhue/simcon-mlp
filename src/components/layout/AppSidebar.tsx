@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import simconLogo from "@/assets/simcon-logo.png.asset.json";
-import { SidebarDebugPanel } from "./SidebarDebugPanel";
+// SidebarDebugPanel se conserva en el proyecto pero ya no se muestra en la barra lateral.
 import { ProfileMenu } from "@/components/profile/ProfileMenu";
 import {
   Sidebar,
@@ -98,9 +98,6 @@ export function AppSidebar() {
         <ProfileMenu />
       </SidebarContent>
 
-      <div className="border-t border-sidebar-border">
-        <SidebarDebugPanel />
-      </div>
 
       <SidebarFooter className="border-t border-sidebar-border p-2">
         <Button 
