@@ -1,3 +1,8 @@
 - [x] Reordenar navegación y conservar Lubricación al final.
 - [x] Preparar STR con pantalla STC compartida y datos separados vacíos.
 - [x] Verificar navegación, estados vacíos STR y continuidad STC.
+- [ ] Mostrar en tooltip el TAG del spool de mayor ΔT al pasar por el ΔT máx de cada estación.
+- [ ] Ocultar el panel "Debug BD" de la barra lateral (conservar el componente).
+- [ ] Ocultar el botón "Descargar Críticos" de la barra superior (conservar el componente).
+- [ ] Crear sección "Graficar Spool" con buscador y gráfico del historial por semana.
+- [ ] Verificar en la vista previa (STC y STR) y confirmar build sin errores.
