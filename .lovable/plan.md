@@ -1,12 +1,11 @@
-# Tooltip con TAG del spool de mayor ΔT en el resumen por estación
+# TAG en tooltip del ΔT máx y ocultar panel "Debug BD"
 
 ## Resultado
-- En la tabla **Resumen por Estación** de Control Temperatura (STC y STR), al pasar el cursor sobre el valor de **ΔT máx (°C)** aparecerá un tooltip con el TAG del spool que registra el mayor delta de esa estación en la semana mostrada.
-- Si la estación no tiene mediciones (o todas son 0/vacías), no se mostrará tooltip.
-- El comportamiento será idéntico en STC y STR, sin cambiar ningún otro cálculo ni el diseño de la tabla.
+1. **TAG del spool al pasar por encima del ΔT máx.** En la tabla "Resumen por Estación" (STC y STR), al poner el cursor sobre el valor de **ΔT máx (°C)** aparecerá un tooltip con el TAG del spool que registra el mayor delta de esa estación en la semana mostrada (por ejemplo `370-STC-014`). Si la estación no tiene mediciones con delta, no se muestra tooltip.
+2. **Ocultar "Debug BD".** El panel lateral con "Equipos" y "Reportes" dejará de verse en la barra de navegación, tanto expandido como contraído. No se elimina el código: se conserva para reactivarlo si vuelve a hacer falta.
 
 ## Detalles técnicos
-- En `src/pages/StcTemperatura.tsx`, extender `stationMax` para devolver también el spool con el mayor `delta_t` (misma semana `latest` que ya usa la tabla).
-- Envolver la celda de ΔT máx con el componente `Tooltip` de shadcn (`src/components/ui/tooltip.tsx`), mostrando por ejemplo: `Spool: 370-STC-001` (TAG real del spool).
-- Solo se renderiza el tooltip cuando existe un spool con delta > 0; en caso contrario la celda queda como está.
-- Verificar en la vista previa que el tooltip aparece al hacer hover en STC y que el build no tiene errores.
+- `src/pages/StcTemperatura.tsx`: `stationMax` pasará a devolver también el spool con el mayor `delta_t` de la semana actual (`latest`), reutilizando `spoolsByStation` y `readingsIndex` que ya usa la tabla.
+- La celda de ΔT máx se envuelve con el componente `Tooltip` ya disponible (`src/components/ui/tooltip.tsx`); el tooltip solo se renderiza cuando existe un spool con delta mayor que 0.
+- `src/components/layout/AppSidebar.tsx`: se retira el render de `<SidebarDebugPanel />` (y su import). El archivo `SidebarDebugPanel.tsx` queda intacto.
+- Verificar en la vista previa: tooltip visible al hacer hover en STC, panel Debug BD ausente en la barra lateral, y build sin errores.
