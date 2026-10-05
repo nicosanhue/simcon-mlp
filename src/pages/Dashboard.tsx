@@ -8,6 +8,9 @@ import { CriticalAlertsList } from "@/components/dashboard/CriticalAlertsList";
 import { WeekSelector } from "@/components/dashboard/WeekSelector";
 import { AreaFilter } from "@/components/dashboard/AreaFilter";
 import { EquipmentSearch } from "@/components/dashboard/EquipmentSearch";
+import { ConditionsExcelDownload } from "@/components/reports/ConditionsExcelDownload";
+import { CriticalReportDownload } from "@/components/reports/CriticalReportDownload";
+import { DashboardScreenshotDownload } from "@/components/reports/DashboardScreenshotDownload";
 import { useDashboardData, GroupedStats, DebugCounts } from "@/hooks/useDashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -169,6 +172,20 @@ export default function Dashboard() {
             />
           </div>
         </div>
+
+        {week !== null && year !== null && (
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <CriticalReportDownload />
+            <ConditionsExcelDownload week={week} year={year} />
+            <DashboardScreenshotDownload
+              areas={areas}
+              currentWeek={week}
+              currentYear={year}
+              onAreaChange={setSelectedArea}
+              dashboardRef={dashboardRef}
+            />
+          </div>
+        )}
 
         {/* Stats Cards */}
         {isLoading ? (
