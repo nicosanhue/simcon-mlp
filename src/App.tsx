@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import LubricacionEquipos from "./pages/LubricacionEquipos";
 import Reports from "./pages/Reports";
 import StcTemperatura from "./pages/StcTemperatura";
+import RepulpeoQuillayes from "./pages/RepulpeoQuillayes";
 import { ProfileProvider } from "./contexts/ProfileContext";
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ const App = () => (
           <Route path="/reports" element={<Reports />} />
           <Route path="/stc-temperatura" element={<StcTemperatura />} />
           <Route path="/str-temperatura" element={<StcTemperatura system="str" />} />
+          <Route path="/repulpeo-quillayes" element={<RepulpeoQuillayes />} />
           <Route path="/admin" element={<AdminSettings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
