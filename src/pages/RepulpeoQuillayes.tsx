@@ -19,13 +19,7 @@ export default function RepulpeoQuillayes() {
             <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
               <Gauge className="h-8 w-8 text-primary" />
             </div>
-            <div className="space-y-2">
-              <h2 className="text-lg font-semibold text-foreground">Panel PumpGuardian</h2>
-              <p className="text-sm text-muted-foreground">
-                El panel de bombas de Repulpeo Quillayes se abre directamente en PumpGuardian.
-                Inicia sesión la primera vez; el navegador recordará tu sesión.
-              </p>
-            </div>
+            <h2 className="text-lg font-semibold text-foreground">Panel PumpGuardian</h2>
             <div className="flex flex-wrap justify-center gap-3">
               <Button size="lg" onClick={openWindow}>
                 <AppWindow className="h-4 w-4 mr-2" />
