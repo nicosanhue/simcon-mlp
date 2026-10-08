@@ -39,7 +39,7 @@ export function ConditionsExcelDownload({ week, year }: Props) {
             )
           )
         `)
-        .in("status", ["Crítico", "Alerta", "Seguimiento"])
+        .in("status", ["Crítico", "Alerta", "Seguimiento", "Sin medición"])
         .eq("week_number", week)
         .eq("year", year);
 
@@ -48,12 +48,12 @@ export function ConditionsExcelDownload({ week, year }: Props) {
       if (!data || data.length === 0) {
         toast({
           title: "Sin datos",
-          description: `No hay equipos en Crítico / Alerta / Seguimiento para semana ${week}/${year}`,
+          description: `No hay equipos en Crítico / Alerta / Seguimiento / Sin medición para semana ${week}/${year}`,
         });
         return;
       }
 
-      const order = { "Crítico": 0, "Alerta": 1, "Seguimiento": 2 } as Record<string, number>;
+      const order = { "Crítico": 0, "Alerta": 1, "Seguimiento": 2, "Sin medición": 3 } as Record<string, number>;
       const rows = data
         .map((r: any) => ({
           Estado: r.status,
