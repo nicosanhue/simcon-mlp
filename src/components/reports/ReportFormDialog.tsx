@@ -566,9 +566,9 @@ export function ReportFormDialog({
               </div>
             )}
           </div>
+          </>)}
         </div>
 
-        </>)}
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button onClick={handleSave} disabled={save.isPending}>

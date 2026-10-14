@@ -118,7 +118,7 @@ export function ThermoReportFields(p: Props) {
                     <td className="p-2 font-mono">{l.tag}</td>
                     <td className="p-2">{l.estacion}</td>
                     <td className="p-2 text-center">{l.delta.toFixed(1)}</td>
-                    <td className={`p-2 text-center font-semibold ${l.condicion === "Peligro" ? "text-destructive" : "text-warning"}`}>{l.condicion}</td>
+                    <td className={`p-2 text-center font-semibold ${l.condicion === "Peligro" ? "text-destructive" : "text-primary"}`}>{l.condicion}</td>
                     <td className="p-1">
                       <Input className="h-7 text-xs" value={p.ordenes[l.tag] || ""}
                         onChange={(e) => { const v = e.target.value; p.setOrdenes((o) => ({ ...o, [l.tag]: v })); }} />
