@@ -2,10 +2,10 @@ import { useState } from "react";
 import { FileText, Download, Plus, Loader2, Trash2, Pencil, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useEquipmentReports, useDeleteReport, ReportRow, reportToPdfData } from "@/hooks/useReports";
+import { useEquipmentReports, useDeleteReport, ReportRow, reportToPdfData, getReportPdf } from "@/hooks/useReports";
 import { ReportFormDialog } from "./ReportFormDialog";
 import { ReportPreviewDialog } from "./ReportPreviewDialog";
-import { generateReportPdf, reportFileName, ReportPdfData } from "@/lib/pdfReport";
+import { reportFileName, ReportPdfData } from "@/lib/pdfReport";
 import { toast } from "sonner";
 
 interface Props {
@@ -25,7 +25,7 @@ export function EquipmentReportsSection(props: Props) {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ReportRow | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [preview, setPreview] = useState<{ data: ReportPdfData; fileName: string } | null>(null);
+  const [preview, setPreview] = useState<{ data: ReportPdfData; fileName: string; loader: () => Promise<Blob> } | null>(null);
 
   function pdfData(r: ReportRow): ReportPdfData {
     return {
@@ -42,7 +42,7 @@ export function EquipmentReportsSection(props: Props) {
   async function download(r: ReportRow) {
     try {
       setDownloadingId(r.id);
-      const blob = await generateReportPdf(pdfData(r));
+      const blob = await getReportPdf(r, pdfData);
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -89,7 +89,7 @@ export function EquipmentReportsSection(props: Props) {
                 {r.hallazgos && <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line break-words">{r.hallazgos}</p>}
               </div>
               <div className="flex gap-1">
-                <Button size="sm" variant="ghost" onClick={() => setPreview({ data: pdfData(r), fileName: fileNameOf(r) })}>
+                <Button size="sm" variant="ghost" onClick={() => setPreview({ data: pdfData(r), fileName: fileNameOf(r), loader: () => getReportPdf(r, pdfData) })}>
                   <Eye className="h-3 w-3" />
                 </Button>
                 <Button size="sm" variant="ghost" onClick={() => download(r)} disabled={downloadingId === r.id}>
@@ -125,6 +125,7 @@ export function EquipmentReportsSection(props: Props) {
         onOpenChange={(v) => !v && setPreview(null)}
         data={preview?.data || null}
         fileName={preview?.fileName || "informe.pdf"}
+        loader={preview?.loader}
       />
     </div>
   );

@@ -14,9 +14,10 @@ interface Props {
   onOpenChange: (v: boolean) => void;
   data: ReportPdfData | null;
   fileName: string;
+  loader?: () => Promise<Blob>;
 }
 
-export function ReportPreviewDialog({ open, onOpenChange, data, fileName }: Props) {
+export function ReportPreviewDialog({ open, onOpenChange, data, fileName, loader }: Props) {
   const [url, setUrl] = useState<string | null>(null);
   const [size, setSize] = useState<number>(0);
   const [loading, setLoading] = useState(false);
@@ -30,11 +31,11 @@ export function ReportPreviewDialog({ open, onOpenChange, data, fileName }: Prop
     let doc: any = null;
 
     async function run() {
-      if (!open || !data) return;
+      if (!open || (!data && !loader)) return;
       setLoading(true);
       setRenderError(null);
       try {
-        const blob = await generateReportPdf(data);
+        const blob = loader ? await loader() : await generateReportPdf(data!);
         if (cancelled) return;
         objectUrl = URL.createObjectURL(blob);
         setUrl(objectUrl);

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { ReportPdfData, worstCondition, GERENCIA_FIJA } from "@/lib/pdfReport";
+import { ReportPdfData, worstCondition, GERENCIA_FIJA, generateReportPdf } from "@/lib/pdfReport";
 
 export type ReportTipo = "Vibraciones" | "Termografia" | "Ultrasonido" | "Lubricacion";
 
@@ -101,6 +101,47 @@ async function signPhotos(photos: ReportPhoto[]): Promise<ReportPhoto[]> {
   return photos.map((p, i) => ({ ...p, signedUrl: data?.[i]?.signedUrl }));
 }
 
+/** Firma las fotos de un solo informe (se usa al ver, descargar o editar). */
+export async function withSignedPhotos(r: ReportRow): Promise<ReportRow> {
+  const sorted = (r.photos || []).slice().sort((a, b) => a.orden - b.orden);
+  return { ...r, photos: await signPhotos(sorted) };
+}
+
+const PDF_BUCKET = "report-pdfs";
+const pdfPathOf = (id: string) => `${id}.pdf`;
+
+async function buildAndStorePdf(
+  r: ReportRow,
+  build: (r: ReportRow) => ReportPdfData = reportToPdfData
+): Promise<Blob> {
+  const signed = await withSignedPhotos(r);
+  const blob = await generateReportPdf(build(signed));
+  await supabase.storage
+    .from(PDF_BUCKET)
+    .upload(pdfPathOf(r.id), blob, { contentType: "application/pdf", upsert: true })
+    .catch(() => undefined);
+  return blob;
+}
+
+/** PDF guardado en la nube; si no existe, lo genera y lo guarda. */
+export async function getReportPdf(
+  r: ReportRow,
+  build?: (r: ReportRow) => ReportPdfData
+): Promise<Blob> {
+  const { data, error } = await supabase.storage.from(PDF_BUCKET).download(pdfPathOf(r.id));
+  if (!error && data && data.size > 0) return data;
+  return buildAndStorePdf(r, build);
+}
+
+async function refreshReportPdf(id: string) {
+  const { data } = await supabase
+    .from("reports")
+    .select(`${SELECT_COLS}, equipment:equipment_id ( id, tag, name, systems ( name, areas ( name ) ) )`)
+    .eq("id", id)
+    .maybeSingle();
+  if (data) await buildAndStorePdf(data as any as ReportRow);
+}
+
 export function useReports(filters?: {
   tipo?: ReportTipo | "all";
   equipmentId?: string;
@@ -128,7 +169,8 @@ export function useReports(filters?: {
       const { data, error } = await q;
       if (error) throw error;
 
-      let rows = (data as any as ReportRow[]) || [];
+      const rows0 = (data as any as ReportRow[]) || [];
+      let rows = rows0;
       if (filters?.search?.trim()) {
         const term = filters.search.trim().toLowerCase();
         rows = rows.filter(
@@ -138,9 +180,6 @@ export function useReports(filters?: {
         );
       }
 
-      for (const r of rows) {
-        r.photos = await signPhotos((r.photos || []).sort((a, b) => a.orden - b.orden));
-      }
       return rows;
     },
   });
@@ -161,9 +200,6 @@ export function useEquipmentReports(equipmentId?: string) {
         .order("week_number", { ascending: false });
       if (error) throw error;
       const rows = (data as any as ReportRow[]) || [];
-      for (const r of rows) {
-        r.photos = await signPhotos((r.photos || []).sort((a, b) => a.orden - b.orden));
-      }
       return rows;
     },
   });
@@ -341,6 +377,12 @@ export function useSaveReport() {
         await supabase.from("reports").update({ weekly_report_id: weeklyId }).eq("id", reportId!);
       }
 
+      try {
+        await refreshReportPdf(reportId!);
+      } catch (e) {
+        console.warn("No se pudo guardar el PDF del informe", e);
+      }
+
       return reportId!;
     },
     onSuccess: () => {
@@ -367,6 +409,7 @@ export function useDeleteReport() {
       if (photos?.length) {
         await supabase.storage.from("report-photos").remove(photos.map((p) => p.storage_path));
       }
+      await supabase.storage.from(PDF_BUCKET).remove([pdfPathOf(id)]);
       const { error } = await supabase.from("reports").delete().eq("id", id);
       if (error) throw error;
     },
