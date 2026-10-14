@@ -68,9 +68,9 @@ export default function Assets() {
     setIsLoading(true);
     try {
       const [areasRes, systemsRes, equipmentRes] = await Promise.all([
-        supabase.from('areas').select('*').order('name'),
-        supabase.from('systems').select('*, areas(name)').order('name'),
-        supabase.from('equipment').select('*, systems(name, areas(name))').order('tag'),
+        supabase.from('areas').select('*').neq('name', 'Control Temperatura').order('name'),
+        supabase.from('systems').select('*, areas(name)').neq('name', 'Control Temperatura').order('name'),
+        supabase.from('equipment').select('*, systems(name, areas(name))').not('tag', 'in', '(STC,STR)').order('tag'),
       ]);
 
       if (areasRes.error) throw areasRes.error;
