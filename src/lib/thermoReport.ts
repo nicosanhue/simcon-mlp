@@ -317,7 +317,7 @@ export async function generateThermoReportPdf(d: ThermoPdfData): Promise<Blob> {
   // ── Páginas por estación
   for (const st of d.stations) {
     doc.addPage();
-    y = header(`ESTACIÓN ${st.name.toUpperCase()}`, "ANEXO A: Imágenes inspección");
+    y = header(`ESTACIÓN ${st.name.replace(/^estaci[oó]n\s*/i, "").toUpperCase()}`, "ANEXO A: Imágenes inspección");
     const cols = 3, gap = 8;
     const imgW = (cw - gap * (cols - 1)) / cols;
     const imgH = imgW * 0.75;
