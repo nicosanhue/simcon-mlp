@@ -636,12 +636,25 @@ export default function StcTemperatura({ system = "stc" }: { system?: Temperatur
               const isOpen = !!openStations[st.id];
 
               const renderRows = (list: StcSpool[]) =>
-                list.map((sp) => {
+                list.flatMap((sp, idx) => {
+                  const g = sp.grupo ?? null;
+                  const prevG = idx > 0 ? list[idx - 1].grupo ?? null : null;
+                  const header =
+                    g && g !== prevG ? (
+                      <TableRow key={`g-${sp.id}`}>
+                        <TableCell
+                          colSpan={2 + visibleWeeks.length + 1}
+                          className="bg-secondary/60 text-xs font-semibold pl-6"
+                        >
+                          {g}
+                        </TableCell>
+                      </TableRow>
+                    ) : null;
                   const latestR = latest
                     ? readingsIndex.get(sp.id)?.get(`${latest.year}-${latest.week}`)
                     : undefined;
                   const status = getStcStatus(latestR?.delta_t ?? null);
-                  return (
+                  const row = (
                     <TableRow key={sp.id}>
                       <TableCell className="font-mono text-xs">
                         {sp.spool_number ?? "—"}
@@ -679,6 +692,7 @@ export default function StcTemperatura({ system = "stc" }: { system?: Temperatur
                       </TableCell>
                     </TableRow>
                   );
+                  return header ? [header, row] : [row];
                 });
 
               return (
