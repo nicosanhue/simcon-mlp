@@ -10,3 +10,5 @@
 - [x] Restaurar las tres descargas: Críticos, Excel Condiciones y Captura por Área, conservando su funcionamiento.
 - [ ] Revisar los hallazgos del panel de Seguridad (acceso sin límites a tablas y archivos) si se decide cerrar la edición por perfil.
 - [ ] Cargar información de STR (estaciones, spools, lecturas y planos) cuando el usuario la suba.
+
+- [x] Informes de termografía STC/STR (formulario, fotos por estación, PDF multipágina)
