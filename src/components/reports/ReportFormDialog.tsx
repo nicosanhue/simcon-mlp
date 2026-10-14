@@ -9,7 +9,7 @@ import { X, Loader2, Upload, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { compressImage, CONDICIONES, worstCondition, conditionRgb, GERENCIA_FIJA } from "@/lib/pdfReport";
-import { useSaveReport, ReportRow, ReportTipo, ReportItem, COMPONENTES } from "@/hooks/useReports";
+import { useSaveReport, ReportRow, ReportTipo, ReportItem, COMPONENTES, withSignedPhotos } from "@/hooks/useReports";
 import { useQuery } from "@tanstack/react-query";
 
 interface Props {
