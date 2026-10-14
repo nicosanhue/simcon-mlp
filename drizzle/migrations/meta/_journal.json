@@ -8,6 +8,13 @@
       "when": 1792006474431,
       "tag": "0000_report_pdfs_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792006857845,
+      "tag": "0001_str_spools_grupo",
+      "breakpoints": true
     }
   ]
 }

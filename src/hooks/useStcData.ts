@@ -25,6 +25,7 @@ export interface StcSpool {
   tag: string;
   branch: "principal" | "variable_emergencia";
   order_index: number;
+  grupo?: string | null;
 }
 
 export interface StcReading {
