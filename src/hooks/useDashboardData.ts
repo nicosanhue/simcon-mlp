@@ -1,3 +1,4 @@
+import { TEMP_AREA_NAME } from "@/lib/tempSystems";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -97,6 +98,7 @@ async function fetchAllEquipment(areaId: string, searchTerm?: string) {
           planned_date
         )
       `)
+      .neq("systems.areas.name", TEMP_AREA_NAME)
       .range(from, from + PAGE_SIZE - 1);
 
     if (areaId !== "all") {
@@ -130,6 +132,7 @@ export function useDashboardData(filters: DashboardFilters) {
       const { data, error } = await supabase
         .from("areas")
         .select("id, name")
+        .neq("name", TEMP_AREA_NAME)
         .order("name");
       if (error) throw error;
       return data;
@@ -142,6 +145,7 @@ export function useDashboardData(filters: DashboardFilters) {
       const { data, error } = await supabase
         .from("systems")
         .select("id, name, area_id")
+        .neq("name", TEMP_AREA_NAME)
         .order("name");
       if (error) throw error;
       return data;
