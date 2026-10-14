@@ -38,6 +38,7 @@ export default function EquipmentTree() {
       const { data: areas, error: areasError } = await supabase
         .from('areas')
         .select('id, name')
+        .neq('name', 'Control Temperatura')
         .order('name');
       
       if (areasError) throw areasError;

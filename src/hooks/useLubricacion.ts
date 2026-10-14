@@ -153,7 +153,8 @@ export function useLubEquipment() {
       for (let from = 0; ; from += PAGE) {
         const { data, error } = await supabase
           .from("equipment")
-          .select("id, tag, name, system_id, systems ( name, areas ( name ) )")
+          .select("id, tag, name, system_id, systems!inner ( name, areas!inner ( name ) )")
+          .neq("systems.areas.name", "Control Temperatura")
           .order("tag")
           .range(from, from + PAGE - 1);
         if (error) throw error;

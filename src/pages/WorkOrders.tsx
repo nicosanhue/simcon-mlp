@@ -109,7 +109,7 @@ export default function WorkOrders() {
   const areasQuery = useQuery({
     queryKey: ["areas"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("areas").select("id, name").order("name");
+      const { data, error } = await supabase.from("areas").select("id, name").neq("name", "Control Temperatura").order("name");
       if (error) throw error;
       return data;
     },

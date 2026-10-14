@@ -1,6 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportPdfData, worstCondition, GERENCIA_FIJA, generateReportPdf } from "@/lib/pdfReport";
+import {
+  ThermoSystem, loadThermoContext, computeListado, seriesFor, generateThermoReportPdf,
+} from "@/lib/thermoReport";
 
 export type ReportTipo = "Vibraciones" | "Termografia" | "Ultrasonido" | "Lubricacion";
 
@@ -56,11 +59,30 @@ export interface ReportRow {
   };
   photos?: ReportPhoto[];
   items?: ReportItem[];
+  sistema_temp?: ThermoSystem | null;
+  inspectores?: string | null;
+  resultado_inspeccion?: string | null;
+  semana_temp?: number | null;
+  anio_temp?: number | null;
+  ordenes_tags?: Record<string, string> | null;
+  station_photos?: StationPhoto[];
+}
+
+export interface StationPhoto {
+  id: string;
+  report_id: string;
+  station_code: string;
+  spool_tag: string;
+  storage_path: string;
+  orden: number;
+  signedUrl?: string;
 }
 
 const SELECT_COLS = `id, equipment_id, weekly_report_id, tipo, week_number, year, fecha_inspeccion,
   fecha_informe, gerencia, proceso_area, ot_numero, aviso_sap, condicion_general,
   tecnico, hallazgos, recomendacion, status_resultante, created_at, updated_at,
+  sistema_temp, inspectores, resultado_inspeccion, semana_temp, anio_temp, ordenes_tags,
+  station_photos:report_station_photos ( id, report_id, station_code, spool_tag, storage_path, orden ),
   photos:report_photos ( id, report_id, storage_path, caption, orden ),
   items:report_items ( id, report_id, equipo_tag, componente, analisis_tecnico, diagnostico, recomendacion, condicion, aviso_sap, orden )`;
 
@@ -114,13 +136,55 @@ async function buildAndStorePdf(
   r: ReportRow,
   build: (r: ReportRow) => ReportPdfData = reportToPdfData
 ): Promise<Blob> {
-  const signed = await withSignedPhotos(r);
-  const blob = await generateReportPdf(build(signed));
+  const blob = r.sistema_temp
+    ? await buildThermoPdf(r)
+    : await generateReportPdf(build(await withSignedPhotos(r)));
   await supabase.storage
     .from(PDF_BUCKET)
     .upload(pdfPathOf(r.id), blob, { contentType: "application/pdf", upsert: true })
     .catch(() => undefined);
   return blob;
+}
+
+export async function signStationPhotos(r: ReportRow): Promise<StationPhoto[]> {
+  const list = (r.station_photos || []).slice().sort((a, b) => a.orden - b.orden);
+  if (!list.length) return [];
+  const { data } = await supabase.storage
+    .from("report-photos")
+    .createSignedUrls(list.map((p) => p.storage_path), 3600);
+  return list.map((p, i) => ({ ...p, signedUrl: data?.[i]?.signedUrl }));
+}
+
+async function buildThermoPdf(r: ReportRow): Promise<Blob> {
+  const system = r.sistema_temp as ThermoSystem;
+  const ctx = await loadThermoContext(system);
+  const week = r.semana_temp ?? r.week_number;
+  const year = r.anio_temp ?? r.year;
+  const ordenes = r.ordenes_tags || {};
+  const photos = await signStationPhotos(r);
+  const stations = ctx.stations
+    .map((st) => {
+      const ph = photos.filter((p) => p.station_code === st.code);
+      return {
+        name: st.name,
+        photos: ph.map((p) => ({ url: p.signedUrl || "", tag: p.spool_tag })),
+        chart: seriesFor(ctx, ph.map((p) => p.spool_tag), week, year),
+      };
+    })
+    .filter((s) => s.photos.length > 0);
+  return generateThermoReportPdf({
+    system,
+    fechaInforme: r.fecha_informe || r.fecha_inspeccion,
+    otNumero: r.ot_numero,
+    avisoSap: r.aviso_sap,
+    inspectores: r.inspectores,
+    resultado: r.resultado_inspeccion,
+    condicionGeneral: r.condicion_general || "Satisfactorio",
+    alcance: ctx.stations.map((s) => s.name).join(", "),
+    semanaLabel: `Semana ${week}/${year}`,
+    listado: computeListado(ctx, week, year).map((l) => ({ ...l, orden: ordenes[l.tag] || "" })),
+    stations,
+  });
 }
 
 /** PDF guardado en la nube; si no existe, lo genera y lo guarda. */
@@ -225,6 +289,14 @@ export interface SaveReportInput {
   items: ReportItem[];
   newPhotos?: { blob: Blob; caption?: string | null }[];
   removePhotoIds?: string[];
+  sistema_temp?: ThermoSystem | null;
+  inspectores?: string | null;
+  resultado_inspeccion?: string | null;
+  semana_temp?: number | null;
+  anio_temp?: number | null;
+  ordenes_tags?: Record<string, string>;
+  newStationPhotos?: { blob: Blob; station_code: string; spool_tag: string }[];
+  removeStationPhotoIds?: string[];
 }
 
 /** ISO week number from a yyyy-mm-dd string */
@@ -267,6 +339,12 @@ export function useSaveReport() {
         hallazgos: input.hallazgos ?? null,
         recomendacion: input.recomendacion ?? null,
         status_resultante: input.status_resultante as any,
+        sistema_temp: input.sistema_temp ?? null,
+        inspectores: input.inspectores ?? null,
+        resultado_inspeccion: input.resultado_inspeccion ?? null,
+        semana_temp: input.semana_temp ?? null,
+        anio_temp: input.anio_temp ?? null,
+        ordenes_tags: input.ordenes_tags ?? {},
       };
 
 
@@ -330,6 +408,42 @@ export function useSaveReport() {
           });
           if (insErr) throw insErr;
         }
+      }
+
+      if (input.removeStationPhotoIds?.length) {
+        const { data: sp } = await supabase
+          .from("report_station_photos")
+          .select("id, storage_path")
+          .in("id", input.removeStationPhotoIds);
+        if (sp?.length) {
+          await supabase.storage.from("report-photos").remove(sp.map((p) => p.storage_path));
+          await supabase.from("report_station_photos").delete().in("id", input.removeStationPhotoIds);
+        }
+      }
+      if (input.newStationPhotos?.length) {
+        const stamp = Date.now();
+        let i = 0;
+        for (const p of input.newStationPhotos) {
+          const path = `${reportId}/st-${stamp}-${i}.jpg`;
+          const { error: upErr } = await supabase.storage
+            .from("report-photos")
+            .upload(path, p.blob, { contentType: "image/jpeg", upsert: true });
+          if (upErr) throw upErr;
+          const { error: insErr } = await supabase.from("report_station_photos").insert({
+            report_id: reportId!,
+            station_code: p.station_code,
+            spool_tag: p.spool_tag,
+            storage_path: path,
+            orden: i++,
+          });
+          if (insErr) throw insErr;
+        }
+      }
+
+      // Informes de termografía STC/STR: no tocan el estado semanal del Dashboard
+      if (input.sistema_temp) {
+        try { await refreshReportPdf(reportId!); } catch (e) { console.warn(e); }
+        return reportId!;
       }
 
       // Sincronizar el estado semanal (Dashboard) con la condición del informe

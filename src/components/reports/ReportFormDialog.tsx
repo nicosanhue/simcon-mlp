@@ -11,6 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { compressImage, CONDICIONES, worstCondition, conditionRgb, GERENCIA_FIJA } from "@/lib/pdfReport";
 import { useSaveReport, ReportRow, ReportTipo, ReportItem, COMPONENTES, withSignedPhotos } from "@/hooks/useReports";
 import { useQuery } from "@tanstack/react-query";
+import { ThermoReportFields, ExistingStationPhoto, NewStationPhoto } from "./ThermoReportFields";
+import { loadThermoContext, defaultThermoWeek, computeListado, thermoToCondicion, ThermoSystem } from "@/lib/thermoReport";
+import { signStationPhotos } from "@/hooks/useReports";
 
 interface Props {
   open: boolean;
@@ -63,6 +66,13 @@ export function ReportFormDialog({
   const [existingPhotos, setExistingPhotos] = useState<{ id: string; url: string; caption: string | null }[]>([]);
   const [equipSearch, setEquipSearch] = useState("");
   const [areaFilter, setAreaFilter] = useState("all");
+  const [thWeekKey, setThWeekKey] = useState("");
+  const [inspectores, setInspectores] = useState("");
+  const [resultado, setResultado] = useState("");
+  const [ordenes, setOrdenes] = useState<Record<string, string>>({});
+  const [stExisting, setStExisting] = useState<ExistingStationPhoto[]>([]);
+  const [stNew, setStNew] = useState<NewStationPhoto[]>([]);
+  const [stRemove, setStRemove] = useState<string[]>([]);
 
   const { data: equipmentList } = useQuery({
     queryKey: ["equipment-picker"],
@@ -90,6 +100,26 @@ export function ReportFormDialog({
     () => (equipmentList || []).find((e: any) => e.id === equipmentId) as any,
     [equipmentList, equipmentId]
   );
+  const thermoSystem: ThermoSystem | null =
+    selectedEquipment?.tag === "STC" ? "stc" : selectedEquipment?.tag === "STR" ? "str" : null;
+  const { data: thermoCtx } = useQuery({
+    queryKey: ["thermo-ctx", thermoSystem],
+    enabled: open && !!thermoSystem,
+    queryFn: () => loadThermoContext(thermoSystem!),
+  });
+  useEffect(() => {
+    if (!thermoCtx || thWeekKey) return;
+    const w = defaultThermoWeek(thermoCtx);
+    if (w) setThWeekKey(`${w.year}-${w.week}`);
+  }, [thermoCtx, thWeekKey]);
+  useEffect(() => {
+    if (thermoSystem && !editing) setTipo("Termografia");
+  }, [thermoSystem, editing]);
+  const thermoListado = useMemo(() => {
+    if (!thermoCtx || !thWeekKey) return [];
+    const [y, w] = thWeekKey.split("-").map(Number);
+    return computeListado(thermoCtx, w, y);
+  }, [thermoCtx, thWeekKey]);
 
   useEffect(() => {
     if (!open) return;
@@ -102,6 +132,14 @@ export function ReportFormDialog({
       setAvisoSap(editing.aviso_sap || "");
       setOtNumero(editing.ot_numero || "");
       setTecnico(editing.tecnico || "");
+      setInspectores(editing.inspectores || "");
+      setResultado(editing.resultado_inspeccion || "");
+      setOrdenes(editing.ordenes_tags || {});
+      setThWeekKey(editing.semana_temp ? `${editing.anio_temp}-${editing.semana_temp}` : "");
+      setStExisting([]);
+      signStationPhotos(editing).then((ps) =>
+        setStExisting(ps.map((x) => ({ id: x.id, url: x.signedUrl || "", station_code: x.station_code, spool_tag: x.spool_tag })))
+      );
       setItems(
         (editing.items || []).slice().sort((a, b) => a.orden - b.orden).map((i) => ({ ...i }))
       );
@@ -122,11 +160,18 @@ export function ReportFormDialog({
       setAvisoSap("");
       setOtNumero("");
       setTecnico("");
+      setInspectores("");
+      setResultado("");
+      setOrdenes({});
+      setThWeekKey("");
+      setStExisting([]);
       setItems([emptyItem("", 0)]);
       setExistingPhotos([]);
     }
     setNewPhotos([]);
     setRemoveIds([]);
+    setStNew([]);
+    setStRemove([]);
     setEquipSearch("");
     setAreaFilter("all");
   }, [open, editing, defaultEquipmentId, defaultWeek, defaultYear, defaultStatus]);
@@ -134,6 +179,10 @@ export function ReportFormDialog({
   // autocompletar proceso/área y tag de las filas al elegir equipo
   useEffect(() => {
     if (!selectedEquipment) return;
+    if (selectedEquipment.tag === "STC" || selectedEquipment.tag === "STR") {
+      setProcesoArea((prev) => prev || `Control Temperatura / ${selectedEquipment.tag}`);
+      return;
+    }
     const area = selectedEquipment.systems?.areas?.name || "";
     const sys = selectedEquipment.systems?.name || "";
     setProcesoArea((prev) => prev || `${area} / ${sys}`);
@@ -144,19 +193,24 @@ export function ReportFormDialog({
 
   const filteredEquipment = useMemo(() => {
     const t = equipSearch.trim().toLowerCase();
-    return (
+    const temp = (equipmentList || []).filter((e: any) => e.tag === "STC" || e.tag === "STR");
+    return temp.concat(
       (equipmentList || [])
+        .filter((e: any) => e.tag !== "STC" && e.tag !== "STR")
         .filter((e: any) => areaFilter === "all" || e.systems?.areas?.name === areaFilter)
         .filter(
           (e: any) => !t || e.tag.toLowerCase().includes(t) || e.name.toLowerCase().includes(t)
         )
-        .slice(0, 200) || []
+        .slice(0, 200)
     );
   }, [equipmentList, equipSearch, areaFilter]);
 
   const condicionGeneral = useMemo(
-    () => worstCondition(items.map((i) => i.condicion)),
-    [items]
+    () =>
+      thermoSystem
+        ? worstCondition(thermoListado.map((l) => thermoToCondicion(l.condicion)))
+        : worstCondition(items.map((i) => i.condicion)),
+    [items, thermoSystem, thermoListado]
   );
   const [cr, cg, cb] = conditionRgb(condicionGeneral);
 
@@ -188,6 +242,7 @@ export function ReportFormDialog({
       toast.error("Selecciona un equipo en Título / ID");
       return;
     }
+    if (thermoSystem) return saveThermo();
     if (items.length === 0) {
       toast.error("Agrega al menos un componente");
       return;
@@ -211,6 +266,42 @@ export function ReportFormDialog({
         status_resultante: condicionGeneral,
         items,
         newPhotos: newPhotos.map((p) => ({ blob: p.blob, caption: p.caption })),
+        removePhotoIds: removeIds,
+      });
+      toast.success(editing ? "Informe actualizado" : "Informe creado");
+      onOpenChange(false);
+    } catch (e: any) {
+      toast.error("Error al guardar: " + e.message);
+    }
+  }
+
+  async function saveThermo() {
+    if (!thWeekKey) return toast.error("Elige la semana de la inspección");
+    const [y, w] = thWeekKey.split("-").map(Number);
+    try {
+      await save.mutateAsync({
+        id: editing?.id,
+        equipment_id: equipmentId,
+        tipo,
+        fecha_inspeccion: fechaInforme,
+        fecha_informe: fechaInforme,
+        proceso_area: procesoArea,
+        ot_numero: otNumero,
+        aviso_sap: avisoSap,
+        condicion_general: condicionGeneral,
+        tecnico: inspectores,
+        hallazgos: resultado,
+        recomendacion: null,
+        status_resultante: condicionGeneral,
+        items: [],
+        sistema_temp: thermoSystem,
+        inspectores,
+        resultado_inspeccion: resultado,
+        semana_temp: w,
+        anio_temp: y,
+        ordenes_tags: ordenes,
+        newStationPhotos: stNew.map((p) => ({ blob: p.blob, station_code: p.station_code, spool_tag: p.spool_tag })),
+        removeStationPhotoIds: stRemove,
         removePhotoIds: removeIds,
       });
       toast.success(editing ? "Informe actualizado" : "Informe creado");
@@ -312,6 +403,27 @@ export function ReportFormDialog({
             </div>
           </div>
 
+          {thermoSystem ? (
+            <ThermoReportFields
+              system={thermoSystem}
+              ctx={thermoCtx}
+              weekKey={thWeekKey}
+              setWeekKey={setThWeekKey}
+              inspectores={inspectores}
+              setInspectores={setInspectores}
+              resultado={resultado}
+              setResultado={setResultado}
+              ordenes={ordenes}
+              setOrdenes={setOrdenes}
+              existing={stExisting}
+              onRemoveExisting={(id) => {
+                setStRemove((r) => [...r, id]);
+                setStExisting((a) => a.filter((x) => x.id !== id));
+              }}
+              newPhotos={stNew}
+              setNewPhotos={setStNew}
+            />
+          ) : (<>
           {/* 2. Evaluación detallada */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
@@ -454,6 +566,7 @@ export function ReportFormDialog({
               </div>
             )}
           </div>
+          </>)}
         </div>
 
         <DialogFooter>

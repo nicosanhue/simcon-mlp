@@ -458,8 +458,47 @@ export type Database = {
           },
         ]
       }
+      report_station_photos: {
+        Row: {
+          created_at: string
+          id: string
+          orden: number
+          report_id: string
+          spool_tag: string
+          station_code: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          orden?: number
+          report_id: string
+          spool_tag: string
+          station_code: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          orden?: number
+          report_id?: string
+          spool_tag?: string
+          station_code?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_station_photos_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reports: {
         Row: {
+          anio_temp: number | null
           aviso_sap: string | null
           condicion_general: string | null
           created_at: string
@@ -469,9 +508,14 @@ export type Database = {
           gerencia: string | null
           hallazgos: string | null
           id: string
+          inspectores: string | null
+          ordenes_tags: Json
           ot_numero: string | null
           proceso_area: string | null
           recomendacion: string | null
+          resultado_inspeccion: string | null
+          semana_temp: number | null
+          sistema_temp: string | null
           status_resultante: Database["public"]["Enums"]["equipment_status"]
           tecnico: string | null
           tipo: string
@@ -481,6 +525,7 @@ export type Database = {
           year: number
         }
         Insert: {
+          anio_temp?: number | null
           aviso_sap?: string | null
           condicion_general?: string | null
           created_at?: string
@@ -490,9 +535,14 @@ export type Database = {
           gerencia?: string | null
           hallazgos?: string | null
           id?: string
+          inspectores?: string | null
+          ordenes_tags?: Json
           ot_numero?: string | null
           proceso_area?: string | null
           recomendacion?: string | null
+          resultado_inspeccion?: string | null
+          semana_temp?: number | null
+          sistema_temp?: string | null
           status_resultante?: Database["public"]["Enums"]["equipment_status"]
           tecnico?: string | null
           tipo: string
@@ -502,6 +552,7 @@ export type Database = {
           year: number
         }
         Update: {
+          anio_temp?: number | null
           aviso_sap?: string | null
           condicion_general?: string | null
           created_at?: string
@@ -511,9 +562,14 @@ export type Database = {
           gerencia?: string | null
           hallazgos?: string | null
           id?: string
+          inspectores?: string | null
+          ordenes_tags?: Json
           ot_numero?: string | null
           proceso_area?: string | null
           recomendacion?: string | null
+          resultado_inspeccion?: string | null
+          semana_temp?: number | null
+          sistema_temp?: string | null
           status_resultante?: Database["public"]["Enums"]["equipment_status"]
           tecnico?: string | null
           tipo?: string
