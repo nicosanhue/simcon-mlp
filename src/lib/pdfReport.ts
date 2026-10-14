@@ -65,7 +65,7 @@ async function fetchPhotoBlob(url: string): Promise<Blob> {
   return blob;
 }
 
-async function urlToJpegDataUrl(url: string, maxWidth: number, quality: number): Promise<string> {
+export async function urlToJpegDataUrl(url: string, maxWidth: number, quality: number): Promise<string> {
   const blob = await fetchPhotoBlob(url);
   const { dataUrl } = await compressImage(blob, maxWidth, quality);
   return dataUrl;
@@ -74,7 +74,7 @@ async function urlToJpegDataUrl(url: string, maxWidth: number, quality: number):
 /** Logos are PNG base64; re-encode once to JPEG (white bg) to cut fixed PDF weight */
 const logoCache = new Map<string, string>();
 
-async function logoJpeg(pngDataUrl: string): Promise<string> {
+export async function logoJpeg(pngDataUrl: string): Promise<string> {
   const hit = logoCache.get(pngDataUrl);
   if (hit) return hit;
   try {
