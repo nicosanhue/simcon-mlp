@@ -15,6 +15,13 @@
       "when": 1792006857845,
       "tag": "0001_str_spools_grupo",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792009273029,
+      "tag": "0002_thermo_reports_additive",
+      "breakpoints": true
     }
   ]
 }
