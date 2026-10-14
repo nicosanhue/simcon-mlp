@@ -108,6 +108,11 @@ export function ReportFormDialog({
       setExistingPhotos(
         (editing.photos || []).map((p) => ({ id: p.id, url: p.signedUrl || "", caption: p.caption }))
       );
+      withSignedPhotos(editing).then((r) =>
+        setExistingPhotos(
+          (r.photos || []).map((p) => ({ id: p.id, url: p.signedUrl || "", caption: p.caption }))
+        )
+      );
     } else {
       setEquipmentId(defaultEquipmentId || "");
       setTipo("Vibraciones");

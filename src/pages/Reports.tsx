@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useReports, useDeleteReport, ReportRow, ReportTipo, reportToPdfData, isoWeekYear } from "@/hooks/useReports";
+import { useReports, useDeleteReport, ReportRow, ReportTipo, reportToPdfData, isoWeekYear, getReportPdf } from "@/hooks/useReports";
 import { ReportFormDialog } from "@/components/reports/ReportFormDialog";
 import { ReportsGroupedList, isoWeekRange } from "@/components/reports/ReportsGroupedList";
 import { ReportPreviewDialog } from "@/components/reports/ReportPreviewDialog";
-import { generateReportPdf, reportFileName, ReportPdfData } from "@/lib/pdfReport";
+import { reportFileName, ReportPdfData } from "@/lib/pdfReport";
 import { toast } from "sonner";
 import { useProfile } from "@/contexts/ProfileContext";
 
@@ -23,7 +23,7 @@ export default function Reports() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<ReportRow | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
-  const [preview, setPreview] = useState<{ data: ReportPdfData; fileName: string } | null>(null);
+  const [preview, setPreview] = useState<{ data: ReportPdfData; fileName: string; loader: () => Promise<Blob> } | null>(null);
 
   const { data: reports, isLoading } = useReports({ tipo, search });
   const del = useDeleteReport();
@@ -63,13 +63,13 @@ export default function Reports() {
   }
 
   function view(r: ReportRow) {
-    setPreview({ data: reportToPdfData(r), fileName: fileNameOf(r) });
+    setPreview({ data: reportToPdfData(r), fileName: fileNameOf(r), loader: () => getReportPdf(r) });
   }
 
   async function download(r: ReportRow) {
     try {
       setDownloadingId(r.id);
-      const blob = await generateReportPdf(reportToPdfData(r));
+      const blob = await getReportPdf(r);
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -233,6 +233,7 @@ export default function Reports() {
         onOpenChange={(v) => !v && setPreview(null)}
         data={preview?.data || null}
         fileName={preview?.fileName || "informe.pdf"}
+        loader={preview?.loader}
       />
     </MainLayout>
   );
