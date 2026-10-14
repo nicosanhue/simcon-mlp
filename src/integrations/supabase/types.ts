@@ -739,6 +739,7 @@ export type Database = {
         Row: {
           branch: Database["public"]["Enums"]["stc_branch"]
           created_at: string
+          grupo: string | null
           id: string
           order_index: number
           spool_number: number | null
@@ -749,6 +750,7 @@ export type Database = {
         Insert: {
           branch?: Database["public"]["Enums"]["stc_branch"]
           created_at?: string
+          grupo?: string | null
           id?: string
           order_index?: number
           spool_number?: number | null
@@ -759,6 +761,7 @@ export type Database = {
         Update: {
           branch?: Database["public"]["Enums"]["stc_branch"]
           created_at?: string
+          grupo?: string | null
           id?: string
           order_index?: number
           spool_number?: number | null

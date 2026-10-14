@@ -1,0 +1,1 @@
+ALTER TABLE public.str_spools ADD COLUMN IF NOT EXISTS grupo text;
