@@ -18,6 +18,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useProfile } from "@/contexts/ProfileContext";
+import { TEMP_AREA_NAME, TEMP_SYSTEM_TAGS } from "@/lib/tempSystems";
+const isTempTag = (t: string) => (TEMP_SYSTEM_TAGS as readonly string[]).includes(t);
 import { ReadOnlyLock } from "@/components/profile/ReadOnlyLock";
 
 
@@ -116,6 +118,7 @@ export default function AdminSettings() {
       const { data, error } = await supabase
         .from("areas")
         .select("id, name")
+        .neq("name", TEMP_AREA_NAME)
         .order("name");
       if (error) throw error;
       return data;
@@ -126,7 +129,7 @@ export default function AdminSettings() {
   const { data: equipmentCounts, refetch: refetchEquipmentCounts } = useQuery({
     queryKey: ["debug-equipment-counts"],
     queryFn: async () => {
-      const { data: areas } = await supabase.from("areas").select("id, name").order("name");
+      const { data: areas } = await supabase.from("areas").select("id, name").neq("name", TEMP_AREA_NAME).order("name");
       if (!areas) return [];
       
       const counts = await Promise.all(areas.map(async (area) => {
@@ -294,7 +297,7 @@ export default function AdminSettings() {
 
       const dbTags = new Set((currentEq ?? []).map(e => e.tag));
       const csvTagSet = new Set(uniqueTagsArr);
-      const orphanTags = Array.from(dbTags).filter(t => !csvTagSet.has(t)).sort();
+      const orphanTags = Array.from(dbTags).filter(t => !csvTagSet.has(t) && !isTempTag(t)).sort();
       const newTags = uniqueTagsArr.filter(t => !dbTags.has(t));
 
       // Fetch existing reports for this week/year to detect status overrides
@@ -614,7 +617,7 @@ export default function AdminSettings() {
       const orphanIds: string[] = [];
       const orphanTags: string[] = [];
       for (const [tag, eqId] of equipmentMap.entries()) {
-        if (!csvTags.has(tag)) {
+        if (!csvTags.has(tag) && !isTempTag(tag)) {
           orphanIds.push(eqId);
           orphanTags.push(tag);
         }
