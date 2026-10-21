@@ -4,7 +4,7 @@ import { TEMP_AREA_NAME } from "@/lib/tempSystems";
 import { loadThermoContext, ThermoSystem } from "@/lib/thermoReport";
 import {
   WeeklyRow, WeekRef, wkey, monthWeeks, prevMonth, latestByEquipment, consecutiveBadWeeks,
-  relapseWeek, buildPareto, ParetoRow, BAD_STATUSES, STATUS_ORDER, SEVERITY, sortAreaNames,
+  relapseWeek, buildPareto, classifyDiagnosis, isoWeekOf, ParetoRow, BAD_STATUSES, STATUS_ORDER, SEVERITY, sortAreaNames,
 } from "@/lib/monthlyReport";
 
 export interface EquipInfo { id: string; tag: string; name: string; system: string; area: string }
@@ -29,6 +29,7 @@ export interface MonthlyReportData {
   prevCounts: Record<string, number>;
   byArea: { area: string; rows: BadRow[] }[];
   pareto: ParetoRow[];
+  diagnoses: DiagDetail[];
   diagCount: number;
   worsened: ChangeRow[];
   improved: ChangeRow[];
@@ -52,23 +53,30 @@ async function fetchWeekly(fromYear: number): Promise<(WeeklyRow & { equipment: 
   return out;
 }
 
-async function fetchReportTexts(month: number, year: number): Promise<string[]> {
+export interface DiagDetail { tag: string; name: string; area: string; week: WeekRef; componente: string; condicion: string; text: string; modes: string[] }
+
+async function fetchReportTexts(month: number, year: number): Promise<DiagDetail[]> {
   const start = `${year}-${String(month).padStart(2, "0")}-01`;
   const nm = month === 12 ? { m: 1, y: year + 1 } : { m: month + 1, y: year };
   const end = `${nm.y}-${String(nm.m).padStart(2, "0")}-01`;
   const { data, error } = await supabase
     .from("reports")
-    .select("id, sistema_temp, hallazgos, report_items(diagnostico, analisis_tecnico, condicion)")
+    .select("id, sistema_temp, fecha_informe, equipment(tag, name, systems(name, areas(name))), report_items(diagnostico, analisis_tecnico, condicion, componente, equipo_tag)")
     .gte("fecha_informe", start)
     .lt("fecha_informe", end);
   if (error) throw error;
-  const texts: string[] = [];
+  const texts: DiagDetail[] = [];
   (data || []).forEach((r: any) => {
+    const eq = r.equipment || {};
+    const week = isoWeekOf(new Date(r.fecha_informe));
     if (r.sistema_temp) return;
     const items = (r.report_items || []).filter((i: any) => ["Seguimiento", "Alerta", "Crítico"].includes(i.condicion));
     items.forEach((i: any) => {
       const t = [i.diagnostico, i.analisis_tecnico].filter(Boolean).join(" ");
-      if (t.trim()) texts.push(t);
+      if (t.trim()) texts.push({
+        tag: i.equipo_tag || eq.tag || "—", name: eq.name || "", area: eq.systems?.areas?.name || "—",
+        week, componente: i.componente || "", condicion: i.condicion, text: t, modes: classifyDiagnosis(t),
+      });
     });
   });
   return texts;
@@ -187,7 +195,7 @@ export async function loadMonthlyReport(month: number, year: number): Promise<Mo
 
   return {
     month, year, weeks, counts, prevCounts, byArea,
-    pareto: buildPareto(texts), diagCount: texts.length,
+    pareto: buildPareto(texts.map((t) => t.text)), diagnoses: texts, diagCount: texts.length,
     worsened, improved, relapses,
     thermo: [stc, str].filter(Boolean) as ThermoSummary[],
   };
