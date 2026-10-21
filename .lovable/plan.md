@@ -12,9 +12,10 @@
 4. **Pareto de modos de falla:** gráfico de barras ordenado de mayor a menor, con línea de porcentaje acumulado, usando los diagnósticos de los informes del mes. Categorías: **Rodamiento, Soltura, Lubricación, Desalineamiento, Desbalanceo, Otra**. Debajo, una tabla con la cantidad por categoría.
 5. **Comparación con el mes anterior:** cantidad de Críticos y Alertas de este mes contra el anterior (con flecha de alza o baja), y la lista de equipos que empeoraron o mejoraron de condición.
 6. **Equipos que volvieron a fallar:** equipos que estuvieron en Satisfactorio o Seguimiento y luego, dentro del mes, volvieron a Alerta o Crítico, con la semana en que recayeron.
+7. **Control de temperatura STC y STR (resumen simple):** una tabla por sistema con cada estación y su ΔT máximo del mes, el TAG del spool más caliente y su color según los rangos actuales (Verde, Amarillo, Naranja, Rojo). Al lado, la cantidad de spools sobre 2,5 °C y la lista corta de los 5 spools más calientes del mes. Solo usa semanas publicadas.
 
 - Lectura libre para todos (no requiere perfil).
-- STC/STR (Control Temperatura) quedan fuera, como en el Dashboard.
+- Los equipos técnicos STC/STR no se cuentan en las secciones 1 a 6 (como en el Dashboard); su información aparece solo en la sección 7, tomada de las mediciones de temperatura.
 
 ## Cómo se clasifica cada diagnóstico
 Se leen los textos de diagnóstico, análisis y hallazgos de los componentes de cada informe del mes y se buscan palabras clave (sin importar mayúsculas ni tildes):
