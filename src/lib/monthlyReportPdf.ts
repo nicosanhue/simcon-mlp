@@ -85,22 +85,7 @@ export async function generateMonthlyReportPdf(d: MonthlyReportData): Promise<Bl
   section("1. RESUMEN DEL MES (último estado de cada equipo)");
   table(STATUS_ORDER, [STATUS_ORDER.map((s) => d.counts[s] || 0)]);
 
-  section("2 y 3. EQUIPOS CRÍTICOS Y EN ALERTA POR ÁREA — SEMANAS SEGUIDAS");
-  if (!d.byArea.length) table(["Tag"], []);
-  d.byArea.forEach((a) => {
-    ensure(30);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
-    doc.text(`${a.area} (${a.rows.length})`, m, y);
-    y += 6;
-    table(
-      ["Tag", "Equipo", "Sistema", "Estado", "Semanas", "Desde", "Aviso SAP", "OT"],
-      a.rows.map((r) => [r.tag, r.name, r.system, r.status, r.weeks, wk(r.since), r.aviso || "Sin aviso", r.ot || "—"]),
-      3
-    );
-  });
-
-  section(`4. PARETO DE MODOS DE FALLA (${d.diagCount} diagnósticos del mes)`);
+  section(`2. PARETO DE MODOS DE FALLA (${d.diagCount} diagnósticos del mes)`);
   if (d.pareto.length) {
     ensure(170);
     const h = 130, x0 = m + 30, w = cw - 60;
@@ -130,7 +115,22 @@ export async function generateMonthlyReportPdf(d: MonthlyReportData): Promise<Bl
   }
   table(["Modo de falla", "Cantidad", "%", "% acumulado"], d.pareto.map((p) => [p.mode, p.count, p.pct.toFixed(1), p.cumPct.toFixed(1)]));
 
-  section("5. COMPARACIÓN CON EL MES ANTERIOR");
+  section("3. EQUIPOS CRÍTICOS Y EN ALERTA POR ÁREA — SEMANAS SEGUIDAS");
+  if (!d.byArea.length) table(["Tag"], []);
+  d.byArea.forEach((a) => {
+    ensure(30);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(`${a.area} (${a.rows.length})`, m, y);
+    y += 6;
+    table(
+      ["Tag", "Equipo", "Sistema", "Estado", "Semanas", "Desde", "Aviso SAP", "OT"],
+      a.rows.map((r) => [r.tag, r.name, r.system, r.status, r.weeks, wk(r.since), r.aviso || "Sin aviso", r.ot || "—"]),
+      3
+    );
+  });
+
+  section("4. COMPARACIÓN CON EL MES ANTERIOR");
   table(
     ["Estado", "Mes anterior", "Este mes", "Variación"],
     ["Crítico", "Alerta"].map((s) => {
@@ -141,10 +141,10 @@ export async function generateMonthlyReportPdf(d: MonthlyReportData): Promise<Bl
   table(["Empeoraron: Tag", "Equipo", "Área", "Antes", "Ahora"], d.worsened.map((r) => [r.tag, r.name, r.area, r.from, r.to]), 4);
   table(["Mejoraron: Tag", "Equipo", "Área", "Antes", "Ahora"], d.improved.map((r) => [r.tag, r.name, r.area, r.from, r.to]), 4);
 
-  section("6. EQUIPOS QUE VOLVIERON A FALLAR");
+  section("5. EQUIPOS QUE VOLVIERON A FALLAR");
   table(["Tag", "Equipo", "Área", "Estado", "Semana"], d.relapses.map((r) => [r.tag, r.name, r.area, r.status, wk(r.week)]), 3);
 
-  section("7. CONTROL DE TEMPERATURA STC Y STR");
+  section("6. CONTROL DE TEMPERATURA STC Y STR");
   d.thermo.forEach((t) => {
     ensure(40);
     doc.setFont("helvetica", "bold");
