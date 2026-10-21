@@ -33,16 +33,17 @@ function Section({ n, title, children }: { n: number; title: string; children: R
   );
 }
 
-function Table({ head, rows, empty = "Sin registros" }: { head: string[]; rows: React.ReactNode[][]; empty?: string }) {
+function Table({ head, rows, empty = "Sin registros", widths }: { head: string[]; rows: React.ReactNode[][]; empty?: string; widths?: string[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className={`w-full text-sm ${widths ? "table-fixed min-w-[900px]" : ""}`}>
+        {widths && <colgroup>{widths.map((w, i) => <col key={i} style={{ width: w }} />)}</colgroup>}
         <thead className="bg-muted/40 text-xs uppercase text-muted-foreground">
           <tr>{head.map((h) => <th key={h} className="text-left p-2">{h}</th>)}</tr>
         </thead>
         <tbody>
           {rows.length ? rows.map((r, i) => (
-            <tr key={i} className="border-t">{r.map((c, j) => <td key={j} className="p-2">{c}</td>)}</tr>
+            <tr key={i} className="border-t">{r.map((c, j) => <td key={j} className={`p-2 ${widths ? "break-words align-top" : ""}`}>{c}</td>)}</tr>
           )) : (
             <tr><td colSpan={head.length} className="p-3 text-center text-muted-foreground italic">{empty}</td></tr>
           )}
@@ -134,6 +135,7 @@ export default function MonthlyReport() {
                   <h3 className="font-medium text-sm">{a.area} <span className="text-muted-foreground">({a.rows.length})</span></h3>
                   <Table
                     head={["Tag", "Equipo", "Sistema", "Estado", "Semanas", "Desde", "Aviso SAP", "OT"]}
+                    widths={["12%", "22%", "16%", "10%", "8%", "9%", "13%", "10%"]}
                     rows={a.rows.map((r) => [
                       <span className="font-mono text-primary text-xs">{r.tag}</span>, r.name, r.system, <StatusPill s={r.status} />,
                       <b>{r.weeks}</b>, wk(r.since), r.aviso || <span className="text-muted-foreground italic">Sin aviso</span>, r.ot || "—",
