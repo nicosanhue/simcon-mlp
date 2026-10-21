@@ -121,7 +121,7 @@ const KEYWORDS: [FailureMode, string[]][] = [
   ["Lubricación", ["lubricacion", "lubricante", "grasa", "aceite"]],
   ["Desalineamiento", ["desalineamiento", "desalineado", "desalineacion", "alineacion"]],
   ["Desbalanceo", ["desbalanceo", "desbalance"]],
-  ["Estructural / Rigidez", ["rigidez", "estructural", "movilidad"]],
+  ["Estructural / Rigidez", ["rigidez", "debilidad estructural", "movilidad"]],
   ["Vibración transmitida", ["transmitida", "trasmitida", "transmitidas", "trasmitidas", "desde el reductor", "desde el motor"]],
   ["Desgaste interno / Roce", ["desgaste", "desajuste", "componentes internos", "roce"]],
   ["Engranajes", ["engranaje", "diente", "gmf"]],
