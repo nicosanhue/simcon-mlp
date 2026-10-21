@@ -149,17 +149,58 @@ export default function MonthlyReport() {
                         <YAxis yAxisId="l" allowDecimals={false} fontSize={11} />
                         <YAxis yAxisId="r" orientation="right" domain={[0, 100]} unit="%" fontSize={11} />
                         <Tooltip />
-                        <Bar yAxisId="l" dataKey="count" name="Cantidad" fill="hsl(var(--primary))" />
+                        <Bar yAxisId="l" dataKey="count" name="Cantidad" fill="hsl(var(--primary))" className="cursor-pointer" onClick={(d: any) => setMode(d?.mode ?? null)} />
                         <Line yAxisId="r" dataKey="cumPct" name="% acumulado" stroke="hsl(var(--destructive))" />
                       </ComposedChart>
                     </ResponsiveContainer>
                   </div>
-                  <Table
-                    head={["Modo de falla", "Cantidad", "%", "% acumulado"]}
-                    rows={data.pareto.map((p) => [p.mode, p.count, p.pct.toFixed(1), p.cumPct.toFixed(1)])}
-                  />
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Haz clic en un modo de falla para ver sus equipos y diagnósticos.</p>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead><tr className="border-b text-left text-muted-foreground">{["Modo de falla", "Cantidad", "%", "% acumulado"].map((h) => <th key={h} className="py-1 pr-3">{h}</th>)}</tr></thead>
+                        <tbody>
+                          {data.pareto.map((p) => (
+                            <tr key={p.mode} onClick={() => setMode(mode === p.mode ? null : p.mode)}
+                              className={`border-b cursor-pointer hover:bg-accent ${mode === p.mode ? "bg-accent font-semibold" : ""}`}>
+                              <td className="py-1 pr-3 text-primary underline-offset-2 hover:underline">{p.mode}</td>
+                              <td className="py-1 pr-3">{p.count}</td><td className="py-1 pr-3">{p.pct.toFixed(1)}</td><td className="py-1 pr-3">{p.cumPct.toFixed(1)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
-              ) : <p className="text-sm text-muted-foreground italic">Sin diagnósticos de informes este mes.</p>}
+              ) : null}
+              {data.pareto.length && mode ? (
+                <div className="mt-4 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-semibold text-sm">{mode}: {data.diagnoses.filter((d) => d.modes.includes(mode)).length} diagnósticos</h3>
+                    <Button size="sm" variant="ghost" onClick={() => setMode(null)}>Cerrar</Button>
+                  </div>
+                  <div className="overflow-x-auto max-h-96 overflow-y-auto border rounded">
+                    <table className="w-full text-xs">
+                      <thead className="sticky top-0 bg-card"><tr className="border-b text-left text-muted-foreground">{["Equipo", "Área", "Semana", "Componente", "Condición", "Diagnóstico"].map((h) => <th key={h} className="p-2">{h}</th>)}</tr></thead>
+                      <tbody>
+                        {data.diagnoses.filter((d) => d.modes.includes(mode))
+                          .sort((a, b) => (STATUS_ORDER[a.condicion as keyof typeof STATUS_ORDER] ?? 9) - (STATUS_ORDER[b.condicion as keyof typeof STATUS_ORDER] ?? 9) || a.tag.localeCompare(b.tag))
+                          .map((d, i) => (
+                          <tr key={i} className="border-b align-top">
+                            <td className="p-2 font-semibold whitespace-nowrap">{d.tag}<div className="font-normal text-muted-foreground">{d.name}</div></td>
+                            <td className="p-2">{d.area}</td>
+                            <td className="p-2 whitespace-nowrap">{wk(d.week)}</td>
+                            <td className="p-2">{d.componente}</td>
+                            <td className="p-2"><StatusPill s={d.condicion} /></td>
+                            <td className="p-2 whitespace-pre-line break-words min-w-[280px]">{d.text}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : null}
+              {data.pareto.length ? null : (<p className="text-sm text-muted-foreground italic">Sin diagnósticos de informes este mes.</p>)}
             </Section>
 
             <Section n={4} title="Comparación con el mes anterior">
