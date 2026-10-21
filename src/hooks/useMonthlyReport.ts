@@ -59,6 +59,11 @@ async function fetchReportTexts(month: number, year: number): Promise<DiagDetail
   const start = `${year}-${String(month).padStart(2, "0")}-01`;
   const nm = month === 12 ? { m: 1, y: year + 1 } : { m: month + 1, y: year };
   const end = `${nm.y}-${String(nm.m).padStart(2, "0")}-01`;
+  return fetchDiagnoses(start, end);
+}
+
+/** Diagnósticos de informes (Seguimiento/Alerta/Crítico) con fecha_informe en [start, end). */
+export async function fetchDiagnoses(start: string, end: string): Promise<DiagDetail[]> {
   const { data, error } = await supabase
     .from("reports")
     .select("id, sistema_temp, fecha_informe, equipment(tag, name, systems(name, areas(name))), report_items(diagnostico, analisis_tecnico, condicion, componente, equipo_tag)")

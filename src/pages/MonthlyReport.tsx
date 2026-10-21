@@ -9,6 +9,7 @@ import { MONTHS, STATUS_ORDER } from "@/lib/monthlyReport";
 import { generateMonthlyReportPdf, monthlyFileName } from "@/lib/monthlyReportPdf";
 import { getStcStatus } from "@/lib/stcStatus";
 import { toast } from "sonner";
+import { AiFailureAnalysis } from "@/components/report/AiFailureAnalysis";
 
 const STATUS_CLASS: Record<string, string> = {
   "Crítico": "bg-status-falla text-primary-foreground",
@@ -187,6 +188,8 @@ export default function MonthlyReport() {
               ) : null}
               {data.pareto.length ? null : (<p className="text-sm text-muted-foreground italic">Sin diagnósticos de informes este mes.</p>)}
             </Section>
+
+            <AiFailureAnalysis month={month} year={year} />
 
             <Section n={3} title="Equipos críticos y en alerta por área, y semanas seguidas en esa condición">
               {data.byArea.length === 0 && <p className="text-sm text-muted-foreground italic">Sin equipos críticos ni en alerta este mes.</p>}
