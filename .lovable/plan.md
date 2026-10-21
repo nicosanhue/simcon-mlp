@@ -10,6 +10,8 @@
 2. **Equipos críticos y en alerta por área:** una tabla por área (orden fijo: Transporte de Fluidos, Tranque Mauro, Puerto, Desaladora) con Tag, nombre, sistema, estado, aviso SAP y OT. Orden: Crítico, luego Alerta, y por Tag.
 3. **Semanas en Crítico o Alerta:** por cada equipo de la tabla anterior, cuántas semanas seguidas lleva en Crítico o Alerta hasta el final del mes (contando también semanas de meses anteriores), si tiene aviso registrado y desde qué semana.
 4. **Pareto de modos de falla:** gráfico de barras ordenado de mayor a menor, con línea de porcentaje acumulado, usando los diagnósticos de los informes del mes. Categorías: **Rodamiento, Soltura, Lubricación, Desalineamiento, Desbalanceo, Otra**. Debajo, una tabla con la cantidad por categoría.
+5. **Comparación con el mes anterior:** cantidad de Críticos y Alertas de este mes contra el anterior (con flecha de alza o baja), y la lista de equipos que empeoraron o mejoraron de condición.
+6. **Equipos que volvieron a fallar:** equipos que estuvieron en Satisfactorio o Seguimiento y luego, dentro del mes, volvieron a Alerta o Crítico, con la semana en que recayeron.
 
 - Lectura libre para todos (no requiere perfil).
 - STC/STR (Control Temperatura) quedan fuera, como en el Dashboard.
