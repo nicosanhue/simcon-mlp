@@ -60,3 +60,11 @@ describe("reporte mensual", () => {
     expect(relapseWeek(h, monthWeeks(10, 2026))).toEqual({ week: 42, year: 2026 });
   });
 });
+
+import { subtypeBreakdown as sb } from "@/lib/monthlyReport";
+describe("subtypeBreakdown", () => {
+  const d = (text: string) => ({ modes: ["Rodamiento"], text });
+  it("BPFI cuenta en BPFI", () => expect(sb([d("falla BPFI")], "Rodamiento")[0].label).toBe("BPFI (pista interna)"));
+  it("sin subtipo cae en Sin especificar", () => expect(sb([d("daño en rodamiento")], "Rodamiento")[0].label).toBe("Sin especificar"));
+  it("BPFI y BPFO cuentan en ambos", () => expect(sb([d("BPFI y BPFO")], "Rodamiento").length).toBe(2));
+});
