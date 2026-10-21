@@ -15,3 +15,5 @@
 - [x] Reporte mensual en pantalla con descarga PDF (críticos por área, semanas, pareto, comparación, recaídas, temperatura STC/STR)
 
 - [x] Análisis con IA por modo de falla (retirado a pedido del usuario)
+
+- [x] Mejoras al Pareto: filtros área/técnica, modo×componente, tendencia 6 meses, top 10 equipos, nueva clasificación de "Otra"

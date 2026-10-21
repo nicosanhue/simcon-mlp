@@ -2,7 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { LOGO_SIMCON, LOGO_MLP, LOGO_BV } from "./reportLogos";
 import { logoJpeg, GERENCIA_FIJA, conditionRgb } from "./pdfReport";
-import { MONTHS, STATUS_ORDER } from "./monthlyReport";
+import { MONTHS, STATUS_ORDER, FAILURE_MODES, buildMonthlyTrend, topBadActors } from "./monthlyReport";
 import { getStcStatus } from "./stcStatus";
 import type { MonthlyReportData } from "@/hooks/useMonthlyReport";
 
@@ -57,6 +57,13 @@ export async function generateMonthlyReportPdf(d: MonthlyReportData): Promise<Bl
     doc.text(title, m + 6, y + 12.5);
     doc.setTextColor(0, 0, 0);
     y += 24;
+  };
+  const subtitle = (t: string) => {
+    ensure(30);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(t, m, y);
+    y += 6;
   };
   const table = (head: string[], body: (string | number)[][], statusCol = -1) => {
     autoTable(doc, {
@@ -114,6 +121,22 @@ export async function generateMonthlyReportPdf(d: MonthlyReportData): Promise<Bl
     y += h + 20;
   }
   table(["Modo de falla", "Cantidad", "%", "% acumulado"], d.pareto.map((p) => [p.mode, p.count, p.pct.toFixed(1), p.cumPct.toFixed(1)]));
+
+  const trend = buildMonthlyTrend(d.trendDiagnoses, d.trendMonths);
+  const tModes = FAILURE_MODES.filter((m) => trend.some((r) => (r as any)[m]));
+  if (tModes.length) {
+    subtitle(`Tendencia últimos ${d.trendMonths.length} meses (diagnósticos por modo de falla)`);
+    table(
+      ["Modo de falla", ...d.trendMonths.map((m) => `${MONTHS[Number(m.slice(5)) - 1].slice(0, 3)} ${m.slice(2, 4)}`)],
+      tModes.map((m) => [m, ...trend.map((r) => (r as any)[m] || 0)]),
+    );
+  }
+  const actors = topBadActors(d.diagnoses, 10);
+  if (actors.length) {
+    subtitle("Malos actores: top 10 de equipos con más diagnósticos");
+    table(["#", "TAG", "Equipo", "Área", "Diag.", "Modos de falla", "Componentes", "Peor condición"],
+      actors.map((a, i) => [i + 1, a.tag, a.name, a.area, a.count, a.modes.join(", "), a.components.join(", "), a.worst]), 7);
+  }
 
   section("3. EQUIPOS CRÍTICOS Y EN ALERTA POR ÁREA — SEMANAS SEGUIDAS");
   if (!d.byArea.length) table(["Tag"], []);
