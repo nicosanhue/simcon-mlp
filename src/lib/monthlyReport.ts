@@ -244,3 +244,21 @@ export function subtypeBreakdown(diags: { modes: string[]; text: string }[], mod
   });
   return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([label, count]) => ({ label, count, pct: rows.length ? (count / rows.length) * 100 : 0 }));
 }
+
+export type BadSortKey = "weeks" | "status" | "tag" | "since";
+export interface BadSort { key: BadSortKey; dir: "asc" | "desc" }
+type BadLike = { tag: string; status: string; weeks: number; since: WeekRef | null };
+
+/** Ordena los equipos críticos/en alerta de la sección 3. No muta la entrada. */
+export function sortBadRows<T extends BadLike>(rows: T[], sort: BadSort): T[] {
+  const dir = sort.dir === "desc" ? -1 : 1;
+  const byTag = (a: T, b: T) => a.tag.localeCompare(b.tag);
+  return [...rows].sort((a, b) => {
+    const primary =
+      sort.key === "weeks" ? (a.weeks - b.weeks) * dir
+      : sort.key === "since" ? ((a.since ? wkey(a.since) : 0) - (b.since ? wkey(b.since) : 0)) * dir
+      : sort.key === "status" ? (SEVERITY[a.status] - SEVERITY[b.status]) * dir
+      : byTag(a, b);
+    return primary || byTag(a, b);
+  });
+}
