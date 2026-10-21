@@ -58,6 +58,13 @@ export async function generateMonthlyReportPdf(d: MonthlyReportData): Promise<Bl
     doc.setTextColor(0, 0, 0);
     y += 24;
   };
+  const subtitle = (t: string) => {
+    ensure(30);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    doc.text(t, m, y);
+    y += 6;
+  };
   const table = (head: string[], body: (string | number)[][], statusCol = -1) => {
     autoTable(doc, {
       startY: y,
@@ -128,7 +135,7 @@ export async function generateMonthlyReportPdf(d: MonthlyReportData): Promise<Bl
   if (actors.length) {
     subtitle("Malos actores: top 10 de equipos con más diagnósticos");
     table(["#", "TAG", "Equipo", "Área", "Diag.", "Modos de falla", "Componentes", "Peor condición"],
-      actors.map((a, i) => [i + 1, a.tag, a.name, a.area, a.count, a.modes.join(", "), a.components.join(", "), a.worst]));
+      actors.map((a, i) => [i + 1, a.tag, a.name, a.area, a.count, a.modes.join(", "), a.components.join(", "), a.worst]), 7);
   }
 
   section("3. EQUIPOS CRÍTICOS Y EN ALERTA POR ÁREA — SEMANAS SEGUIDAS");
