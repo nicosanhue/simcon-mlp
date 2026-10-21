@@ -5,7 +5,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMonthlyReport } from "@/hooks/useMonthlyReport";
-import { MONTHS, STATUS_ORDER } from "@/lib/monthlyReport";
+import { MONTHS, STATUS_ORDER, sortBadRows, type BadSort, type BadSortKey } from "@/lib/monthlyReport";
 import { generateMonthlyReportPdf, monthlyFileName } from "@/lib/monthlyReportPdf";
 import { getStcStatus } from "@/lib/stcStatus";
 import { toast } from "sonner";
@@ -58,6 +58,9 @@ export default function MonthlyReport() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
   const [busy, setBusy] = useState(false);
+  const [badSort, setBadSort] = useState<BadSort>({ key: "weeks", dir: "desc" });
+  const pickSort = (key: BadSortKey) =>
+    setBadSort((s) => (s.key === key ? { key, dir: s.dir === "desc" ? "asc" : "desc" } : { key, dir: key === "tag" ? "asc" : "desc" }));
   const { data, isLoading, error } = useMonthlyReport(month, year);
   const years = [now.getFullYear() - 1, now.getFullYear()];
 
