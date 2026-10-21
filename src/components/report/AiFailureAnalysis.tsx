@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Loader2, Brain } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,7 @@ export function AiFailureAnalysis({ month, year }: { month: number; year: number
       {error && <p className="text-sm text-destructive">{error}</p>}
       {result && (
         <div className="text-sm space-y-2 border rounded p-3 bg-card [&_h2]:font-semibold [&_h2]:text-primary [&_h2]:mt-3 [&_h3]:font-semibold [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_table]:w-full [&_table]:text-xs [&_th]:text-left [&_th]:border-b [&_th]:p-1 [&_td]:border-b [&_td]:p-1 [&_strong]:font-semibold">
-          <ReactMarkdown>{result}</ReactMarkdown>
+          <div className="overflow-x-auto"><ReactMarkdown remarkPlugins={[remarkGfm]}>{result}</ReactMarkdown></div>
           <p className="text-xs text-muted-foreground italic">Sugerencia generada con IA a partir de los diagnósticos; revísala antes de tomar decisiones.</p>
         </div>
       )}

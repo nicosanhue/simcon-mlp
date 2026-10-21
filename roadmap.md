@@ -13,3 +13,5 @@
 
 - [x] Informes de termografía STC/STR (formulario, fotos por estación, PDF multipágina)
 - [x] Reporte mensual en pantalla con descarga PDF (críticos por área, semanas, pareto, comparación, recaídas, temperatura STC/STR)
+
+- [x] Análisis con IA por modo de falla y período en Reporte (patrones y acciones de inspección)
