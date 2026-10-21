@@ -56,6 +56,7 @@ export default function MonthlyReport() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
   const [busy, setBusy] = useState(false);
+  const [mode, setMode] = useState<string | null>(null);
   const { data, isLoading, error } = useMonthlyReport(month, year);
   const years = [now.getFullYear() - 1, now.getFullYear()];
 
@@ -184,7 +185,7 @@ export default function MonthlyReport() {
                       <thead className="sticky top-0 bg-card"><tr className="border-b text-left text-muted-foreground">{["Equipo", "Área", "Semana", "Componente", "Condición", "Diagnóstico"].map((h) => <th key={h} className="p-2">{h}</th>)}</tr></thead>
                       <tbody>
                         {data.diagnoses.filter((d) => d.modes.includes(mode))
-                          .sort((a, b) => (STATUS_ORDER[a.condicion as keyof typeof STATUS_ORDER] ?? 9) - (STATUS_ORDER[b.condicion as keyof typeof STATUS_ORDER] ?? 9) || a.tag.localeCompare(b.tag))
+                          .sort((a, b) => STATUS_ORDER.indexOf(a.condicion) - STATUS_ORDER.indexOf(b.condicion) || a.tag.localeCompare(b.tag))
                           .map((d, i) => (
                           <tr key={i} className="border-b align-top">
                             <td className="p-2 font-semibold whitespace-nowrap">{d.tag}<div className="font-normal text-muted-foreground">{d.name}</div></td>
