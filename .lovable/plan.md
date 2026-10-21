@@ -19,6 +19,17 @@
 - Equipos con más diagnósticos en el mes, con su TAG, nombre, área, cantidad, modos de falla, componentes y peor condición.
 - Al hacer clic en un equipo se ven sus diagnósticos.
 
+**5. Nueva clasificación para reducir "Otra"**
+- Modos de falla nuevos:
+  - **Estructural / Rigidez:** falta de rigidez, debilidad estructural, movilidad.
+  - **Vibración transmitida:** transmitida o trasmitida, desde el reductor o el motor.
+  - **Desgaste interno / Roce:** desgaste, desajuste, componentes internos, roce.
+  - **Engranajes:** engranaje, dientes, GMF.
+  - **Correas:** correa, polea.
+  - **Proceso / Operación:** impactos, ciclo de compresión, peristáltica, cavitación.
+- Se excluyen del Pareto los textos que no describen una falla: "estado satisfactorio", "valores aceptables", "valores estables", "en seguimiento", "sin acceso", "F/S". Si un texto también nombra un modo de falla, se cuenta igual.
+- "Otra" queda solo para lo que no calce en ninguno.
+
 **PDF:** se agregan la tendencia (en tabla) y el top 10 de equipos. Los filtros quedan solo en pantalla, y el PDF sale siempre con todas las áreas y técnicas.
 
 ## Detalles técnicos
