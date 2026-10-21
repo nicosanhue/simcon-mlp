@@ -1,3 +1,4 @@
 - Reutilizar la pantalla y las consultas de temperatura mediante un identificador de sistema (`stc` o `str`) con tablas independientes: evita mezclar mediciones y mantener dos vistas divergentes.
 - Reservar los planos por sistema y mostrar controles de PDF solo para mapas existentes: evita asociar archivos STC a estaciones STR.
 - Informes de termografía STC/STR se asocian a los equipos técnicos STC/STR del área "Control Temperatura", que se excluye de Dashboard, Activos, Organigrama, Avisos y Lubricación y nunca sincroniza weekly_reports: mantiene equipment_id obligatorio sin contaminar los conteos.
+- Monthly report logic lives as pure functions in src/lib/monthlyReport.ts (tested); weeks belong to the month containing their ISO Thursday so each week counts once.
