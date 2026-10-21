@@ -1,32 +1,33 @@
-# Cruzar avisos y OT de Databricks con SIMCON
+# Reporte mensual de equipos
 
-## Tablas de origen
-- **Avisos (IW29):** `ams.iagen_sandbox.dmt_sap_transacciones_iw29_mst`. Se cruza con el aviso SAP de SIMCON y desde ahí se obtiene la OT asociada.
-- **OT (IW39):** `ams.iagen_sandbox.dmt_sap_transacciones_iw39_mst`. Entrega el estado y la fecha planificada de la OT.
+## Qué se verá
+- Nueva sección **"Reporte"** en la barra lateral, justo después de "Informes".
+- Arriba: selector de **mes y año** (mes calendario; por defecto, el mes actual) y botones **"Ver PDF"** y **"Descargar PDF"**.
+- En pantalla y en el PDF (mismo estilo que los informes actuales, con logos y encabezado "Superintendencia Confiabilidad y Mejoramiento TFT y Puerto", pero más simple):
 
-## Cómo va a funcionar
-1. **Conectar Databricks**: se abre una tarjeta de conexión en el chat. Ahí ingresas los datos de tu espacio de Databricks. La clave queda guardada de forma segura y nunca llega al navegador.
-2. **Identificar las tablas**: con la conexión lista, reviso qué tablas de avisos, OT y equipos tienes y te confirmo qué columnas se usan: número de aviso, número de OT, estado de la OT y fecha planificada.
-3. **Sincronización diaria**: una vez al día, SIMCON toma todos los equipos que tienen un aviso SAP registrado y los busca en Databricks por número de aviso. Con eso:
-   - **Completa la OT** cuando en SIMCON está vacía.
-   - **Trae el estado de la OT** (abierta, en ejecución, cerrada).
-   - **Actualiza la fecha planificada**.
-   - Nunca cambia el estado de condición del equipo (Crítico, Alerta, etc.), que sigue saliendo de los informes y del CSV.
-4. **Lo que verás**: en Avisos y OT y en el detalle de las condiciones del Dashboard aparecerán la OT, su estado con una etiqueta de color y la fecha planificada. También verás la hora de la última sincronización.
-5. **Botón de respaldo**: perfiles MonCon y AdC podrán ejecutar "Sincronizar ahora" si no quieren esperar al día siguiente.
+1. **Resumen del mes:** cantidad de equipos en Crítico, Alerta, Seguimiento, Satisfactorio y Sin medición (según el último estado del mes de cada equipo).
+2. **Equipos críticos y en alerta por área:** una tabla por área (orden fijo: Transporte de Fluidos, Tranque Mauro, Puerto, Desaladora) con Tag, nombre, sistema, estado, aviso SAP y OT. Orden: Crítico, luego Alerta, y por Tag.
+3. **Semanas en Crítico o Alerta:** por cada equipo de la tabla anterior, cuántas semanas seguidas lleva en Crítico o Alerta hasta el final del mes (contando también semanas de meses anteriores), si tiene aviso registrado y desde qué semana.
+4. **Pareto de modos de falla:** gráfico de barras ordenado de mayor a menor, con línea de porcentaje acumulado, usando los diagnósticos de los informes del mes. Categorías: **Rodamiento, Soltura, Lubricación, Desalineamiento, Desbalanceo, Otra**. Debajo, una tabla con la cantidad por categoría.
 
-## Lo que necesito de ti
-- Acceso a Databricks con permiso de lectura sobre las tablas de avisos y OT, y un SQL Warehouse activo.
-- El nombre de las tablas, si ya lo sabes. Si no, las busco después de conectar.
+- Lectura libre para todos (no requiere perfil).
+- STC/STR (Control Temperatura) quedan fuera, como en el Dashboard.
+
+## Cómo se clasifica cada diagnóstico
+Se leen los textos de diagnóstico, análisis y hallazgos de los componentes de cada informe del mes y se buscan palabras clave (sin importar mayúsculas ni tildes):
+- Rodamiento: rodamiento, BPFO, BPFI, pista, jaula, elemento rodante
+- Soltura: soltura, holgura, suelto, pernos, anclaje, pata coja
+- Lubricación: lubricación, lubricante, grasa, aceite, falta de lubricación
+- Desalineamiento: desalineamiento, desalineado, alineación
+- Desbalanceo: desbalanceo, desbalance
+- Otra: todo lo que no calce
+
+Si un diagnóstico menciona dos modos, cuenta en ambos. Solo se cuentan componentes en Seguimiento, Alerta o Crítico (los Satisfactorios no son falla).
 
 ## Detalles técnicos
-- Conector Databricks de Lovable, vinculado al proyecto. Las llamadas pasan por una función de servidor `databricks-sync`, que usa `/2.0/sql/statements` con parámetros (`:avisos`), sin SQL armado con texto del usuario.
-- Columnas nuevas en `weekly_reports`: `ot_status text` y `databricks_synced_at timestamptz`. `sap_order` y `planned_date` se llenan solo si llega un valor. Se agrega una tabla `integration_runs` para guardar el registro de cada ejecución (hora, filas cruzadas, errores).
-- Alcance: semana más reciente cargada, avisos no vacíos y área distinta de Control Temperatura.
-- Programación diaria con pg_cron + pg_net a las 06:00 hora de Chile (09:00 UTC). Corre 1 vez al día, así que el costo es mínimo y el retraso máximo es de un día.
-- UI: `WorkOrders.tsx` y `CriticalAlertsList.tsx` muestran el estado de la OT, y en Admin queda el botón de sincronización, bloqueado para quien entra sin perfil.
-
-## Datos de conexión ya identificados
-- Espacio de Databricks: adb-5534975844772448.8.azuredatabricks.net
-- SQL Warehouse: amsa_sql_endpoint_dev (f502d71903cb6768)
-- Acceso: token personal generado desde la guía de Python del Warehouse (vigencia 90 días, renovable). Más adelante se puede cambiar por una cuenta de servicio de TI.
+- Nueva página `src/pages/MonthlyReport.tsx` y ruta `/reporte`; ítem en `AppSidebar.tsx`.
+- Nuevo `src/lib/monthlyReport.ts` con funciones puras: semanas ISO que caen en el mes, cálculo de semanas consecutivas en Crítico/Alerta desde `weekly_reports`, clasificación por palabras clave y armado del pareto.
+- Nuevo hook `useMonthlyReport(month, year)`: lee `weekly_reports` (con equipo/sistema/área, paginado de a 1000) desde unas 26 semanas atrás para contar rachas, y `reports` + `report_items` del mes por `fecha_informe`.
+- PDF con jspdf + jspdf-autotable reutilizando logos de `pdfReport.ts`; el pareto se dibuja a mano igual que en los informes de termografía. En pantalla, el pareto usa recharts. Vista previa con el `ReportPreviewDialog` existente.
+- Pruebas: clasificación de diagnósticos y conteo de semanas consecutivas.
+- No hay cambios en la base de datos.
