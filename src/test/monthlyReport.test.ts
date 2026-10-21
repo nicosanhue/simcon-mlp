@@ -68,3 +68,14 @@ describe("subtypeBreakdown", () => {
   it("sin subtipo cae en Sin especificar", () => expect(sb([d("daño en rodamiento")], "Rodamiento")[0].label).toBe("Sin especificar"));
   it("BPFI y BPFO cuentan en ambos", () => expect(sb([d("BPFI y BPFO")], "Rodamiento").length).toBe(2));
 });
+
+import { sortBadRows } from "@/lib/monthlyReport";
+describe("sortBadRows", () => {
+  const b = (tag: string, weeks: number, status = "Alerta", since: { week: number; year: number } | null = null) => ({ tag, weeks, status, since });
+  const rows = [b("B2", 1), b("A1", 19, "Crítico", { week: 25, year: 2026 }), b("C3", 7)];
+  it("de mayor a menor semanas", () => expect(sortBadRows(rows, { key: "weeks", dir: "desc" }).map((r) => r.tag)).toEqual(["A1", "C3", "B2"]));
+  it("de menor a mayor semanas", () => expect(sortBadRows(rows, { key: "weeks", dir: "asc" }).map((r) => r.tag)).toEqual(["B2", "C3", "A1"]));
+  it("primero Crítico y luego Alerta", () => expect(sortBadRows(rows, { key: "status", dir: "desc" }).map((r) => r.tag)).toEqual(["A1", "B2", "C3"]));
+  it("desde más antiguo primero", () => expect(sortBadRows(rows, { key: "since", dir: "asc" }).map((r) => r.tag)).toEqual(["A1", "B2", "C3"]));
+  it("no muta la entrada", () => { const src = [b("Z", 2), b("A", 9)]; sortBadRows(src, { key: "weeks", dir: "desc" }); expect(src.map((r) => r.tag)).toEqual(["Z", "A"]); });
+});

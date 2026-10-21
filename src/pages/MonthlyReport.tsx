@@ -5,7 +5,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useMonthlyReport } from "@/hooks/useMonthlyReport";
-import { MONTHS, STATUS_ORDER } from "@/lib/monthlyReport";
+import { MONTHS, STATUS_ORDER, sortBadRows, type BadSort, type BadSortKey } from "@/lib/monthlyReport";
 import { generateMonthlyReportPdf, monthlyFileName } from "@/lib/monthlyReportPdf";
 import { getStcStatus } from "@/lib/stcStatus";
 import { toast } from "sonner";
@@ -58,6 +58,9 @@ export default function MonthlyReport() {
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
   const [busy, setBusy] = useState(false);
+  const [badSort, setBadSort] = useState<BadSort>({ key: "weeks", dir: "desc" });
+  const pickSort = (key: BadSortKey) =>
+    setBadSort((s) => (s.key === key ? { key, dir: s.dir === "desc" ? "asc" : "desc" } : { key, dir: key === "tag" ? "asc" : "desc" }));
   const { data, isLoading, error } = useMonthlyReport(month, year);
   const years = [now.getFullYear() - 1, now.getFullYear()];
 
@@ -129,6 +132,16 @@ export default function MonthlyReport() {
             </Section>
 
             <Section n={3} title="Equipos críticos y en alerta por área, y semanas seguidas en esa condición">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs text-muted-foreground">Ordenar por:</span>
+                {([["weeks", "Semanas"], ["status", "Estado"], ["since", "Desde"], ["tag", "TAG"]] as [BadSortKey, string][]).map(([k, label]) => (
+                  <Button key={k} size="sm" variant={badSort.key === k ? "default" : "outline"}
+                    className="h-7 px-2.5 text-xs gap-1" onClick={() => pickSort(k)}>
+                    {label}
+                    {badSort.key === k && (badSort.dir === "desc" ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />)}
+                  </Button>
+                ))}
+              </div>
               {data.byArea.length === 0 && <p className="text-sm text-muted-foreground italic">Sin equipos críticos ni en alerta este mes.</p>}
               {data.byArea.map((a) => (
                 <div key={a.area} className="space-y-1">
@@ -136,7 +149,7 @@ export default function MonthlyReport() {
                   <Table
                     head={["Tag", "Equipo", "Sistema", "Estado", "Semanas", "Desde", "Aviso SAP", "OT"]}
                     widths={["12%", "22%", "16%", "10%", "8%", "9%", "13%", "10%"]}
-                    rows={a.rows.map((r) => [
+                    rows={sortBadRows(a.rows, badSort).map((r) => [
                       <span className="font-mono text-primary text-xs">{r.tag}</span>, r.name, r.system, <StatusPill s={r.status} />,
                       <b>{r.weeks}</b>, wk(r.since), r.aviso || <span className="text-muted-foreground italic">Sin aviso</span>, r.ot || "—",
                     ])}
