@@ -9,7 +9,7 @@ export const SEVERITY: Record<string, number> = {
   Satisfactorio: 1,
   "Sin medición": 0,
 };
-export const AREA_ORDER = ["Transporte de Fluidos", "Tranque Mauro", "Puerto", "Desaladora"];
+export const AREA_ORDER = ["Transporte de Fluidos", "Transporte Fluidos", "Tranque Mauro", "Puerto", "Desaladora"];
 export const MONTHS = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
@@ -17,7 +17,7 @@ export const MONTHS = [
 
 export function sortAreaNames(a: string, b: string) {
   const ia = AREA_ORDER.indexOf(a), ib = AREA_ORDER.indexOf(b);
-  if (ia !== -1 || ib !== -1) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+  if (ia !== -1 || ib !== -1) return (ia === -1 ? 99 : Math.max(ia - 1, 0)) - (ib === -1 ? 99 : Math.max(ib - 1, 0));
   return a.localeCompare(b);
 }
 
