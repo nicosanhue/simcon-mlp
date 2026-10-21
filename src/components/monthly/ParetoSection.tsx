@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import type { MonthlyReportData, DiagDetail } from "@/hooks/useMonthlyReport";
 import {
   FAILURE_MODES, MONTHS, STATUS_ORDER, normalize, paretoFromModes, buildParetoByComponent,
-  buildMonthlyTrend, topBadActors, sortAreaNames,
+  buildMonthlyTrend, topBadActors, sortAreaNames, subtypeBreakdown,
 } from "@/lib/monthlyReport";
 
 const TECNICAS = ["Vibraciones", "Termografía", "Ultrasonido", "Lubricación"];
@@ -88,7 +88,17 @@ export function ParetoSection({ data }: { data: MonthlyReportData }) {
                 <XAxis dataKey="mode" fontSize={10} interval={0} angle={-25} textAnchor="end" height={60} />
                 <YAxis yAxisId="l" allowDecimals={false} fontSize={11} />
                 <YAxis yAxisId="r" orientation="right" domain={[0, 100]} unit="%" fontSize={11} />
-                <Tooltip />
+                <Tooltip content={({ active, payload }: any) => {
+                  if (!active || !payload?.length) return null;
+                  const p = payload[0].payload;
+                  const subs = subtypeBreakdown(month, p.mode);
+                  return (
+                    <div className="rounded-md border bg-card p-2 text-xs shadow-md max-w-xs">
+                      <p className="font-semibold">{p.mode}: {p.count} ({p.cumPct}% acum.)</p>
+                      {subs.length > 0 && <ul className="mt-1 space-y-0.5">{subs.map((s) => <li key={s.label} className="flex justify-between gap-3"><span>{s.label}</span><span className="font-medium">{s.count} ({s.pct.toFixed(0)}%)</span></li>)}</ul>}
+                    </div>
+                  );
+                }} />
                 <Bar yAxisId="l" dataKey="count" name="Cantidad" fill="hsl(var(--primary))" className="cursor-pointer" onClick={(d: any) => setMode(d?.mode ?? null)} />
                 <Line yAxisId="r" dataKey="cumPct" name="% acumulado" stroke="hsl(var(--destructive))" />
               </ComposedChart>
