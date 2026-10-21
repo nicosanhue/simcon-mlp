@@ -13,6 +13,7 @@ import WorkOrders from "./pages/WorkOrders";
 import NotFound from "./pages/NotFound";
 import LubricacionEquipos from "./pages/LubricacionEquipos";
 import Reports from "./pages/Reports";
+import MonthlyReport from "./pages/MonthlyReport";
 import StcTemperatura from "./pages/StcTemperatura";
 import RepulpeoQuillayes from "./pages/RepulpeoQuillayes";
 import { ProfileProvider } from "./contexts/ProfileContext";
@@ -34,6 +35,7 @@ const App = () => (
           <Route path="/assets" element={<Assets />} />
           <Route path="/lubricacion-equipos" element={<LubricacionEquipos />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/reporte" element={<MonthlyReport />} />
           <Route path="/stc-temperatura" element={<StcTemperatura />} />
           <Route path="/str-temperatura" element={<StcTemperatura system="str" />} />
           <Route path="/repulpeo-quillayes" element={<RepulpeoQuillayes />} />
