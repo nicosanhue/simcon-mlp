@@ -101,7 +101,7 @@ export function ParetoSection({ data }: { data: MonthlyReportData }) {
               <tbody>
                 {pareto.map((p) => (
                   <tr key={p.mode} onClick={() => setMode(mode === p.mode ? null : p.mode)}
-                    className={`border-b cursor-pointer hover:bg-accent ${mode === p.mode ? "bg-accent font-semibold" : ""}`}>
+                    className={`border-b cursor-pointer hover:bg-accent ${mode === p.mode ? "bg-secondary font-semibold" : ""}`}>
                     <td className="py-1 pr-3 text-primary hover:underline">{p.mode}</td>
                     <td className="py-1 pr-3">{p.count}</td><td className="py-1 pr-3">{p.pct.toFixed(1)}</td><td className="py-1 pr-3">{p.cumPct.toFixed(1)}</td>
                   </tr>
@@ -164,7 +164,7 @@ export function ParetoSection({ data }: { data: MonthlyReportData }) {
               <tbody>
                 {actors.map((a, i) => (
                   <tr key={a.tag} onClick={() => setActor(actor === a.tag ? null : a.tag)}
-                    className={`border-b cursor-pointer hover:bg-accent align-top ${actor === a.tag ? "bg-accent" : ""}`}>
+                    className={`border-b cursor-pointer hover:bg-accent align-top ${actor === a.tag ? "bg-secondary" : ""}`}>
                     <td className="p-2">{i + 1}</td>
                     <td className="p-2 font-mono font-semibold text-primary whitespace-nowrap">{a.tag}</td>
                     <td className="p-2">{a.name}</td><td className="p-2">{a.area}</td>
