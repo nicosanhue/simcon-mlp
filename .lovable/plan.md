@@ -15,7 +15,7 @@
 7. **Control de temperatura STC y STR (resumen simple):** una tabla por sistema con cada estación y su ΔT máximo del mes, el TAG del spool más caliente y su color según los rangos actuales (Verde, Amarillo, Naranja, Rojo). Al lado, la cantidad de spools sobre 2,5 °C y la lista corta de los 5 spools más calientes del mes. Solo usa semanas publicadas.
 
 - Lectura libre para todos (no requiere perfil).
-- STC/STR (Control Temperatura) quedan fuera, como en el Dashboard.
+- Los equipos técnicos STC/STR no se cuentan en las secciones 1 a 6 (como en el Dashboard); su información aparece solo en la sección 7, tomada de las mediciones de temperatura.
 
 ## Cómo se clasifica cada diagnóstico
 Se leen los textos de diagnóstico, análisis y hallazgos de los componentes de cada informe del mes y se buscan palabras clave (sin importar mayúsculas ni tildes):
