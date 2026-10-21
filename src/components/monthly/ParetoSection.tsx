@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, CartesianGrid, ComposedChart, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
 import type { MonthlyReportData, DiagDetail } from "@/hooks/useMonthlyReport";
 import {
@@ -139,28 +139,29 @@ export function ParetoSection({ data }: { data: MonthlyReportData }) {
         <h3 className="font-semibold text-sm">Tendencia de los últimos {data.trendMonths.length} meses</h3>
         {trendModes.length ? (() => {
           const val = (r: any, m: string) => Number(r[m] || 0);
-          const rows = trendModes.map((m) => ({ m, total: trend.reduce((s, r) => s + val(r, m), 0) })).sort((a, b) => b.total - a.total);
-          const max = Math.max(1, ...trend.flatMap((r) => trendModes.map((m) => val(r, m))));
-          const cell = (v: number) => {
-            if (!v) return { style: {}, cls: "text-muted-foreground/40" };
-            const a = 0.1 + (v / max) * 0.75;
-            return { style: { backgroundColor: `hsl(var(--primary) / ${a.toFixed(2)})` }, cls: a > 0.5 ? "text-primary-foreground font-semibold" : "text-foreground" };
-          };
+          const ranked = trendModes.map((m) => ({ m, total: trend.reduce((s, r) => s + val(r, m), 0) })).sort((a, b) => b.total - a.total);
+          const top = ranked.slice(0, 5).map((x) => x.m);
+          const rest = ranked.slice(5).map((x) => x.m);
+          const data = trend.map((r) => {
+            const o: Record<string, any> = { label: r.label };
+            top.forEach((m) => (o[m] = val(r, m)));
+            if (rest.length) o["Otras"] = rest.reduce((s, m) => s + val(r, m), 0);
+            return o;
+          });
+          const colors = ["hsl(var(--primary))", "hsl(var(--chart-falla))", "hsl(var(--chart-alerta))", "hsl(var(--chart-seguimiento))", "hsl(var(--chart-operativo))"];
           return (
-            <div className="overflow-x-auto">
-              <table className="w-full text-xs border-separate border-spacing-0.5">
-                <thead><tr className="text-muted-foreground"><th className="p-2 text-left">Categorización de anomalía</th>{trend.map((r) => <th key={r.month} className="p-2 text-center">{r.label}</th>)}<th className="p-2 text-center">Total</th></tr></thead>
-                <tbody>
-                  {rows.map(({ m, total }) => (
-                    <tr key={m}>
-                      <td className="p-2 font-medium whitespace-nowrap">{m}</td>
-                      {trend.map((r) => { const v = val(r, m); const c = cell(v); return <td key={r.month} style={c.style} className={`p-2 text-center rounded ${c.cls}`}>{v || "·"}</td>; })}
-                      <td className="p-2 text-center font-bold">{total}</td>
-                    </tr>
-                  ))}
-                  <tr className="border-t font-bold"><td className="p-2">Total</td>{trend.map((r) => <td key={r.month} className="p-2 text-center">{trendModes.reduce((s, m) => s + val(r, m), 0)}</td>)}<td className="p-2 text-center">{rows.reduce((s, x) => s + x.total, 0)}</td></tr>
-                </tbody>
-              </table>
+            <div className="h-72">
+              <ResponsiveContainer>
+                <LineChart data={data}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="label" fontSize={11} />
+                  <YAxis allowDecimals={false} fontSize={11} />
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  {top.map((m, i) => <Line key={m} type="monotone" dataKey={m} stroke={colors[i]} strokeWidth={2.5} dot={{ r: 4 }} activeDot={{ r: 6 }} />)}
+                  {rest.length > 0 && <Line type="monotone" dataKey="Otras" stroke="hsl(var(--muted-foreground))" strokeWidth={2} strokeDasharray="5 4" dot={{ r: 3 }} />}
+                </LineChart>
+              </ResponsiveContainer>
             </div>
           );
         })() : <p className="text-sm text-muted-foreground italic">Sin datos en el período.</p>}
