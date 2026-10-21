@@ -12,3 +12,4 @@
 - [ ] Cargar información de STR (estaciones, spools, lecturas y planos) cuando el usuario la suba.
 
 - [x] Informes de termografía STC/STR (formulario, fotos por estación, PDF multipágina)
+- [x] Reporte mensual en pantalla con descarga PDF (críticos por área, semanas, pareto, comparación, recaídas, temperatura STC/STR)
