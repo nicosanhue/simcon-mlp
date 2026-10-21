@@ -123,23 +123,7 @@ export default function MonthlyReport() {
               </div>
             </Section>
 
-            <Section n={2} title="Equipos críticos y en alerta por área, y semanas seguidas en esa condición">
-              {data.byArea.length === 0 && <p className="text-sm text-muted-foreground italic">Sin equipos críticos ni en alerta este mes.</p>}
-              {data.byArea.map((a) => (
-                <div key={a.area} className="space-y-1">
-                  <h3 className="font-medium text-sm">{a.area} <span className="text-muted-foreground">({a.rows.length})</span></h3>
-                  <Table
-                    head={["Tag", "Equipo", "Sistema", "Estado", "Semanas", "Desde", "Aviso SAP", "OT"]}
-                    rows={a.rows.map((r) => [
-                      <span className="font-mono text-primary text-xs">{r.tag}</span>, r.name, r.system, <StatusPill s={r.status} />,
-                      <b>{r.weeks}</b>, wk(r.since), r.aviso || <span className="text-muted-foreground italic">Sin aviso</span>, r.ot || "—",
-                    ])}
-                  />
-                </div>
-              ))}
-            </Section>
-
-            <Section n={3} title={`Pareto de modos de falla (${data.diagCount} diagnósticos)`}>
+            <Section n={2} title={`Pareto de modos de falla (${data.diagCount} diagnósticos)`}>
               {data.pareto.length ? (
                 <div className="grid lg:grid-cols-2 gap-4">
                   <div className="h-64">
@@ -202,6 +186,22 @@ export default function MonthlyReport() {
                 </div>
               ) : null}
               {data.pareto.length ? null : (<p className="text-sm text-muted-foreground italic">Sin diagnósticos de informes este mes.</p>)}
+            </Section>
+
+            <Section n={3} title="Equipos críticos y en alerta por área, y semanas seguidas en esa condición">
+              {data.byArea.length === 0 && <p className="text-sm text-muted-foreground italic">Sin equipos críticos ni en alerta este mes.</p>}
+              {data.byArea.map((a) => (
+                <div key={a.area} className="space-y-1">
+                  <h3 className="font-medium text-sm">{a.area} <span className="text-muted-foreground">({a.rows.length})</span></h3>
+                  <Table
+                    head={["Tag", "Equipo", "Sistema", "Estado", "Semanas", "Desde", "Aviso SAP", "OT"]}
+                    rows={a.rows.map((r) => [
+                      <span className="font-mono text-primary text-xs">{r.tag}</span>, r.name, r.system, <StatusPill s={r.status} />,
+                      <b>{r.weeks}</b>, wk(r.since), r.aviso || <span className="text-muted-foreground italic">Sin aviso</span>, r.ot || "—",
+                    ])}
+                  />
+                </div>
+              ))}
             </Section>
 
             <Section n={4} title="Comparación con el mes anterior">
