@@ -2,7 +2,8 @@
 
 ## Qué se verá
 - Nueva sección **"Reporte"** en la barra lateral, justo después de "Informes".
-- Arriba: selector de **mes y año** (mes calendario; por defecto, el mes actual) y botones **"Ver PDF"** y **"Descargar PDF"**.
+- Arriba: selector de **mes y año** (mes calendario; por defecto, el mes actual). El reporte se muestra **directo en la página**, sin descargar nada.
+- En la esquina superior derecha, un solo botón **"Descargar PDF"**; el PDF se genera solo al presionarlo.
 - En pantalla y en el PDF (mismo estilo que los informes actuales, con logos y encabezado "Superintendencia Confiabilidad y Mejoramiento TFT y Puerto", pero más simple):
 
 1. **Resumen del mes:** cantidad de equipos en Crítico, Alerta, Seguimiento, Satisfactorio y Sin medición (según el último estado del mes de cada equipo).
