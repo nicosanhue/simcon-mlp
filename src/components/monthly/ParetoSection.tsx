@@ -137,22 +137,33 @@ export function ParetoSection({ data }: { data: MonthlyReportData }) {
 
       <div className="space-y-2 border-t pt-3">
         <h3 className="font-semibold text-sm">Tendencia de los últimos {data.trendMonths.length} meses</h3>
-        {trendModes.length ? (
-          <div className="h-72">
-            <ResponsiveContainer>
-              <BarChart data={trend}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="label" fontSize={11} />
-                <YAxis allowDecimals={false} fontSize={11} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 11 }} />
-                {trendModes.map((m, i) => (
-                  <Bar key={m} dataKey={m} stackId="a" fill={MODE_COLORS[i % MODE_COLORS.length]} fillOpacity={1 - Math.floor(i / MODE_COLORS.length) * 0.45} />
-                ))}
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        ) : <p className="text-sm text-muted-foreground italic">Sin datos en el período.</p>}
+        {trendModes.length ? (() => {
+          const val = (r: any, m: string) => Number(r[m] || 0);
+          const rows = trendModes.map((m) => ({ m, total: trend.reduce((s, r) => s + val(r, m), 0) })).sort((a, b) => b.total - a.total);
+          const max = Math.max(1, ...trend.flatMap((r) => trendModes.map((m) => val(r, m))));
+          const cell = (v: number) => {
+            if (!v) return { style: {}, cls: "text-muted-foreground/40" };
+            const a = 0.1 + (v / max) * 0.75;
+            return { style: { backgroundColor: `hsl(var(--primary) / ${a.toFixed(2)})` }, cls: a > 0.5 ? "text-primary-foreground font-semibold" : "text-foreground" };
+          };
+          return (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs border-separate border-spacing-0.5">
+                <thead><tr className="text-muted-foreground"><th className="p-2 text-left">Categorización de anomalía</th>{trend.map((r) => <th key={r.month} className="p-2 text-center">{r.label}</th>)}<th className="p-2 text-center">Total</th></tr></thead>
+                <tbody>
+                  {rows.map(({ m, total }) => (
+                    <tr key={m}>
+                      <td className="p-2 font-medium whitespace-nowrap">{m}</td>
+                      {trend.map((r) => { const v = val(r, m); const c = cell(v); return <td key={r.month} style={c.style} className={`p-2 text-center rounded ${c.cls}`}>{v || "·"}</td>; })}
+                      <td className="p-2 text-center font-bold">{total}</td>
+                    </tr>
+                  ))}
+                  <tr className="border-t font-bold"><td className="p-2">Total</td>{trend.map((r) => <td key={r.month} className="p-2 text-center">{trendModes.reduce((s, m) => s + val(r, m), 0)}</td>)}<td className="p-2 text-center">{rows.reduce((s, x) => s + x.total, 0)}</td></tr>
+                </tbody>
+              </table>
+            </div>
+          );
+        })() : <p className="text-sm text-muted-foreground italic">Sin datos en el período.</p>}
       </div>
 
       <div className="space-y-2 border-t pt-3">
