@@ -215,3 +215,32 @@ export function topBadActors(diags: DiagLike[], n = 10): BadActor[] {
   });
   return [...map.values()].sort((a, b) => b.count - a.count || (SEVERITY[b.worst] ?? 0) - (SEVERITY[a.worst] ?? 0) || a.tag.localeCompare(b.tag)).slice(0, n);
 }
+
+/** Subtipos por categorización (palabras clave normalizadas). */
+export const SUBTYPES: Record<string, [string, string[]][]> = {
+  "Rodamiento": [["BPFI (pista interna)", ["bpfi", "pista interna"]], ["BPFO (pista externa)", ["bpfo", "pista externa"]], ["Jaula (FTF)", ["jaula", "ftf"]], ["Elemento rodante (BSF)", ["elemento rodante", "elementos rodantes", "bsf"]]],
+  "Soltura": [["Pernos / anclaje", ["perno", "anclaje"]], ["Pata coja", ["pata coja"]], ["Holgura mecánica", ["holgura"]]],
+  "Lubricación": [["Grasa", ["grasa"]], ["Aceite", ["aceite"]], ["Falta / deficiencia", ["falta", "deficien", "escasa", "insuficiente"]]],
+  "Desalineamiento": [["Angular", ["angular"]], ["Paralelo", ["paralel"]]],
+  "Estructural / Rigidez": [["Debilidad estructural", ["debilidad estructural"]], ["Movilidad / rigidez", ["movilidad", "rigidez"]]],
+  "Vibración transmitida": [["Desde motor", ["desde el motor"]], ["Desde reductor", ["desde el reductor"]]],
+  "Desgaste interno / Roce": [["Desgaste", ["desgaste"]], ["Roce", ["roce"]], ["Desajuste", ["desajuste"]], ["Componentes internos", ["componentes internos"]]],
+  "Engranajes": [["GMF / engrane", ["gmf", "engranaje"]], ["Dientes", ["diente"]]],
+  "Correas": [["Correa", ["correa"]], ["Polea", ["polea"]]],
+  "Proceso / Operación": [["Impacto", ["impacto"]], ["Cavitación", ["cavitacion"]], ["Ciclo de compresión", ["ciclo de compresion"]], ["Peristáltica", ["peristaltica"]]],
+};
+const FALLBACK: Record<string, string> = { "Vibración transmitida": "Desde otra fuente" };
+
+/** Conteo de subtipos dentro de una categorización. */
+export function subtypeBreakdown(diags: { modes: string[]; text: string }[], mode: string) {
+  const subs = SUBTYPES[mode];
+  if (!subs) return [];
+  const counts = new Map<string, number>();
+  const rows = diags.filter((d) => d.modes.includes(mode));
+  rows.forEach((d) => {
+    const t = normalize(d.text);
+    const hit = subs.filter(([, w]) => w.some((x) => t.includes(x))).map(([l]) => l);
+    (hit.length ? hit : [FALLBACK[mode] || "Sin especificar"]).forEach((l) => counts.set(l, (counts.get(l) || 0) + 1));
+  });
+  return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([label, count]) => ({ label, count, pct: rows.length ? (count / rows.length) * 100 : 0 }));
+}
