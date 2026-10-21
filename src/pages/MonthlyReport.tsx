@@ -124,7 +124,7 @@ export default function MonthlyReport() {
               </div>
             </Section>
 
-            <Section n={2} title={`Pareto de modos de falla (${data.diagCount} diagnósticos)`}>
+            <Section n={2} title={`Pareto de categorización de anomalías (${data.diagCount} diagnósticos)`}>
               <ParetoSection data={data} />
             </Section>
 

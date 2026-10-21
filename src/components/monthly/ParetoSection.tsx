@@ -95,9 +95,9 @@ export function ParetoSection({ data }: { data: MonthlyReportData }) {
             </ResponsiveContainer>
           </div>
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">Haz clic en un modo de falla para ver sus componentes y diagnósticos.</p>
+            <p className="text-xs text-muted-foreground">Haz clic en una categorización de anomalía para ver sus componentes y diagnósticos.</p>
             <table className="w-full text-sm">
-              <thead><tr className="border-b text-left text-muted-foreground">{["Modo de falla", "Cantidad", "%", "% acumulado"].map((h) => <th key={h} className="py-1 pr-3">{h}</th>)}</tr></thead>
+              <thead><tr className="border-b text-left text-muted-foreground">{["Categorización de anomalía", "Cantidad", "%", "% acumulado"].map((h) => <th key={h} className="py-1 pr-3">{h}</th>)}</tr></thead>
               <tbody>
                 {pareto.map((p) => (
                   <tr key={p.mode} onClick={() => setMode(mode === p.mode ? null : p.mode)}
@@ -160,7 +160,7 @@ export function ParetoSection({ data }: { data: MonthlyReportData }) {
         {actors.length ? (
           <div className="overflow-x-auto">
             <table className="w-full text-xs">
-              <thead><tr className="border-b text-left text-muted-foreground">{["#", "TAG", "Equipo", "Área", "Diagnósticos", "Modos de falla", "Componentes", "Peor condición"].map((h) => <th key={h} className="p-2">{h}</th>)}</tr></thead>
+              <thead><tr className="border-b text-left text-muted-foreground">{["#", "TAG", "Equipo", "Área", "Diagnósticos", "Categorización de anomalías", "Componentes", "Peor condición"].map((h) => <th key={h} className="p-2">{h}</th>)}</tr></thead>
               <tbody>
                 {actors.map((a, i) => (
                   <tr key={a.tag} onClick={() => setActor(actor === a.tag ? null : a.tag)}
