@@ -29,4 +29,4 @@
 ## Datos de conexión ya identificados
 - Espacio de Databricks: adb-5534975844772448.8.azuredatabricks.net
 - SQL Warehouse: amsa_sql_endpoint_dev (f502d71903cb6768)
-- Falta solo el acceso: un token, o una cuenta de servicio (Client ID + Secret) entregada por TI, con lectura sobre IW29 e IW39.
+- Acceso: token personal generado desde la guía de Python del Warehouse (vigencia 90 días, renovable). Más adelante se puede cambiar por una cuenta de servicio de TI.
