@@ -25,3 +25,8 @@
 - Alcance: semana más reciente cargada, avisos no vacíos y área distinta de Control Temperatura.
 - Programación diaria con pg_cron + pg_net a las 06:00 hora de Chile (09:00 UTC). Corre 1 vez al día, así que el costo es mínimo y el retraso máximo es de un día.
 - UI: `WorkOrders.tsx` y `CriticalAlertsList.tsx` muestran el estado de la OT, y en Admin queda el botón de sincronización, bloqueado para quien entra sin perfil.
+
+## Datos de conexión ya identificados
+- Espacio de Databricks: adb-5534975844772448.8.azuredatabricks.net
+- SQL Warehouse: amsa_sql_endpoint_dev (f502d71903cb6768)
+- Falta solo el acceso: un token, o una cuenta de servicio (Client ID + Secret) entregada por TI, con lectura sobre IW29 e IW39.
