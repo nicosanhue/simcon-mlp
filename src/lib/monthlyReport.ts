@@ -256,7 +256,7 @@ export function sortBadRows<T extends BadLike>(rows: T[], sort: BadSort): T[] {
   return [...rows].sort((a, b) => {
     const primary =
       sort.key === "weeks" ? (a.weeks - b.weeks) * dir
-      : sort.key === "since" ? ((a.since ? wkey(a.since) : 0) - (b.since ? wkey(b.since) : 0)) * dir
+      : sort.key === "since" ? (!a.since && !b.since ? 0 : !a.since ? 1 : !b.since ? -1 : (wkey(a.since) - wkey(b.since)) * dir)
       : sort.key === "status" ? (SEVERITY[a.status] - SEVERITY[b.status]) * dir
       : byTag(a, b);
     return primary || byTag(a, b);
