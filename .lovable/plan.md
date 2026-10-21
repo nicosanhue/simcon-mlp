@@ -1,5 +1,9 @@
 # Cruzar avisos y OT de Databricks con SIMCON
 
+## Tablas de origen
+- **Avisos (IW29):** `ams.iagen_sandbox.dmt_sap_transacciones_iw29_mst`. Se cruza con el aviso SAP de SIMCON y desde ahí se obtiene la OT asociada.
+- **OT (IW39):** `ams.iagen_sandbox.dmt_sap_transacciones_iw39_mst`. Entrega el estado y la fecha planificada de la OT.
+
 ## Cómo va a funcionar
 1. **Conectar Databricks**: se abre una tarjeta de conexión en el chat. Ahí ingresas los datos de tu espacio de Databricks. La clave queda guardada de forma segura y nunca llega al navegador.
 2. **Identificar las tablas**: con la conexión lista, reviso qué tablas de avisos, OT y equipos tienes y te confirmo qué columnas se usan: número de aviso, número de OT, estado de la OT y fecha planificada.
