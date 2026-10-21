@@ -14,7 +14,6 @@ const MODE_COLORS = [
   "hsl(var(--accent-foreground))", "hsl(var(--muted-foreground))",
 ];
 const modeColor = (m: string) => MODE_COLORS[FAILURE_MODES.indexOf(m as any) % MODE_COLORS.length];
-const areaKey = (a: string) => (a === "Transporte Fluidos" ? "Transporte de Fluidos" : a);
 const wk = (w: { week: number; year: number }) => `S${w.week}/${w.year}`;
 
 function Chips({ label, options, value, onChange }: { label: string; options: string[]; value: string; onChange: (v: string) => void }) {
@@ -60,9 +59,9 @@ export function ParetoSection({ data }: { data: MonthlyReportData }) {
   const [mode, setMode] = useState<string | null>(null);
   const [actor, setActor] = useState<string | null>(null);
 
-  const areas = useMemo(() => sortAreaNames([...new Set(data.trendDiagnoses.map((d) => areaKey(d.area)).filter((a) => a !== "—"))]), [data]);
+  const areas = useMemo(() => [...new Set(data.trendDiagnoses.map((d) => d.area).filter((a) => a !== "—"))].sort(sortAreaNames), [data]);
   const match = (d: DiagDetail) =>
-    (area === "all" || areaKey(d.area) === area) && (tec === "all" || normalize(d.tecnica) === normalize(tec));
+    (area === "all" || d.area === area) && (tec === "all" || normalize(d.tecnica) === normalize(tec));
   const month = useMemo(() => data.diagnoses.filter(match), [data, area, tec]);
   const trendDiags = useMemo(() => data.trendDiagnoses.filter(match), [data, area, tec]);
   const pareto = useMemo(() => paretoFromModes(month.map((d) => d.modes)), [month]);
