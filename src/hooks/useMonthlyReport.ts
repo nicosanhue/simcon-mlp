@@ -4,7 +4,7 @@ import { TEMP_AREA_NAME } from "@/lib/tempSystems";
 import { loadThermoContext, ThermoSystem } from "@/lib/thermoReport";
 import {
   WeeklyRow, WeekRef, wkey, monthWeeks, prevMonth, latestByEquipment, consecutiveBadWeeks,
-  relapseWeek, buildPareto, classifyDiagnosis, isoWeekOf, ParetoRow, BAD_STATUSES, STATUS_ORDER, SEVERITY, sortAreaNames,
+  relapseWeek, paretoFromModes, lastMonths, classifyDiagnosis, isoWeekOf, ParetoRow, BAD_STATUSES, STATUS_ORDER, SEVERITY, sortAreaNames,
 } from "@/lib/monthlyReport";
 
 export interface EquipInfo { id: string; tag: string; name: string; system: string; area: string }
@@ -30,6 +30,9 @@ export interface MonthlyReportData {
   byArea: { area: string; rows: BadRow[] }[];
   pareto: ParetoRow[];
   diagnoses: DiagDetail[];
+  /** Diagnósticos de los últimos TREND_MONTHS meses (incluye el mes). */
+  trendDiagnoses: DiagDetail[];
+  trendMonths: string[];
   diagCount: number;
   worsened: ChangeRow[];
   improved: ChangeRow[];
@@ -53,10 +56,13 @@ async function fetchWeekly(fromYear: number): Promise<(WeeklyRow & { equipment: 
   return out;
 }
 
-export interface DiagDetail { tag: string; name: string; area: string; week: WeekRef; componente: string; condicion: string; text: string; modes: string[] }
+export interface DiagDetail { tag: string; name: string; area: string; week: WeekRef; componente: string; condicion: string; text: string; modes: string[]; tecnica: string; month: string }
+
+export const TREND_MONTHS = 6;
 
 async function fetchReportTexts(month: number, year: number): Promise<DiagDetail[]> {
-  const start = `${year}-${String(month).padStart(2, "0")}-01`;
+  const s0 = new Date(Date.UTC(year, month - 1 - (TREND_MONTHS - 1), 1));
+  const start = `${s0.getUTCFullYear()}-${String(s0.getUTCMonth() + 1).padStart(2, "0")}-01`;
   const nm = month === 12 ? { m: 1, y: year + 1 } : { m: month + 1, y: year };
   const end = `${nm.y}-${String(nm.m).padStart(2, "0")}-01`;
   return fetchDiagnoses(start, end);
@@ -66,7 +72,7 @@ async function fetchReportTexts(month: number, year: number): Promise<DiagDetail
 export async function fetchDiagnoses(start: string, end: string): Promise<DiagDetail[]> {
   const { data, error } = await supabase
     .from("reports")
-    .select("id, sistema_temp, fecha_informe, equipment(tag, name, systems(name, areas(name))), report_items(diagnostico, analisis_tecnico, condicion, componente, equipo_tag)")
+    .select("id, sistema_temp, tipo, fecha_informe, equipment(tag, name, systems(name, areas(name))), report_items(diagnostico, analisis_tecnico, condicion, componente, equipo_tag)")
     .gte("fecha_informe", start)
     .lt("fecha_informe", end);
   if (error) throw error;
@@ -81,6 +87,7 @@ export async function fetchDiagnoses(start: string, end: string): Promise<DiagDe
       if (t.trim()) texts.push({
         tag: i.equipo_tag || eq.tag || "—", name: eq.name || "", area: eq.systems?.areas?.name || "—",
         week, componente: i.componente || "", condicion: i.condicion, text: t, modes: classifyDiagnosis(t),
+        tecnica: r.tipo || "", month: String(r.fecha_informe).slice(0, 7),
       });
     });
   });
@@ -127,13 +134,15 @@ export async function loadMonthlyReport(month: number, year: number): Promise<Mo
   const prevWeeks = monthWeeks(pm.month, pm.year);
   const lastWeek = weeks[weeks.length - 1];
 
-  const [weekly, texts, stc, str] = await Promise.all([
+  const [weekly, allTexts, stc, str] = await Promise.all([
     fetchWeekly(year - 1),
     fetchReportTexts(month, year),
     thermoSummary("stc", weeks).catch(() => null),
     thermoSummary("str", weeks).catch(() => null),
   ]);
 
+  const curMonth = `${year}-${String(month).padStart(2, "0")}`;
+  const texts = allTexts.filter((t) => t.month === curMonth);
   const info = new Map<string, EquipInfo>();
   const rows = weekly.filter((r) => {
     const area = r.equipment?.systems?.areas?.name;
@@ -200,7 +209,9 @@ export async function loadMonthlyReport(month: number, year: number): Promise<Mo
 
   return {
     month, year, weeks, counts, prevCounts, byArea,
-    pareto: buildPareto(texts.map((t) => t.text)), diagnoses: texts, diagCount: texts.length,
+    pareto: paretoFromModes(texts.map((t) => t.modes)), diagnoses: texts,
+    diagCount: texts.filter((t) => t.modes.length).length,
+    trendDiagnoses: allTexts, trendMonths: lastMonths(month, year, TREND_MONTHS),
     worsened, improved, relapses,
     thermo: [stc, str].filter(Boolean) as ThermoSummary[],
   };
