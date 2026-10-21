@@ -92,7 +92,7 @@ export async function generateMonthlyReportPdf(d: MonthlyReportData): Promise<Bl
   section("1. RESUMEN DEL MES (último estado de cada equipo)");
   table(STATUS_ORDER, [STATUS_ORDER.map((s) => d.counts[s] || 0)]);
 
-  section(`2. PARETO DE MODOS DE FALLA (${d.diagCount} diagnósticos del mes)`);
+  section(`2. PARETO DE CATEGORIZACIÓN DE ANOMALÍAS (${d.diagCount} diagnósticos del mes)`);
   if (d.pareto.length) {
     ensure(170);
     const h = 130, x0 = m + 30, w = cw - 60;
@@ -120,21 +120,21 @@ export async function generateMonthlyReportPdf(d: MonthlyReportData): Promise<Bl
     doc.setLineWidth(0.5);
     y += h + 20;
   }
-  table(["Modo de falla", "Cantidad", "%", "% acumulado"], d.pareto.map((p) => [p.mode, p.count, p.pct.toFixed(1), p.cumPct.toFixed(1)]));
+  table(["Categorización de anomalía", "Cantidad", "%", "% acumulado"], d.pareto.map((p) => [p.mode, p.count, p.pct.toFixed(1), p.cumPct.toFixed(1)]));
 
   const trend = buildMonthlyTrend(d.trendDiagnoses, d.trendMonths);
   const tModes = FAILURE_MODES.filter((m) => trend.some((r) => (r as any)[m]));
   if (tModes.length) {
-    subtitle(`Tendencia últimos ${d.trendMonths.length} meses (diagnósticos por modo de falla)`);
+    subtitle(`Tendencia últimos ${d.trendMonths.length} meses (diagnósticos por categorización de anomalía)`);
     table(
-      ["Modo de falla", ...d.trendMonths.map((m) => `${MONTHS[Number(m.slice(5)) - 1].slice(0, 3)} ${m.slice(2, 4)}`)],
+      ["Categorización de anomalía", ...d.trendMonths.map((m) => `${MONTHS[Number(m.slice(5)) - 1].slice(0, 3)} ${m.slice(2, 4)}`)],
       tModes.map((m) => [m, ...trend.map((r) => (r as any)[m] || 0)]),
     );
   }
   const actors = topBadActors(d.diagnoses, 10);
   if (actors.length) {
     subtitle("Malos actores: top 10 de equipos con más diagnósticos");
-    table(["#", "TAG", "Equipo", "Área", "Diag.", "Modos de falla", "Componentes", "Peor condición"],
+    table(["#", "TAG", "Equipo", "Área", "Diag.", "Categorización de anomalías", "Componentes", "Peor condición"],
       actors.map((a, i) => [i + 1, a.tag, a.name, a.area, a.count, a.modes.join(", "), a.components.join(", "), a.worst]), 7);
   }
 
