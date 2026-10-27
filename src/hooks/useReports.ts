@@ -323,6 +323,26 @@ export function useSaveReport() {
     mutationFn: async (input: SaveReportInput) => {
       let reportId = input.id;
       const derived = isoWeekYear(input.fecha_informe || input.fecha_inspeccion);
+
+      // Buscar OT y fecha de planificación del aviso en SAP (IW29/IW39)
+      let plannedDate: string | null = null;
+      let otNumero = input.ot_numero || null;
+      if (!input.sistema_temp) {
+        const aviso = normAviso(input.aviso_sap) || normAviso(input.items.find((i) => normAviso(i.aviso_sap))?.aviso_sap);
+        if (aviso) {
+          try {
+            const info = (await lookupAvisos([aviso]))[aviso];
+            if (info?.orden_principal && !otNumero) otNumero = info.orden_principal;
+            plannedDate = info?.fecha_inicio_extrema ?? null;
+            if (!info) toast.info(`Aviso ${aviso} no encontrado en SAP`);
+            else if (info.orden_principal) toast.success(`SAP: OT ${info.orden_principal}${plannedDate ? ` · inicio extremo ${plannedDate}` : ""}`);
+          } catch (e) {
+            console.warn("sap-lookup", e);
+            toast.warning("No se pudo consultar SAP; el informe se guarda igual");
+          }
+        }
+      }
+
       const payload = {
         equipment_id: input.equipment_id,
         tipo: input.tipo,
@@ -332,7 +352,7 @@ export function useSaveReport() {
         fecha_informe: input.fecha_informe,
         gerencia: GERENCIA_FIJA,
         proceso_area: input.proceso_area ?? null,
-        ot_numero: input.ot_numero ?? null,
+        ot_numero: otNumero,
         aviso_sap: input.aviso_sap ?? null,
         condicion_general: input.condicion_general,
         tecnico: input.tecnico ?? null,
