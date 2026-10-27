@@ -1,91 +1,65 @@
 import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { createClient } from "npm:@supabase/supabase-js@2";
 import { z } from "npm:zod@3";
+import { lookupAvisos } from "../_shared/sap.ts";
 
-const HOST = "https://adb-5534975844772448.8.azuredatabricks.net";
-const WAREHOUSE_ID = "f502d71903cb6768";
-const IW29 = "hive_metastore.amsa_provisioning.dmt_sap_transacciones_iw29_mst";
-const IW39 = "hive_metastore.amsa_provisioning.dmt_sap_transacciones_iw39_mst";
-
-const Body = z.object({
-  avisos: z.array(z.string().trim().regex(/^\d{1,12}$/)).min(1).max(200),
-});
+const Body = z.union([
+  z.object({ avisos: z.array(z.string().trim().regex(/^\d{1,12}$/)).min(1).max(1000) }),
+  z.object({ action: z.literal("sync") }),
+]);
 
 function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+  return new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 }
 
-async function query(token: string, statement: string, params: { name: string; value: string }[]) {
-  const res = await fetch(`${HOST}/api/2.0/sql/statements`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      warehouse_id: WAREHOUSE_ID,
-      statement,
-      parameters: params.map((p) => ({ ...p, type: "STRING" })),
-      wait_timeout: "50s",
-      disposition: "INLINE",
-      format: "JSON_ARRAY",
-    }),
-  });
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok || body?.status?.state !== "SUCCEEDED") {
-    const msg = body?.status?.error?.message || body?.message || `HTTP ${res.status}`;
-    throw new Error(`Databricks: ${msg}`);
+const norm = (a: string | null) => (a || "").trim().replace(/^0+/, "");
+
+/** Completa sap_order y planned_date vacíos en weekly_reports con datos de IW39 (sin sobrescribir). */
+async function sync() {
+  const db = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const { data: excluded } = await db
+    .from("equipment")
+    .select("id, systems!inner(areas!inner(name))")
+    .eq("systems.areas.name", "Control Temperatura");
+  const skip = new Set((excluded ?? []).map((e: any) => e.id));
+
+  const rows: { id: string; equipment_id: string; sap_notification: string | null; sap_order: string | null; planned_date: string | null }[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await db
+      .from("weekly_reports")
+      .select("id, equipment_id, sap_notification, sap_order, planned_date")
+      .not("sap_notification", "is", null)
+      .or("planned_date.is.null,sap_order.is.null,sap_order.eq.")
+      .range(from, from + 999);
+    if (error) throw error;
+    rows.push(...(data ?? []));
+    if (!data || data.length < 1000) break;
   }
-  return (body.result?.data_array ?? []) as (string | null)[][];
+  const pending = rows.filter((r) => !skip.has(r.equipment_id) && /^\d+$/.test(norm(r.sap_notification)));
+  const info = await lookupAvisos(pending.map((r) => norm(r.sap_notification)));
+
+  let updated = 0;
+  for (const r of pending) {
+    const i = info[norm(r.sap_notification)];
+    if (!i) continue;
+    const upd: Record<string, string> = {};
+    if (!(r.sap_order || "").trim() && i.orden_principal) upd.sap_order = i.orden_principal;
+    if (!r.planned_date && i.fecha_inicio_extrema) upd.planned_date = i.fecha_inicio_extrema;
+    if (!Object.keys(upd).length) continue;
+    const { error } = await db.from("weekly_reports").update(upd).eq("id", r.id);
+    if (!error) updated++;
+  }
+  return { revisados: pending.length, encontrados_en_sap: Object.keys(info).length, actualizados: updated };
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return json({ error: "Método no permitido" }, 405);
-
-  const token = Deno.env.get("DATABRICKS_TOKEN");
-  if (!token) return json({ error: "DATABRICKS_TOKEN no configurado" }, 500);
-
   const parsed = Body.safeParse(await req.json().catch(() => null));
-  if (!parsed.success) return json({ error: "Avisos inválidos (solo números)" }, 400);
-
-  const padded = [...new Set(parsed.data.avisos.map((a) => a.padStart(12, "0")))];
-  const params = padded.map((v, i) => ({ name: `a${i}`, value: v }));
-  const inList = params.map((p) => `:${p.name}`).join(",");
-
+  if (!parsed.success) return json({ error: "Solicitud inválida" }, 400);
   try {
-    const [r39, r29] = await Promise.all([
-      query(
-        token,
-        `SELECT aviso, orden, fecha_de_inicio_extrema, status_del_sistema, texto_breve FROM ${IW39} WHERE aviso IN (${inList})`,
-        params,
-      ),
-      query(
-        token,
-        `SELECT aviso, orden, status_sistema, descripcion FROM ${IW29} WHERE aviso IN (${inList})`,
-        params,
-      ),
-    ]);
-
-    const strip = (s: string | null) => (s ? s.replace(/^0+/, "") : null);
-    const results: Record<string, unknown> = {};
-    for (const a of padded) {
-      const key = strip(a)!;
-      const ots = r39
-        .filter((r) => r[0] === a)
-        .map((r) => ({ orden: strip(r[1]), fecha_inicio_extrema: r[2], status: r[3], texto: r[4] }))
-        .sort((x, y) => (y.fecha_inicio_extrema ?? "").localeCompare(x.fecha_inicio_extrema ?? ""));
-      const n29 = r29.find((r) => r[0] === a);
-      results[key] = {
-        en_iw29: !!n29,
-        status_aviso: n29?.[2] ?? null,
-        descripcion_aviso: n29?.[3] ?? null,
-        orden_iw29: strip(n29?.[1] ?? null),
-        ordenes: ots,
-        orden_principal: ots[0]?.orden ?? strip(n29?.[1] ?? null),
-        fecha_inicio_extrema: ots[0]?.fecha_inicio_extrema ?? null,
-      };
-    }
-    return json({ results });
+    if ("action" in parsed.data) return json(await sync());
+    return json({ results: await lookupAvisos(parsed.data.avisos) });
   } catch (e) {
     console.error(e);
     return json({ error: (e as Error).message }, 502);
