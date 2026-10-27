@@ -47,9 +47,25 @@ export function VigiaFab() {
           fill="none" stroke="hsl(var(--primary))" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"
         />
       </svg>
-      <span className="pointer-events-none absolute right-full mr-3 whitespace-nowrap rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground opacity-0 shadow transition-opacity group-hover:opacity-100">
+      <span className="pointer-events-none absolute top-full mt-2 whitespace-nowrap rounded-md bg-popover px-2 py-1 text-xs text-popover-foreground opacity-0 shadow transition-opacity group-hover:opacity-100">
         Preguntar a Vig-IA
       </span>
     </button>
+    </PopoverTrigger>
+    <PopoverContent align="center" className="w-[min(90vw,420px)] space-y-2">
+      <p className="text-sm font-medium">¿Qué quieres preguntarle a Vig-IA?</p>
+      <Textarea
+        autoFocus
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
+        placeholder="Ej: Resume el historial de 4320PP4957"
+        rows={3}
+      />
+      <div className="flex justify-end">
+        <Button size="sm" onClick={submit} disabled={!text.trim()}><Send className="mr-1 h-4 w-4" />Enviar</Button>
+      </div>
+    </PopoverContent>
+    </Popover>
   );
 }
