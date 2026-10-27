@@ -1,3 +1,5 @@
+import { toast } from "sonner";
+import { lookupAvisos, normAviso } from "@/lib/sapLookup";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { ReportPdfData, worstCondition, GERENCIA_FIJA, generateReportPdf } from "@/lib/pdfReport";
@@ -485,7 +487,8 @@ export function useSaveReport() {
       if (existingWeekly) {
         const upd: any = { status: statusEnum };
         if (input.aviso_sap) upd.sap_notification = input.aviso_sap;
-        if (input.ot_numero) upd.sap_order = input.ot_numero;
+        if (otNumero) upd.sap_order = otNumero;
+        if (plannedDate) upd.planned_date = plannedDate;
         if (!existingWeekly.technical_description && descripcion) {
           upd.technical_description = descripcion;
         }
@@ -499,7 +502,8 @@ export function useSaveReport() {
             year: yr,
             status: statusEnum,
             sap_notification: input.aviso_sap ?? null,
-            sap_order: input.ot_numero ?? null,
+            sap_order: otNumero,
+            planned_date: plannedDate,
             technical_description: descripcion,
           })
           .select("id")
