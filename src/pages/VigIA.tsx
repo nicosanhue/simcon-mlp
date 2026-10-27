@@ -46,7 +46,7 @@ const SUGGESTIONS = [
   "Recomienda prioridades de inspección para la próxima semana",
 ];
 
-function VigiaChat({ profileKey, initialMessages, initialInput }: { profileKey: string; initialMessages: UIMessage[]; initialInput: string }) {
+function VigiaChat({ profileKey, initialMessages, initialInput, autoAsk }: { profileKey: string; initialMessages: UIMessage[]; initialInput: string; autoAsk?: string }) {
   const transport = useMemo(
     () =>
       new DefaultChatTransport({
@@ -78,6 +78,15 @@ function VigiaChat({ profileKey, initialMessages, initialInput }: { profileKey: 
     if (!text.trim() || busy) return;
     sendMessage({ text });
   };
+
+  const askedRef = useRef(false);
+  useEffect(() => {
+    if (autoAsk && !askedRef.current) {
+      askedRef.current = true;
+      sendMessage({ text: autoAsk });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="flex h-[calc(100vh-11rem)] min-h-[480px] flex-col rounded-xl border border-border bg-card/80 backdrop-blur">
@@ -186,9 +195,18 @@ function VigiaChat({ profileKey, initialMessages, initialInput }: { profileKey: 
 export default function VigIA() {
   const { profile } = useProfile();
   const profileKey = profile ?? "lectura";
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const tag = params.get("tag");
   const initialInput = tag ? `Resume el historial de ${tag} y dame recomendaciones` : "";
+  const [autoAsk] = useState(() => params.get("ask") ?? "");
+  useEffect(() => {
+    if (params.get("ask")) {
+      const p = new URLSearchParams(params);
+      p.delete("ask");
+      setParams(p, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [loaded, setLoaded] = useState<UIMessage[] | null>(null);
 
   useEffect(() => {
@@ -218,7 +236,7 @@ export default function VigIA() {
           <Shimmer>Cargando conversación…</Shimmer>
         </div>
       ) : (
-        <VigiaChat key={`${profileKey}-${tag ?? ""}`} profileKey={profileKey} initialMessages={loaded} initialInput={initialInput} />
+        <VigiaChat key={`${profileKey}-${tag ?? ""}`} profileKey={profileKey} initialMessages={loaded} initialInput={initialInput} autoAsk={autoAsk} />
       )}
     </div>
     </MainLayout>
