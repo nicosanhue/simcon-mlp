@@ -129,7 +129,7 @@ function VigiaChat({ profileKey, initialMessages, initialInput }: { profileKey: 
                     );
                   }
                   if (part.type.startsWith("tool-")) {
-                    // deno-lint-ignore no-explicit-any
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const tp = part as any;
                     const name = part.type.slice(5);
                     const meta = TOOL_LABELS[name];
@@ -173,7 +173,7 @@ function VigiaChat({ profileKey, initialMessages, initialInput }: { profileKey: 
           <PromptInput onSubmit={({ text }) => send(text)}>
             <PromptInputTextarea autoFocus placeholder="Pregunta sobre un equipo, un TAG, un área o un spool…" />
             <PromptInputFooter className="justify-end">
-              <PromptInputSubmit status={status} onStop={stop} disabled={status === "ready" ? false : !busy} />
+              <PromptInputSubmit status={status} onStop={stop} />
             </PromptInputFooter>
           </PromptInput>
         </PromptInputProvider>
