@@ -2,3 +2,4 @@
 - Reservar los planos por sistema y mostrar controles de PDF solo para mapas existentes: evita asociar archivos STC a estaciones STR.
 - Informes de termografía STC/STR se asocian a los equipos técnicos STC/STR del área "Control Temperatura", que se excluye de Dashboard, Activos, Organigrama, Avisos y Lubricación y nunca sincroniza weekly_reports: mantiene equipment_id obligatorio sin contaminar los conteos.
 - Monthly report logic lives as pure functions in src/lib/monthlyReport.ts (tested); weeks belong to the month containing their ISO Thursday so each week counts once.
+- Vig-IA (AI assistant) runs only in the vig-ia edge function with read-only tools over a service-role client; chat history lives in vig_ia_messages keyed by profile, accessible only via that function: the app has no Supabase auth, so the table stays closed to anon.
