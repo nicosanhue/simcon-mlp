@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { FileText, Download, Plus, Loader2, Pencil, Trash2, Search, Eye, LayoutList, Table2 } from "lucide-react";
+import { VigiaFab } from "@/components/vigia/VigiaFab";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,6 +92,7 @@ export default function Reports() {
 
   return (
     <MainLayout>
+      <VigiaFab />
       <div className="space-y-6">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>

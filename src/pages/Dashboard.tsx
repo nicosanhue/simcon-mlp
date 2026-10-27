@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Activity, CheckCircle2, AlertTriangle, XCircle, Eye, HelpCircle } from "lucide-react";
+import { VigiaFab } from "@/components/vigia/VigiaFab";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { StatusPieChart } from "@/components/dashboard/StatusPieChart";
 import { MultipleStatusCharts } from "@/components/dashboard/MultipleStatusCharts";
@@ -131,6 +132,7 @@ export default function Dashboard() {
 
   return (
     <MainLayout>
+      <VigiaFab />
       <div className="space-y-6" ref={dashboardRef}>
         {/* Search Bar */}
         <div className="w-full">
