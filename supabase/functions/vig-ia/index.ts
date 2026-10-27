@@ -276,6 +276,7 @@ Deno.serve(async (req) => {
 
     const response = result.toUIMessageStreamResponse({
       originalMessages: messages,
+      generateMessageId: () => crypto.randomUUID(),
       sendReasoning: true,
       headers: corsHeaders,
       onFinish: async ({ responseMessage }) => {
