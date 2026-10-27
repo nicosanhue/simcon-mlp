@@ -1,12 +1,15 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { lookupAvisos, normAviso, syncSapToWeekly } from "@/lib/sapLookup";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ClipboardList, Search } from "lucide-react";
+import { ClipboardList, Search, RefreshCw, Loader2, AlertTriangle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface WorkOrderRow {
@@ -120,6 +123,43 @@ export default function WorkOrders() {
     queryFn: fetchLatestWeekWorkOrders,
   });
 
+  const qc = useQueryClient();
+  const [syncing, setSyncing] = useState(false);
+  const avisoKeys = useMemo(
+    () => [...new Set((ordersQuery.data ?? []).map((r) => normAviso(r.sapNotification)).filter((a) => /^\d+$/.test(a)))].sort(),
+    [ordersQuery.data],
+  );
+  const sapQuery = useQuery({
+    queryKey: ["sap-lookup-bulk", avisoKeys],
+    queryFn: () => lookupAvisos(avisoKeys),
+    enabled: avisoKeys.length > 0,
+    staleTime: 5 * 60_000,
+    retry: false,
+  });
+  const today = new Date().toISOString().slice(0, 10);
+  const sapOf = (r: WorkOrderRow) => sapQuery.data?.[normAviso(r.sapNotification)];
+  const isLate = (r: WorkOrderRow) => {
+    const s = sapOf(r);
+    return !!(s?.ot_abierta && s.fecha_inicio_extrema && s.fecha_inicio_extrema < today);
+  };
+
+  async function handleSync() {
+    setSyncing(true);
+    try {
+      const res = await syncSapToWeekly();
+      toast.success(`SAP: ${res.actualizados} registros completados`);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["work-orders"] }),
+        qc.invalidateQueries({ queryKey: ["sap-lookup-bulk"] }),
+      ]);
+    } catch (e) {
+      console.error(e);
+      toast.error("No se pudo consultar SAP");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
   const filtered = useMemo(() => {
     const rows = ordersQuery.data ?? [];
     const term = search.trim().toLowerCase();
@@ -154,17 +194,29 @@ export default function WorkOrders() {
   }, [filtered]);
 
   const totalAvisos = filtered.filter((r) => r.sapNotification).length;
-  const totalOTs = filtered.filter((r) => r.sapOrder).length;
+  const totalOTs = filtered.filter((r) => r.sapOrder || sapOf(r)?.orden_principal).length;
+  const totalLate = filtered.filter(isLate).length;
 
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Avisos y Órdenes de Trabajo</h1>
-          <p className="text-muted-foreground mt-1">
-            Listado de avisos SAP y OT por área y equipo, correspondientes a la última semana registrada.
-          </p>
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Avisos y Órdenes de Trabajo</h1>
+            <p className="text-muted-foreground mt-1">
+              Listado de avisos SAP y OT por área y equipo, correspondientes a la última semana registrada. OT y fechas en vivo desde SAP (IW29/IW39).
+            </p>
+          </div>
+          <Button onClick={handleSync} disabled={syncing || sapQuery.isFetching}>
+            {syncing || sapQuery.isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCw className="mr-2 h-4 w-4" />}
+            Actualizar desde SAP
+          </Button>
         </div>
+        {sapQuery.isError && (
+          <div className="industrial-panel p-3 text-sm text-destructive flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4" /> No se pudo consultar SAP; se muestran los datos guardados.
+          </div>
+        )}
 
         {/* Filters */}
         <div className="industrial-panel p-4 flex flex-col md:flex-row gap-3 md:items-center">
@@ -204,7 +256,7 @@ export default function WorkOrders() {
         </div>
 
         {/* Summary */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div className="industrial-panel p-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Registros</p>
             <p className="text-2xl font-bold text-foreground">{filtered.length}</p>
@@ -216,6 +268,10 @@ export default function WorkOrders() {
           <div className="industrial-panel p-4">
             <p className="text-xs text-muted-foreground uppercase tracking-wider">Órdenes de Trabajo</p>
             <p className="text-2xl font-bold text-foreground">{totalOTs}</p>
+          </div>
+          <div className="industrial-panel p-4">
+            <p className="text-xs text-muted-foreground uppercase tracking-wider">OT abiertas atrasadas</p>
+            <p className="text-2xl font-bold text-destructive">{sapQuery.isLoading ? "…" : totalLate}</p>
           </div>
         </div>
 
@@ -248,7 +304,8 @@ export default function WorkOrders() {
                       <TableHead>Estado</TableHead>
                       <TableHead>Aviso SAP</TableHead>
                       <TableHead>OT</TableHead>
-                      <TableHead>Fecha Programada</TableHead>
+                      <TableHead>Inicio extremo (SAP)</TableHead>
+                      <TableHead>Estado OT</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -264,12 +321,40 @@ export default function WorkOrders() {
                           <Badge variant={statusVariant(r.status)}>{r.status}</Badge>
                         </TableCell>
                         <TableCell className="font-mono text-xs">{r.sapNotification ?? "—"}</TableCell>
-                        <TableCell className="font-mono text-xs">{r.sapOrder ?? "—"}</TableCell>
-                        <TableCell className="whitespace-nowrap">
-                          {r.plannedDate
-                            ? new Date(r.plannedDate).toLocaleDateString("es-CL")
-                            : "—"}
-                        </TableCell>
+                        {(() => {
+                          const sap = sapOf(r);
+                          const sapOt = sap?.orden_principal ?? null;
+                          const ot = sapOt ?? r.sapOrder;
+                          const differs = sapOt && r.sapOrder && normAviso(r.sapOrder) !== sapOt;
+                          const fecha = sap?.fecha_inicio_extrema ?? r.plannedDate;
+                          const late = isLate(r);
+                          return (
+                            <>
+                              <TableCell className="font-mono text-xs">
+                                {ot ?? "—"}
+                                {differs && (
+                                  <span className="block text-[10px] text-muted-foreground" title="OT guardada en SIMCON">
+                                    SIMCON: {r.sapOrder}
+                                  </span>
+                                )}
+                              </TableCell>
+                              <TableCell className={late ? "whitespace-nowrap text-destructive font-semibold" : "whitespace-nowrap"}>
+                                {fecha ? new Date(fecha.slice(0, 10) + "T00:00").toLocaleDateString("es-CL") : "—"}
+                              </TableCell>
+                              <TableCell>
+                                {sap?.ot_abierta == null ? (
+                                  <span className="text-muted-foreground text-xs">{sapQuery.isLoading && r.sapNotification ? "…" : "—"}</span>
+                                ) : late ? (
+                                  <Badge variant="destructive">Atrasada</Badge>
+                                ) : sap.ot_abierta ? (
+                                  <Badge variant="default">Abierta</Badge>
+                                ) : (
+                                  <Badge variant="secondary">Cerrada</Badge>
+                                )}
+                              </TableCell>
+                            </>
+                          );
+                        })()}
                       </TableRow>
                     ))}
                   </TableBody>
