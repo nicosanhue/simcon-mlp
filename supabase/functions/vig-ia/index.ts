@@ -206,6 +206,39 @@ function buildTools(sb: SupabaseClient) {
         return { chart: { kind: "line", title: `ΔT ${tag.toUpperCase()} (${sistema.toUpperCase()})`, yLabel: "ΔT °C", data: pts } };
       },
     }),
+    consultar_sap: tool({
+      description: "Consulta SAP en vivo (IW29 avisos / IW39 órdenes): OTs asociadas, estado del aviso, estado de la OT (abierta/cerrada) y fecha de inicio extremo (fecha de planificación). Pasa avisos o el TAG de un equipo (usa sus avisos registrados).",
+      inputSchema: z.object({
+        avisos: z.array(z.string()).nullable().describe("Números de aviso SAP"),
+        tag: z.string().nullable().describe("TAG de equipo para tomar sus avisos registrados"),
+      }),
+      execute: async ({ avisos, tag }) => {
+        const list = new Set((avisos ?? []).map((a) => a.trim().replace(/^0+/, "")));
+        if (tag) {
+          const eq = await findByTag(tag);
+          if (!eq) return { error: `No se encontró ${tag}` };
+          const { data } = await sb.from("weekly_reports").select("sap_notification")
+            .eq("equipment_id", eq.id).not("sap_notification", "is", null).order("year", { ascending: false }).order("week_number", { ascending: false }).limit(52);
+          for (const r of data ?? []) { const a = (r.sap_notification || "").trim().replace(/^0+/, ""); if (/^\d+$/.test(a)) list.add(a); }
+        }
+        const valid = [...list].filter((a) => /^\d{1,12}$/.test(a)).slice(0, 100);
+        if (!valid.length) return { error: "Sin avisos para consultar" };
+        try {
+          const info = await lookupAvisos(valid);
+          const hoy = new Date().toISOString().slice(0, 10);
+          return {
+            fuente: "SAP IW29/IW39 (Databricks)",
+            avisos: valid.map((a) => {
+              const i = info[a];
+              if (!i) return { aviso: a, encontrado: false };
+              return { aviso: a, encontrado: true, ...i, atrasada: !!(i.ot_abierta && i.fecha_inicio_extrema && i.fecha_inicio_extrema < hoy) };
+            }),
+          };
+        } catch (e) {
+          return { error: `No se pudo consultar SAP: ${(e as Error).message}` };
+        }
+      },
+    }),
   };
 }
 
