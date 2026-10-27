@@ -1,4 +1,6 @@
 import { EquipmentWithHistory } from "@/hooks/useEquipmentHistory";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -76,6 +78,11 @@ export function EquipmentTimeline({ equipment }: EquipmentTimelineProps) {
                 {equipment.name}
               </CardTitle>
             </div>
+            <Button asChild variant="outline" size="sm" className="shrink-0">
+              <Link to={`/vig-ia?tag=${encodeURIComponent(equipment.tag)}`}>
+                <Eye className="mr-2 h-4 w-4" /> Preguntar a Vig-IA
+              </Link>
+            </Button>
           </div>
           <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
             <span>{equipment.system.area.name}</span>
