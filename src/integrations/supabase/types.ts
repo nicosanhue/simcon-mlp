@@ -977,6 +977,30 @@ export type Database = {
           },
         ]
       }
+      vig_ia_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: Json
+          message_id: string
+          profile_key: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: Json
+          message_id: string
+          profile_key: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: Json
+          message_id?: string
+          profile_key?: string
+        }
+        Relationships: []
+      }
       weekly_reports: {
         Row: {
           created_at: string
