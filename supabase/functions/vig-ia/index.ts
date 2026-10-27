@@ -8,6 +8,7 @@ import {
   getLovableAiGatewayRunId,
   withLovableAiGatewayRunIdHeader,
 } from "../_shared/run-id.ts";
+import { lookupAvisos } from "../_shared/sap.ts";
 
 const corsHeaders = {
   ...baseCors,
