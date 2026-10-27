@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Download, Loader2, ArrowUp, ArrowDown, Minus } from "lucide-react";
 import { Bar, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { VigiaFab } from "@/components/vigia/VigiaFab";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -86,6 +87,7 @@ export default function MonthlyReport() {
 
   return (
     <MainLayout>
+      <VigiaFab />
       <div className="space-y-6">
         <div className="flex items-start justify-between flex-wrap gap-3">
           <div>
