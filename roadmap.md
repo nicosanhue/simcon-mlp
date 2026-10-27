@@ -17,4 +17,4 @@
 - [x] Análisis con IA por modo de falla (retirado a pedido del usuario)
 
 - [x] Mejoras al Pareto: filtros área/técnica, modo×componente, tendencia 6 meses, top 10 equipos, nueva clasificación de "Otra"
-- [ ] Asistente IA: resumir informes y responder preguntas sobre equipos (bloqueado: Claude Haiku no está en el catálogo de modelos de esta app; esperando confirmación de modelo)
+- [x] Asistente Vig-IA: chat con historial, gráficos y recomendaciones (sección propia + botón en Historial)
