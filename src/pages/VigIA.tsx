@@ -23,6 +23,7 @@ import { Shimmer } from "@/components/ai-elements/shimmer";
 import { VigiaChart, type VigiaChartData } from "@/components/vigia/VigiaChart";
 import { useProfile } from "@/contexts/ProfileContext";
 import vigiaLogo from "@/assets/vig-ia-logo.png";
+import { MainLayout } from "@/components/layout/MainLayout";
 
 const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/vig-ia`;
 const AUTH_HEADERS = {
@@ -79,7 +80,7 @@ function VigiaChat({ profileKey, initialMessages, initialInput }: { profileKey: 
   };
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] min-h-[520px] flex-col rounded-xl border border-border bg-card/80 backdrop-blur">
+    <div className="flex h-[calc(100vh-11rem)] min-h-[480px] flex-col rounded-xl border border-border bg-card/80 backdrop-blur">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-3">
           <img src={vigiaLogo} alt="Vig-IA" className="h-10 w-10 object-contain" width={40} height={40} />
@@ -210,6 +211,7 @@ export default function VigIA() {
   }, [profileKey]);
 
   return (
+    <MainLayout>
     <div className="space-y-4">
       {loaded === null ? (
         <div className="flex h-64 items-center justify-center">
@@ -219,5 +221,6 @@ export default function VigIA() {
         <VigiaChat key={`${profileKey}-${tag ?? ""}`} profileKey={profileKey} initialMessages={loaded} initialInput={initialInput} />
       )}
     </div>
+    </MainLayout>
   );
 }
