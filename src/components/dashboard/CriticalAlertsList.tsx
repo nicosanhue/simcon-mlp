@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { useReportsIndex } from "@/hooks/useReports";
 import { EquipmentReportsSection } from "@/components/reports/EquipmentReportsSection";
+import { SapAvisoInfo } from "./SapAvisoInfo";
 
 interface Alert {
   id: string;
@@ -263,6 +264,7 @@ export function CriticalAlertsList({ alerts, activeFilter, week, year }: Critica
                       )}
                     </div>
                   </div>
+                  {selectedAlert.sapNotification && <SapAvisoInfo aviso={selectedAlert.sapNotification} />}
 
                   <div className="pt-4 border-t">
                     <EquipmentReportsSection
