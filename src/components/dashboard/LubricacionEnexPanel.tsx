@@ -12,7 +12,7 @@ import { coverage } from "@/lib/enexReport";
 const norm = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, "");
 
 /** Condiciones de lubricación ENEX (Crítico/Alerta) asociadas a equipos SIMCON, con su aviso/OT MonCon. */
-export function LubricacionEnexPanel({ searchTerm = "" }: { searchTerm?: string }) {
+export function LubricacionEnexPanel({ searchTerm = "", className = "" }: { searchTerm?: string; className?: string }) {
   const live = useEnexReport();
   const links = useEnexLinks(live.data);
   const eq = useQuery({
@@ -39,7 +39,7 @@ export function LubricacionEnexPanel({ searchTerm = "" }: { searchTerm?: string 
   const cov = coverage(rows.map((r) => r.link));
 
   return (
-    <Card>
+    <Card className={className}>
       <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
         <div>
           <CardTitle className="flex items-center gap-2 text-base"><Droplets className="h-4 w-4 text-primary" />Lubricación (ENEX + SAP)</CardTitle>

@@ -282,7 +282,7 @@ export default function Dashboard() {
             />
           )}
 
-          <LubricacionEnexPanel searchTerm={searchTerm} />
+          <LubricacionEnexPanel searchTerm={searchTerm} className="lg:col-span-2" />
         </div>
 
         {/* Footer info */}
