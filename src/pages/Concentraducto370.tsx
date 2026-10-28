@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { RefreshCw, AlertTriangle } from "lucide-react";
 import { MainLayout } from "@/components/layout/MainLayout";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,6 @@ const fmt = (iso?: string | null) =>
   iso ? new Date(iso).toLocaleString("es-CL", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—";
 
 export default function Concentraducto370() {
-  const qc = useQueryClient();
   const template = useQuery({
     queryKey: ["c370-template"],
     queryFn: async () => (await fetch("/concentraducto-370.html")).text(),
@@ -21,8 +20,8 @@ export default function Concentraducto370() {
   });
   const live = useQuery({
     queryKey: ["c370-live"],
-    queryFn: async ({ meta }) => {
-      const res = await fetch(`${FN_URL}${meta?.force ? "?force=1" : ""}`, { headers: { apikey: KEY, Authorization: `Bearer ${KEY}` } });
+    queryFn: async () => {
+      const res = await fetch(FN_URL, { headers: { apikey: KEY, Authorization: `Bearer ${KEY}` } });
       const body = await res.json();
       if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
       return body as C370Live;
@@ -43,10 +42,6 @@ export default function Concentraducto370() {
     live.data?.errors.sap && `SAP no respondió: avisos y OT corresponden a la foto del ${fmt(base?.sapIng)}.`,
     piStale && `El último dato PI tiene ${Math.round(piAge! / 60)} h de antigüedad.`,
   ].filter(Boolean) as string[];
-
-  const refresh = async () => {
-    await qc.fetchQuery({ queryKey: ["c370-live"], queryFn: live.refetch as never, meta: { force: true } }).catch(() => {});
-  };
 
   return (
     <MainLayout>

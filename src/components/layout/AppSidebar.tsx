@@ -12,7 +12,8 @@ import {
   Thermometer,
   Gauge,
   BarChart3,
-  Eye
+  Eye,
+  Waypoints
 } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import simconLogo from "@/assets/simcon-logo.png.asset.json";
@@ -37,6 +38,7 @@ const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "STC Control Temperatura", url: "/stc-temperatura", icon: Thermometer },
   { title: "STR Control Temperatura", url: "/str-temperatura", icon: Thermometer },
+  { title: "Concentraducto 370", url: "/concentraducto-370", icon: Waypoints },
   { title: "Repulpeo Quillayes", url: "/repulpeo-quillayes", icon: Gauge },
   { title: "Informes", url: "/reports", icon: FileText },
   { title: "Reporte", url: "/reporte", icon: BarChart3 },
