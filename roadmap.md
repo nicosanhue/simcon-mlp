@@ -18,3 +18,5 @@
 
 - [x] Mejoras al Pareto: filtros área/técnica, modo×componente, tendencia 6 meses, top 10 equipos, nueva clasificación de "Otra"
 - [x] Asistente Vig-IA: chat con historial, gráficos y recomendaciones (sección propia + botón en Historial)
+
+- [x] Reporte ENEX: dashboard ejecutivo leyendo en vivo la hoja "Informes Activos Críticos MLP"
