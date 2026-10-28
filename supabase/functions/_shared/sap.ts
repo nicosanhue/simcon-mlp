@@ -89,7 +89,7 @@ export async function lookupAvisos(avisos: string[]): Promise<Record<string, Sap
 }
 
 /** Usuarios SAP que crean avisos MonCon. */
-export const MONCON_CREATORS = ["eleonp"];
+export const MONCON_CREATORS = ["eleonp", "ggonzalezc"];
 export const LUB_REGEX = "LUB|ACEIT|GRAS|MUESTR|ENGRAS|OIL";
 export interface LubAviso {
   aviso: string; descripcion: string | null; creado_el: string | null; status_aviso: string | null;
