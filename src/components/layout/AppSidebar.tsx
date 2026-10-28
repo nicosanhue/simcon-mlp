@@ -42,6 +42,7 @@ const navigationItems = [
   { title: "Repulpeo Quillayes", url: "/repulpeo-quillayes", icon: Gauge },
   { title: "Informes", url: "/reports", icon: FileText },
   { title: "Reporte", url: "/reporte", icon: BarChart3 },
+  { title: "Reporte ENEX", url: "/reporte-enex", icon: PieChart },
   { title: "Vig-IA", url: "/vig-ia", icon: Eye },
   { title: "Avisos y OT", url: "/work-orders", icon: ClipboardList },
   { title: "Historial", url: "/history", icon: History },

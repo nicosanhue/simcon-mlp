@@ -16,6 +16,7 @@ import Reports from "./pages/Reports";
 import MonthlyReport from "./pages/MonthlyReport";
 import VigIA from "./pages/VigIA";
 import Concentraducto370 from "./pages/Concentraducto370";
+import ReporteEnex from "./pages/ReporteEnex";
 import StcTemperatura from "./pages/StcTemperatura";
 import RepulpeoQuillayes from "./pages/RepulpeoQuillayes";
 import { ProfileProvider } from "./contexts/ProfileContext";
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/reporte" element={<MonthlyReport />} />
           <Route path="/vig-ia" element={<VigIA />} />
           <Route path="/concentraducto-370" element={<Concentraducto370 />} />
+          <Route path="/reporte-enex" element={<ReporteEnex />} />
           <Route path="/stc-temperatura" element={<StcTemperatura />} />
           <Route path="/str-temperatura" element={<StcTemperatura system="str" />} />
           <Route path="/repulpeo-quillayes" element={<RepulpeoQuillayes />} />
