@@ -6,6 +6,7 @@ import { StatusPieChart } from "@/components/dashboard/StatusPieChart";
 import { MultipleStatusCharts } from "@/components/dashboard/MultipleStatusCharts";
 import { StatusCard } from "@/components/dashboard/StatusCard";
 import { CriticalAlertsList } from "@/components/dashboard/CriticalAlertsList";
+import { LubricacionEnexPanel } from "@/components/dashboard/LubricacionEnexPanel";
 import { WeekSelector } from "@/components/dashboard/WeekSelector";
 import { AreaFilter } from "@/components/dashboard/AreaFilter";
 import { EquipmentSearch } from "@/components/dashboard/EquipmentSearch";
@@ -280,6 +281,8 @@ export default function Dashboard() {
               year={year ?? currentDate.getFullYear()}
             />
           )}
+
+          <LubricacionEnexPanel searchTerm={searchTerm} className="lg:col-span-2" />
         </div>
 
         {/* Footer info */}

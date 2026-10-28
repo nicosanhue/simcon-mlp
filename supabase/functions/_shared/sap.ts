@@ -87,3 +87,33 @@ export async function lookupAvisos(avisos: string[]): Promise<Record<string, Sap
   }
   return out;
 }
+
+/** Usuarios SAP que crean avisos MonCon. */
+export const MONCON_CREATORS = ["eleonp"];
+export const LUB_REGEX = "LUB|ACEIT|GRAS|MUESTR|ENGRAS|OIL";
+export interface LubAviso {
+  aviso: string; descripcion: string | null; creado_el: string | null; status_aviso: string | null;
+  orden: string | null; status_ot: string | null; fecha_inicio_extrema: string | null;
+}
+
+/** Avisos de lubricación/aceite creados por MonCon en IW29, con su OT de IW39. */
+export async function lookupLubricacionMonCon(creators = MONCON_CREATORS): Promise<LubAviso[]> {
+  const token = Deno.env.get("DATABRICKS_TOKEN");
+  if (!token) throw new Error("DATABRICKS_TOKEN no configurado");
+  const params = creators.map((c, i) => ({ name: `c${i}`, value: c.toLowerCase() }));
+  const rows = await query(token,
+    `SELECT n.aviso, n.descripcion, n.creado_el, n.status_sistema, coalesce(o.orden, n.orden), o.status_del_sistema, o.fecha_de_inicio_extrema
+     FROM ${IW29} n LEFT JOIN ${IW39} o ON o.aviso = n.aviso
+     WHERE lower(n.creado_por) IN (${params.map((p) => `:${p.name}`).join(",")})
+       AND upper(n.descripcion) RLIKE '${LUB_REGEX}'
+     ORDER BY n.creado_el DESC`, params);
+  const seen = new Set<string>();
+  const out: LubAviso[] = [];
+  for (const r of rows) {
+    const aviso = strip(r[0])!;
+    if (seen.has(aviso)) continue; // una OT principal por aviso
+    seen.add(aviso);
+    out.push({ aviso, descripcion: r[1], creado_el: r[2], status_aviso: r[3], orden: strip(r[4]) || null, status_ot: r[5], fecha_inicio_extrema: r[6] });
+  }
+  return out;
+}

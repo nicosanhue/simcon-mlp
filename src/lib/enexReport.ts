@@ -120,3 +120,61 @@ export function heatMatrix(rows: EnexRow[], maxEquip = 25) {
   }));
   return { weeks, equipments, data };
 }
+
+// ---------- Cruce con avisos de lubricación MonCon (SAP IW29/IW39) ----------
+export interface LubAviso {
+  aviso: string; descripcion: string | null; creado_el: string | null; status_aviso: string | null;
+  orden: string | null; status_ot: string | null; fecha_inicio_extrema: string | null;
+}
+export type SapState = "NO_REQUIERE" | "SIN_AVISO" | "AVISO_SIN_OT" | "OT_ABIERTA" | "EJECUTADO";
+export interface SapLink { state: SapState; aviso: LubAviso | null }
+
+interface TagKey { letters: string; num: number; suf: string }
+const norm = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+/** "340TM711 C" → {TM, 711, C}. */
+export function enexTagKey(tag: string): TagKey | null {
+  const m = norm(tag).match(/^\d{0,4}([A-Z]{2,3})(\d{2,5})([A-Z]?)$/);
+  return m ? { letters: m[1], num: Number(m[2]), suf: m[3] } : null;
+}
+
+/** TAGs mencionados en la descripción del aviso ("TK711-D", "PP914", "UMG TK051"). */
+export function descTagKeys(desc: string): TagKey[] {
+  const out: TagKey[] = [];
+  const re = /(?:^|[^A-Z0-9])\d{0,4}([A-Z]{2,3})[\s-]?(\d{2,5})(?:[\s-]?([A-Z])(?![A-Z0-9]))?/g;
+  for (const m of desc.toUpperCase().matchAll(re)) out.push({ letters: m[1], num: Number(m[2]), suf: m[3] ?? "" });
+  return out;
+}
+
+const keyMatch = (e: TagKey, s: TagKey) =>
+  e.num === s.num && e.letters[0] === s.letters[0] && (!e.suf || !s.suf || e.suf === s.suf);
+
+export const isClosedAviso = (s: string | null) => !!s && /\b(MECE|CERR)\b/.test(s);
+export const isClosedOt = (s: string | null) => !!s && /\b(CTEC|CERR)\b/.test(s);
+
+const addDaysIso = (iso: string, d: number) => {
+  const t = new Date(iso + "T00:00:00Z"); t.setUTCDate(t.getUTCDate() + d); return t.toISOString().slice(0, 10);
+};
+
+/** Vincula una condición ENEX con el primer aviso MonCon del mismo TAG creado desde 7 días antes del informe. */
+export function linkRow(row: EnexRow, avisos: LubAviso[]): SapLink {
+  if (row.status !== "CRITICO" && row.status !== "ALERTA") return { state: "NO_REQUIERE", aviso: null };
+  const k = enexTagKey(row.tag);
+  if (!k) return { state: "SIN_AVISO", aviso: null };
+  const from = addDaysIso(row.date, -7);
+  const cand = avisos
+    .filter((a) => (a.creado_el ?? "") >= from && descTagKeys(a.descripcion ?? "").some((s) => keyMatch(k, s)))
+    .sort((a, b) => (a.creado_el ?? "").localeCompare(b.creado_el ?? ""));
+  const a = cand[0];
+  if (!a) return { state: "SIN_AVISO", aviso: null };
+  if (isClosedOt(a.status_ot) || isClosedAviso(a.status_aviso)) return { state: "EJECUTADO", aviso: a };
+  if (!a.orden) return { state: "AVISO_SIN_OT", aviso: a };
+  return { state: "OT_ABIERTA", aviso: a };
+}
+
+export function coverage(links: SapLink[]) {
+  const c = { total: 0, SIN_AVISO: 0, AVISO_SIN_OT: 0, OT_ABIERTA: 0, EJECUTADO: 0 };
+  for (const l of links) if (l.state !== "NO_REQUIERE") { c.total++; c[l.state]++; }
+  const conOt = c.OT_ABIERTA + c.EJECUTADO;
+  return { ...c, pct: c.total ? Math.round((conOt / c.total) * 100) : 0 };
+}

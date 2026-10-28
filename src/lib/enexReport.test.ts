@@ -40,3 +40,29 @@ describe("enexReport", () => {
     expect(m.data.find(([x, y]) => y === 0 && m.weeks[x] === "2026-10-12")?.[2]).toBe(3);
   });
 });
+
+import { linkRow, enexTagKey, coverage, type LubAviso } from "./enexReport";
+describe("cruce ENEX ↔ avisos MonCon", () => {
+  const row = (tag: string, status: "CRITICO" | "ALERTA" | "OPERATIVO", date = "2026-09-01") =>
+    ({ date, site: "TFT", subsite: "", equipment: "", tag, component: "", status });
+  const av = (p: Partial<LubAviso>): LubAviso => ({ aviso: "1", descripcion: "", creado_el: "2026-09-02", status_aviso: "METR ORAS", orden: "5", status_ot: "LIB", fecha_inicio_extrema: null, ...p });
+
+  it("vincula por TAG con sufijo", () => {
+    expect(enexTagKey("340TM711 C")).toEqual({ letters: "TM", num: 711, suf: "C" });
+    const l = linkRow(row("340TM711 C", "ALERTA"), [av({ descripcion: "MONCON; CAMBIO ACEITE TM711-C" })]);
+    expect(l.state).toBe("OT_ABIERTA");
+  });
+  it("ignora avisos de otro sufijo o anteriores al informe", () => {
+    expect(linkRow(row("340TM711 C", "ALERTA"), [av({ descripcion: "MONCON; LUB TM711-D" })]).state).toBe("SIN_AVISO");
+    expect(linkRow(row("370PP914", "CRITICO"), [av({ descripcion: "MONCON; LUB PP914", creado_el: "2026-08-01" })]).state).toBe("SIN_AVISO");
+  });
+  it("aviso u OT cerrados = Ejecutado; operativo no requiere aviso", () => {
+    expect(linkRow(row("370PP914", "CRITICO"), [av({ descripcion: "MONCON; LUB PP914", status_aviso: "ORAS MECE" })]).state).toBe("EJECUTADO");
+    expect(linkRow(row("370PP914", "CRITICO"), [av({ descripcion: "LUB PP914", orden: null })]).state).toBe("AVISO_SIN_OT");
+    expect(linkRow(row("370PP914", "OPERATIVO"), []).state).toBe("NO_REQUIERE");
+  });
+  it("cobertura cuenta solo Crítico/Alerta con OT", () => {
+    const c = coverage([{ state: "EJECUTADO", aviso: null }, { state: "SIN_AVISO", aviso: null }, { state: "NO_REQUIERE", aviso: null }]);
+    expect(c).toMatchObject({ total: 2, EJECUTADO: 1, SIN_AVISO: 1, pct: 50 });
+  });
+});
