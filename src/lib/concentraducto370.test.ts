@@ -1,4 +1,4 @@
-// @vitest-environment edge-runtime
+// @vitest-environment node
 import { describe, it, expect } from "vitest";
 import { mergeLive, buildDocument, type C370Data, type C370Live } from "./concentraducto370";
 
