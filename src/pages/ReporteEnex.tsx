@@ -44,11 +44,11 @@ function StatusBadge({ s }: { s: EnexStatus }) {
   return <Badge variant="secondary">{s === "OPERATIVO" ? "Operativo" : "—"}</Badge>;
 }
 
-function Kpi({ label, value, prev, color, spark, k, active, onClick }: {
-  label: string; value: number; prev: number; color: string; spark: Record<string, number | string>[]; k: string;
+function Kpi({ label, value, cur, prev, color, spark, k, active, onClick }: {
+  label: string; value: number; cur: number; prev: number; color: string; spark: Record<string, number | string>[]; k: string;
   active?: boolean; onClick?: () => void;
 }) {
-  const diff = value - prev;
+  const diff = cur - prev;
   const Icon = diff > 0 ? TrendingUp : diff < 0 ? TrendingDown : Minus;
   return (
     <Card onClick={onClick}
@@ -61,7 +61,7 @@ function Kpi({ label, value, prev, color, spark, k, active, onClick }: {
           <div>
             <div className="text-3xl font-bold tabular-nums text-foreground">{value}</div>
             <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-              <Icon className="h-3 w-3" />{diff > 0 ? "+" : ""}{diff} vs 30 días previos
+              <Icon className="h-3 w-3" />{cur} en últimos 30 días ({diff > 0 ? "+" : ""}{diff})
             </div>
           </div>
           <div className="h-10 w-24">
@@ -175,7 +175,7 @@ export default function ReporteEnex() {
               <SelectContent><SelectItem value="all">Todos los sitios</SelectItem>{sites.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
             </Select>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-36"><SelectValue placeholder="Estado" /></SelectTrigger>
+              <SelectTrigger className="w-44"><SelectValue placeholder="Estado" /></SelectTrigger>
               <SelectContent><SelectItem value="all">Todos los estados</SelectItem>{STATUSES.map((s) => <SelectItem key={s} value={s}>{LABEL[s]}</SelectItem>)}</SelectContent>
             </Select>
             <Select value={range} onValueChange={setRange}>
@@ -197,9 +197,9 @@ export default function ReporteEnex() {
         ) : !all.length ? null : (
           <div ref={reportRef} className="space-y-4 bg-background">
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <Kpi label="Total informes" value={c.total} prev={delta.prev.total} color="hsl(var(--primary))" spark={spark} k="total" active={status === "all"} onClick={() => setStatus("all")} />
+              <Kpi label="Total informes" value={c.total} cur={delta.cur.total} prev={delta.prev.total} color="hsl(var(--primary))" spark={spark} k="total" active={status === "all"} onClick={() => setStatus("all")} />
               {STATUSES.map((s) => (
-                <Kpi key={s} label={LABEL[s]} value={c[s]} prev={delta.prev[s]} color={COLOR[s]} spark={spark} k={s}
+                <Kpi key={s} label={LABEL[s]} value={c[s]} cur={delta.cur[s]} prev={delta.prev[s]} color={COLOR[s]} spark={spark} k={s}
                   active={status === s} onClick={() => setStatus(status === s ? "all" : s)} />
               ))}
             </div>
