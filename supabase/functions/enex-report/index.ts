@@ -27,7 +27,9 @@ const json = (b: unknown, status = 200) =>
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "GET") return json({ error: "Método no permitido" }, 405);
-  if (cache && Date.now() - cache.at < CACHE_MS) return json(cache.body);
+  const refresh = new URL(req.url).searchParams.get("refresh") === "1";
+  if (refresh) sapCache = null;
+  if (!refresh && cache && Date.now() - cache.at < CACHE_MS) return json(cache.body);
 
   const lovableKey = Deno.env.get("LOVABLE_API_KEY");
   const sheetsKey = Deno.env.get("GOOGLE_SHEETS_API_KEY");
