@@ -14,6 +14,8 @@ export interface SapAvisoInfo {
   orden_principal: string | null;
   fecha_inicio_extrema: string | null;
   ot_abierta: boolean | null;
+  fecha_creacion_aviso: string | null;
+  fecha_aviso: string | null;
 }
 
 const strip = (s: string | null | undefined) => (s ? s.replace(/^0+/, "") : null);
@@ -51,7 +53,7 @@ export async function lookupAvisos(avisos: string[]): Promise<Record<string, Sap
     const inList = params.map((p) => `:${p.name}`).join(",");
     const [r39, r29] = await Promise.all([
       query(token, `SELECT aviso, orden, fecha_de_inicio_extrema, status_del_sistema, texto_breve FROM ${IW39} WHERE aviso IN (${inList})`, params),
-      query(token, `SELECT aviso, orden, status_sistema, descripcion FROM ${IW29} WHERE aviso IN (${inList})`, params),
+      query(token, `SELECT aviso, orden, status_sistema, descripcion, creado_el, fecha_de_aviso FROM ${IW29} WHERE aviso IN (${inList})`, params),
     ]);
     for (const a of padded) {
       const ots = r39
@@ -69,6 +71,8 @@ export async function lookupAvisos(avisos: string[]): Promise<Record<string, Sap
         orden_principal: ots[0]?.orden ?? strip(n29?.[1]),
         fecha_inicio_extrema: ots[0]?.fecha_inicio_extrema ?? null,
         ot_abierta: ots[0] ? ots[0].abierta : null,
+        fecha_creacion_aviso: n29?.[4] ?? n29?.[5] ?? null,
+        fecha_aviso: n29?.[5] ?? null,
       };
     }
   }
