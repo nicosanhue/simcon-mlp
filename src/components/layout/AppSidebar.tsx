@@ -12,6 +12,7 @@ import {
   Thermometer,
   Gauge,
   BarChart3,
+  PieChart,
   Eye,
   Waypoints
 } from "lucide-react";
