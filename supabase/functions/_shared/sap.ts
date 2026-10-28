@@ -1,8 +1,8 @@
 // Consulta SAP (IW29/IW39) en Databricks. Solo lectura.
 const HOST = "https://adb-5534975844772448.8.azuredatabricks.net";
 const WAREHOUSE_ID = "f502d71903cb6768";
-const IW29 = "hive_metastore.amsa_provisioning.dmt_sap_transacciones_iw29_mst";
-const IW39 = "hive_metastore.amsa_provisioning.dmt_sap_transacciones_iw39_mst";
+export const IW29 = "hive_metastore.amsa_provisioning.dmt_sap_transacciones_iw29_mst";
+export const IW39 = "hive_metastore.amsa_provisioning.dmt_sap_transacciones_iw39_mst";
 
 export interface SapOt { orden: string | null; fecha_inicio_extrema: string | null; status: string | null; texto: string | null; abierta: boolean }
 export interface SapAvisoInfo {
@@ -21,22 +21,31 @@ export interface SapAvisoInfo {
 const strip = (s: string | null | undefined) => (s ? s.replace(/^0+/, "") : null);
 export const isOpenStatus = (s: string | null) => !!s && !/\b(CTEC|CERR)\b/.test(s);
 
-async function query(token: string, statement: string, params: { name: string; value: string }[]) {
+export async function query(token: string, statement: string, params: { name: string; value: string }[]) {
+  const headers = { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
   const res = await fetch(`${HOST}/api/2.0/sql/statements`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify({
       warehouse_id: WAREHOUSE_ID,
       statement,
       parameters: params.map((p) => ({ ...p, type: "STRING" })),
       wait_timeout: "50s",
+      on_wait_timeout: "CONTINUE",
       disposition: "INLINE",
       format: "JSON_ARRAY",
     }),
   });
-  const body = await res.json().catch(() => ({}));
+  let body = await res.json().catch(() => ({}));
+  // Si el warehouse estaba detenido, la consulta sigue en curso: esperar hasta ~100 s más.
+  const started = Date.now();
+  while (res.ok && body?.statement_id && ["PENDING", "RUNNING"].includes(body?.status?.state) && Date.now() - started < 100_000) {
+    await new Promise((r) => setTimeout(r, 2500));
+    const r2 = await fetch(`${HOST}/api/2.0/sql/statements/${body.statement_id}`, { headers });
+    body = await r2.json().catch(() => ({}));
+  }
   if (!res.ok || body?.status?.state !== "SUCCEEDED") {
-    throw new Error(`Databricks: ${body?.status?.error?.message || body?.message || `HTTP ${res.status}`}`);
+    throw new Error(`Databricks: ${body?.status?.error?.message || body?.message || body?.status?.state || `HTTP ${res.status}`}`);
   }
   return (body.result?.data_array ?? []) as (string | null)[][];
 }
