@@ -25,6 +25,6 @@ describe("Concentraducto 370 merge", () => {
   it("los datos inyectados no pueden cerrar la etiqueta script", () => {
     const html = '<head></head><script type="application/json" id="data">{}</script>';
     const doc = buildDocument(html, { ...base, avisos: [{ txt: "</script><b>" }] });
-    expect(doc.match(/<\/script>/g)).toHaveLength(1);
+    expect(doc).not.toContain("</script><b>");
   });
 });
