@@ -1,5 +1,7 @@
 import { useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { useEnexReport, useEnexLinks, fetchEnex } from "@/hooks/useEnexReport";
+import { SapStateBadge } from "@/components/enex/SapStateBadge";
 import ReactECharts from "echarts-for-react";
 import {
   Area, AreaChart, Bar, BarChart, Brush, CartesianGrid, Legend, Line, LineChart,
@@ -18,11 +20,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   parseRows, counts, periodDelta, weeklySeries, bySite, latestCritical, heatMatrix,
-  STATUSES, type EnexRow, type EnexStatus,
+  STATUSES, coverage, type EnexRow, type EnexStatus, type SapState,
 } from "@/lib/enexReport";
 
-const FN_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enex-report`;
-const KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 const COLOR: Record<Exclude<EnexStatus, "OTRO">, string> = {
   CRITICO: "hsl(var(--status-falla))",
@@ -83,17 +83,16 @@ export default function ReporteEnex() {
   const [q, setQ] = useState("");
   const [exporting, setExporting] = useState(false);
 
-  const live = useQuery({
-    queryKey: ["enex-report"],
-    queryFn: async () => {
-      const res = await fetch(FN_URL, { headers: { apikey: KEY, Authorization: `Bearer ${KEY}` } });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body?.error || `HTTP ${res.status}`);
-      return body as { rows: string[][]; updated: string | null; fetchedAt: string };
-    },
-    refetchInterval: 5 * 60_000,
-    retry: 1,
-  });
+  const live = useEnexReport();
+  const qc = useQueryClient();
+  const [sapFilter, setSapFilter] = useState<SapState | "all">("all");
+  const [syncing, setSyncing] = useState(false);
+  const links = useEnexLinks(live.data);
+  const linkByTag = useMemo(() => new Map(links.map((x) => [x.row.tag, x.link])), [links]);
+  async function syncSap() {
+    setSyncing(true);
+    try { qc.setQueryData(["enex-report"], await fetchEnex(true)); } finally { setSyncing(false); }
+  }
 
   const all = useMemo(() => parseRows(live.data?.rows ?? []), [live.data]);
   const sites = useMemo(() => bySite(all).map((s) => s.site), [all]);
@@ -118,8 +117,11 @@ export default function ReporteEnex() {
   const sitesData = useMemo(() => bySite(range === "all" && status === "all" ? all : filtered), [all, filtered, range, status]);
   const critical = useMemo(() => {
     const s = q.trim().toLowerCase();
-    return latestCritical(scoped).filter((r) => !s || `${r.tag} ${r.component} ${r.equipment} ${r.site}`.toLowerCase().includes(s));
-  }, [scoped, q]);
+    return latestCritical(scoped)
+      .filter((r) => sapFilter === "all" || linkByTag.get(r.tag)?.state === sapFilter)
+      .filter((r) => !s || `${r.tag} ${r.component} ${r.equipment} ${r.site}`.toLowerCase().includes(s));
+  }, [scoped, q, sapFilter, linkByTag]);
+  const cov = useMemo(() => coverage(latestCritical(scoped).map((r) => linkByTag.get(r.tag)!).filter(Boolean)), [scoped, linkByTag]);
   const heat = useMemo(() => heatMatrix(scoped), [scoped]);
 
   const heatOption = useMemo(() => ({
@@ -186,11 +188,16 @@ export default function ReporteEnex() {
             <Button variant="outline" size="sm" onClick={() => live.refetch()} disabled={live.isFetching}>
               <RefreshCw className={`mr-1 h-4 w-4 ${live.isFetching ? "animate-spin" : ""}`} />Actualizar
             </Button>
+            <Button variant="outline" size="sm" onClick={syncSap} disabled={syncing}>
+              <RefreshCw className={`mr-1 h-4 w-4 ${syncing ? "animate-spin" : ""}`} />{syncing ? "Consultando SAP…" : "Actualizar desde SAP"}
+            </Button>
             <Button size="sm" onClick={exportPdf} disabled={exporting || !all.length}><Download className="mr-1 h-4 w-4" />{exporting ? "Generando…" : "Descargar PDF"}</Button>
           </div>
         </div>
 
         {live.error && <Alert variant="destructive"><AlertDescription>No se pudo leer la hoja de Google: {(live.error as Error).message}</AlertDescription></Alert>}
+
+        {live.data?.sap?.error && <Alert><AlertDescription>No se pudo consultar SAP ahora; {live.data.sap.avisos ? "se muestran los últimos avisos leídos." : "el cruce con avisos no está disponible."}</AlertDescription></Alert>}
 
         {live.isLoading ? (
           <div className="grid gap-4 md:grid-cols-4">{[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-28" />)}<Skeleton className="h-72 md:col-span-4" /></div>
@@ -203,6 +210,22 @@ export default function ReporteEnex() {
                   active={status === s} onClick={() => setStatus(status === s ? "all" : s)} />
               ))}
             </div>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base">Cobertura SAP de condiciones Crítico/Alerta</CardTitle>
+                <p className="text-xs text-muted-foreground">Avisos de lubricación creados por MonCon (IW29) y su OT (IW39). Haz clic para filtrar la tabla.</p>
+              </CardHeader>
+              <CardContent className="flex flex-wrap items-center gap-6">
+                <div><div className="text-3xl font-bold tabular-nums text-foreground">{cov.pct}%</div><div className="text-xs text-muted-foreground">con OT asociada ({cov.total} condiciones)</div></div>
+                {(["SIN_AVISO", "AVISO_SIN_OT", "OT_ABIERTA", "EJECUTADO"] as SapState[]).map((st) => (
+                  <button key={st} type="button" onClick={() => setSapFilter(sapFilter === st ? "all" : st)}
+                    className={`flex items-center gap-2 rounded-md border border-border px-3 py-2 text-left transition hover:bg-muted ${sapFilter === st ? "ring-2 ring-primary" : ""}`}>
+                    <SapStateBadge state={st} /><span className="text-lg font-semibold tabular-nums text-foreground">{cov[st as keyof typeof cov]}</span>
+                  </button>
+                ))}
+              </CardContent>
+            </Card>
 
             <div className="grid gap-4 lg:grid-cols-5">
               <Card className="lg:col-span-2">
@@ -267,7 +290,7 @@ export default function ReporteEnex() {
               <CardContent className="max-h-[480px] overflow-auto p-0">
                 <table className="w-full text-sm">
                   <thead className="sticky top-0 bg-muted text-left text-xs uppercase text-muted-foreground">
-                    <tr><th className="px-4 py-2">Estado</th><th className="px-4 py-2">TAG</th><th className="px-4 py-2">Componente</th><th className="px-4 py-2">Equipo</th><th className="px-4 py-2">Sitio</th><th className="px-4 py-2">Último informe</th></tr>
+                    <tr><th className="px-4 py-2">Estado</th><th className="px-4 py-2">TAG</th><th className="px-4 py-2">Componente</th><th className="px-4 py-2">Equipo</th><th className="px-4 py-2">Sitio</th><th className="px-4 py-2">Último informe</th><th className="px-4 py-2">SAP</th><th className="px-4 py-2">Aviso / OT</th><th className="px-4 py-2">Inicio extremo</th></tr>
                   </thead>
                   <tbody>
                     {critical.map((r) => (
@@ -278,9 +301,14 @@ export default function ReporteEnex() {
                         <td className="px-4 py-2 text-muted-foreground">{r.equipment}</td>
                         <td className="px-4 py-2 text-muted-foreground">{r.site}</td>
                         <td className="px-4 py-2 tabular-nums">{fmtDate(r.date)}-{r.date.slice(0, 4)}</td>
+                        {(() => { const l = linkByTag.get(r.tag); return <>
+                          <td className="px-4 py-2">{l && <SapStateBadge state={l.state} />}</td>
+                          <td className="px-4 py-2 font-mono text-xs" title={l?.aviso?.descripcion ?? ""}>{l?.aviso ? <>{l.aviso.aviso}{l.aviso.orden && <> / {l.aviso.orden}</>}</> : "—"}</td>
+                          <td className="px-4 py-2 tabular-nums">{l?.aviso?.fecha_inicio_extrema ?? "—"}</td>
+                        </>; })()}
                       </tr>
                     ))}
-                    {!critical.length && <tr><td colSpan={6} className="py-8 text-center text-muted-foreground">Sin resultados.</td></tr>}
+                    {!critical.length && <tr><td colSpan={9} className="py-8 text-center text-muted-foreground">Sin resultados.</td></tr>}
                   </tbody>
                 </table>
               </CardContent>
