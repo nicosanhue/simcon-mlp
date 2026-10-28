@@ -20,5 +20,5 @@
 - [x] Asistente Vig-IA: chat con historial, gráficos y recomendaciones (sección propia + botón en Historial)
 
 - [x] Reporte ENEX: dashboard ejecutivo leyendo en vivo la hoja "Informes Activos Críticos MLP"
-- [x] Cruzar avisos de lubricación MonCon (IW29 creador eleonp) + OT IW39 con Reporte ENEX y mostrar estado Ejecutado.
+- [x] Cruzar avisos de lubricación MonCon (IW29 creadores eleonp, ggonzalezc) + OT IW39 con Reporte ENEX y mostrar estado Ejecutado.
 - [x] Mostrar condiciones de lubricación ENEX/SAP en el Dashboard principal.
