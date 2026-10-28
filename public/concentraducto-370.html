@@ -531,7 +531,7 @@ function App(){
   return html`<${React.Fragment}>
     <header class="top"><div class="ttl"><span class="eyebrow">Minera Los Pelambres · Área 370 · Transporte de concentrado</span><h1>Concentraducto 370</h1>
       <span class="muted">Estado de instrumentos PI, ubicaciones técnicas SAP y backlog de mantenimiento</span></div>
-      <div class="fresh"><span>PI: <b>${f2(D.snap)}</b></span><span>SAP: <b>${f2(D.sapIng)}</b></span><span>Foto de datos, no en vivo</span></div></header>
+      <div class="fresh"><span>PI: <b>${f2(D.snap)}</b></span><span>SAP: <b>${f2(D.sapIng)}</b></span><span>En vivo · PI y SAP desde Databricks</span></div></header>
     <${Kpis} th=${th} weekly=${weekly}/>
     <${Pipeline} sel=${sel} onPick=${pickNoScroll} th=${th}/>
     <div class="grid3"><${Attention} onPick=${pick}/><${Backlog} th=${th} sel=${sel} onPick=${pick}/><${OtHeat} th=${th} onPick=${pick}/></div>
